@@ -68,7 +68,7 @@ public class RegisterActivity extends AppCompatActivity {
                     Toast.makeText(RegisterActivity.this,
                             "Registro exitoso. Inicia sesión.",
                             Toast.LENGTH_SHORT).show();
-                    finish(); // regresa a Login
+                    finish();
                 } else {
                     Toast.makeText(RegisterActivity.this,
                             "No se pudo registrar (email usado u otros).",

@@ -23,7 +23,7 @@ public class ApiClient {
             Gson gson = new GsonBuilder().setLenient().create();
 
             retrofit = new Retrofit.Builder()
-                    .baseUrl("https://TU-BACKEND.com/") // ⚠️ cambia por tu backend
+                    .baseUrl("https://TU-BACKEND.com/")
                     .addConverterFactory(GsonConverterFactory.create(gson))
                     .client(client)
                     .build();
