@@ -37,7 +37,7 @@ public class RegisterActivity extends AppCompatActivity {
         api = ApiClient.getClient(this).create(ApiService.class);
 
         btnRegister.setOnClickListener(v -> doRegister());
-        btnGoLogin.setOnClickListener(v -> finish()); // vuelve al LoginActivity
+        btnGoLogin.setOnClickListener(v -> finish());
     }
 
     private void doRegister() {
