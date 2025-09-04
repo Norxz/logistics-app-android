@@ -3,15 +3,31 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingLeft="12dp"
+    android:paddingRight="12dp"
+    android:paddingBottom="12dp"
+    android:paddingTop="?attr/actionBarSize">
+
+    <Button
+        android:id="@+id/btnNuevaSolicitud"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Solicitar recolección" />
 
     <TextView
-        android:id="@+id/tvWelcome"
-        android:layout_width="wrap_content"
+        android:id="@+id/tvEmpty"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Bienvenido 👋"
-        android:textSize="20sp"
-        android:textStyle="bold" />
+        android:text="Aún no tienes solicitudes"
+        android:paddingTop="12dp"
+        android:visibility="gone" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvSolicitudes"
+        android:layout_width="372dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="100dp"
+        android:layout_weight="1" />
 
 </LinearLayout>

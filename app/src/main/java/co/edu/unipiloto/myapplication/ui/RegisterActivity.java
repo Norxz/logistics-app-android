@@ -6,12 +6,7 @@ import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 import co.edu.unipiloto.myapplication.R;
-import co.edu.unipiloto.myapplication.model.RegisterRequest;
-import co.edu.unipiloto.myapplication.net.ApiClient;
-import co.edu.unipiloto.myapplication.net.ApiService;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import co.edu.unipiloto.myapplication.db.UserRepository;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -19,7 +14,7 @@ public class RegisterActivity extends AppCompatActivity {
     private Spinner spRol;
     private Button btnRegister, btnGoLogin;
     private ProgressBar progress;
-    private ApiService api;
+    private UserRepository users;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +29,7 @@ public class RegisterActivity extends AppCompatActivity {
         btnGoLogin = findViewById(R.id.btnGoLogin);
         progress = findViewById(R.id.progress);
 
-        api = ApiClient.getClient(this).create(ApiService.class);
+        users = new UserRepository(this);
 
         btnRegister.setOnClickListener(v -> doRegister());
         btnGoLogin.setOnClickListener(v -> finish());
@@ -44,9 +39,6 @@ public class RegisterActivity extends AppCompatActivity {
         String email = etEmail.getText().toString().trim();
         String pass  = etPassword.getText().toString();
         String pass2 = etPassword2.getText().toString();
-        String rol   = (spRol.getSelectedItem() != null)
-                ? spRol.getSelectedItem().toString()
-                : "CLIENTE";
 
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             etEmail.setError("Email inválido"); return;
@@ -60,29 +52,15 @@ public class RegisterActivity extends AppCompatActivity {
 
         toggleLoading(true);
 
-        RegisterRequest body = new RegisterRequest(email, pass, rol);
-        api.register(body).enqueue(new Callback<Void>() {
-            @Override public void onResponse(Call<Void> call, Response<Void> res) {
-                toggleLoading(false);
-                if (res.isSuccessful()) {
-                    Toast.makeText(RegisterActivity.this,
-                            "Registro exitoso. Inicia sesión.",
-                            Toast.LENGTH_SHORT).show();
-                    finish();
-                } else {
-                    Toast.makeText(RegisterActivity.this,
-                            "No se pudo registrar (email usado u otros).",
-                            Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override public void onFailure(Call<Void> call, Throwable t) {
-                toggleLoading(false);
-                Toast.makeText(RegisterActivity.this,
-                        "Error de red: " + t.getMessage(),
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
+        try {
+            users.register(email, pass); // (opcional: hashear pass)
+            toggleLoading(false);
+            Toast.makeText(this, "Registro exitoso. Inicia sesión.", Toast.LENGTH_SHORT).show();
+            finish();
+        } catch (Exception e) {
+            toggleLoading(false);
+            etEmail.setError("Email ya registrado");
+        }
     }
 
     private void toggleLoading(boolean loading) {
