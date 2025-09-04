@@ -12,13 +12,8 @@ public class SessionManager {
         prefs = context.getSharedPreferences(PREF, Context.MODE_PRIVATE);
     }
 
-    public void saveToken(String token) {
-        prefs.edit().putString(KEY_TOKEN, token).apply();
-    }
-
-    public String getToken() {
-        return prefs.getString(KEY_TOKEN, null);
-    }
+    public void saveUserId(long id){ prefs.edit().putLong("user_id", id).apply(); }
+    public long getUserId(){ return prefs.getLong("user_id", -1L); }
 
     public void clear() {
         prefs.edit().clear().apply();
