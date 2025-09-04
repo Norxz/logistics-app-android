@@ -9,11 +9,18 @@
     android:paddingBottom="12dp"
     android:paddingTop="?attr/actionBarSize">
 
+
     <Button
         android:id="@+id/btnNuevaSolicitud"
-        android:layout_width="match_parent"
+        android:layout_width="379dp"
         android:layout_height="wrap_content"
         android:text="Solicitar recolección" />
+
+    <Button
+        android:id="@+id/btnLogout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cerrar sesión" />
 
     <TextView
         android:id="@+id/tvEmpty"

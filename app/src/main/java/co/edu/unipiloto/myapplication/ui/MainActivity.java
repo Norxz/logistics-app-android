@@ -49,6 +49,14 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(this, SolicitudActivity.class)));
 
         cargarLista();
+
+        Button btnLogout = findViewById(R.id.btnLogout);
+        btnLogout.setOnClickListener(v -> {
+            new SessionManager(this).clear();   // borra userId y todo
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+        });
+
     }
 
     @Override
