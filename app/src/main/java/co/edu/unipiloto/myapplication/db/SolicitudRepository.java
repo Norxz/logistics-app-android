@@ -8,6 +8,8 @@ import android.database.sqlite.SQLiteDatabase;
 import java.util.ArrayList;
 import java.util.List;
 
+import co.edu.unipiloto.myapplication.model.Solicitud;
+
 public class SolicitudRepository {
     private final DBHelper helper;
     public SolicitudRepository(Context ctx){ this.helper = new DBHelper(ctx); }
@@ -61,28 +63,34 @@ public class SolicitudRepository {
         return list;
     }
 
-    public List<SolicitudItem> listarAsignadasARecolector(long recolectorId){
+
+    public List<Solicitud> getByZona(String zona) {
         SQLiteDatabase db = helper.getReadableDatabase();
+        List<Solicitud> lista = new ArrayList<>();
         Cursor c = db.rawQuery(
-                "SELECT id, direccion, fecha, franja, estado, created_at, zona " +
-                        "FROM solicitudes WHERE recolector_id=? ORDER BY created_at DESC",
-                new String[]{String.valueOf(recolectorId)});
-        List<SolicitudItem> list = new ArrayList<>();
-        try {
-            while(c.moveToNext()){
-                SolicitudItem it = new SolicitudItem();
-                it.id = c.getLong(0);
-                it.direccion = c.getString(1);
-                it.fecha = c.getString(2);
-                it.franja = c.getString(3);
-                it.estado = c.getString(4);
-                it.createdAt = c.getLong(5);
-                it.zona = c.getString(6);
-                list.add(it);
-            }
-        } finally { c.close(); }
-        return list;
+                "SELECT id, user_id, direccion, fecha, franja, notas, estado, zona, created_at FROM solicitudes WHERE zona=?",
+                new String[]{zona}
+        );
+        if (c.moveToFirst()) {
+            do {
+                Solicitud s = new Solicitud(
+                        c.getLong(0),
+                        c.getLong(1),
+                        c.getString(2),
+                        c.getString(3),
+                        c.getString(4),
+                        c.getString(5),
+                        c.getString(6),
+                        c.getString(7),
+                        c.getLong(8)
+                );
+                lista.add(s);
+            } while (c.moveToNext());
+        }
+        c.close();
+        return lista;
     }
+
 
 
     public static class SolicitudItem {
