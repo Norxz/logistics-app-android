@@ -1,8 +1,16 @@
 <resources>
     <string name="app_name">MyApplication</string>
     <string-array name="roles_array">
-        <item>CLIENTE</item>
-        <item>ELECTRICISTA</item>
+        <item>REMITENTE</item>
+        <item>RECOLECTOR</item>
         <item>ADMIN</item>
+    </string-array>
+    <string-array name="zonas_bogota">
+        <item>Bogotá - Chapinero</item>
+        <item>Bogotá - Fontibón</item>
+        <item>Bogotá - Suba</item>
+        <item>Bogotá - Usaquén</item>
+        <item>Bogotá - Kennedy</item>
+        <item>Bogotá - Engativá</item>
     </string-array>
 </resources>

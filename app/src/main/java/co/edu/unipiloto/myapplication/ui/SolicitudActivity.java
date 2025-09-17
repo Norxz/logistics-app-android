@@ -12,6 +12,8 @@ public class SolicitudActivity extends AppCompatActivity {
     Spinner spFranja;
     Button btnCrear;
     SolicitudRepository repo;
+
+    Spinner spZona;
     long userId;
 
     @Override protected void onCreate(Bundle b) {
@@ -37,6 +39,16 @@ public class SolicitudActivity extends AppCompatActivity {
         spFranja.setAdapter(franjas);
 
         btnCrear.setOnClickListener(v -> crear());
+
+        spZona = findViewById(R.id.spZonaSolicitud);
+
+        ArrayAdapter<CharSequence> zonas = ArrayAdapter.createFromResource(
+                this,
+                R.array.zonas_bogota,
+                android.R.layout.simple_spinner_item
+        );
+        zonas.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spZona.setAdapter(zonas);
     }
 
     private void crear(){
@@ -48,7 +60,9 @@ public class SolicitudActivity extends AppCompatActivity {
         if (dir.length() < 8){ etDireccion.setError("Dirección muy corta"); return; }
         if (!fecha.matches("\\d{4}-\\d{2}-\\d{2}")){ etFecha.setError("Formato yyyy-MM-dd"); return; }
 
-        long id = repo.crear(userId, dir, fecha, franja, notas);
+        String zona = (String) spZona.getSelectedItem();
+
+        long id = repo.crear(userId, dir, fecha, franja, notas, zona); // <-- autoasigna
         if (id > 0){
             Toast.makeText(this, "Solicitud creada (ID " + id + ")", Toast.LENGTH_SHORT).show();
             finish();

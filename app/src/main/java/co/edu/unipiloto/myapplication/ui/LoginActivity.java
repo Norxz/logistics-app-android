@@ -50,9 +50,9 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        Long userId = users.login(email, pass);
-        if (userId != null) {
-            session.saveUserId(userId);
+        UserRepository.UserInfo u = users.login(email, pass);
+        if (u != null) {
+            session.saveUser(u); // guarda id, role, zona
             Toast.makeText(this, "Login OK", Toast.LENGTH_SHORT).show();
             startActivity(new Intent(LoginActivity.this, MainActivity.class));
             finish();

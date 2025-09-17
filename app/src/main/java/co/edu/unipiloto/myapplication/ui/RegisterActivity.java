@@ -11,10 +11,13 @@ import co.edu.unipiloto.myapplication.db.UserRepository;
 public class RegisterActivity extends AppCompatActivity {
 
     private EditText etEmail, etPassword, etPassword2;
-    private Spinner spRol;
     private Button btnRegister, btnGoLogin;
     private ProgressBar progress;
     private UserRepository users;
+
+    private Spinner spRol, spZona;
+    private TextView tvZonaLabel;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,17 +31,47 @@ public class RegisterActivity extends AppCompatActivity {
         btnRegister = findViewById(R.id.btnRegister);
         btnGoLogin = findViewById(R.id.btnGoLogin);
         progress = findViewById(R.id.progress);
+        tvZonaLabel = findViewById(R.id.tvZonaLabel);
+        spZona      = findViewById(R.id.spZona);
 
         users = new UserRepository(this);
 
         btnRegister.setOnClickListener(v -> doRegister());
         btnGoLogin.setOnClickListener(v -> finish());
+
+        ArrayAdapter<String> roles = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item,
+                new String[]{"CLIENTE","RECOLECTOR"});
+        roles.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spRol.setAdapter(roles);
+
+        ArrayAdapter<CharSequence> zonas = ArrayAdapter.createFromResource(
+                this,
+                R.array.zonas_bogota,
+                android.R.layout.simple_spinner_item
+        );
+        zonas.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spZona.setAdapter(zonas);
+
+
+        spRol.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+                String rol = (String) spRol.getSelectedItem();
+                int vis = "RECOLECTOR".equals(rol) ? View.VISIBLE : View.GONE;
+                tvZonaLabel.setVisibility(vis);
+                spZona.setVisibility(vis);
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        });
     }
 
     private void doRegister() {
         String email = etEmail.getText().toString().trim();
         String pass  = etPassword.getText().toString();
         String pass2 = etPassword2.getText().toString();
+        String rol   = (String) spRol.getSelectedItem();
+        String zona = "RECOLECTOR".equals(rol) ? (String) spZona.getSelectedItem() : null;
+
 
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             etEmail.setError("Email inválido"); return;
@@ -52,9 +85,9 @@ public class RegisterActivity extends AppCompatActivity {
 
         toggleLoading(true);
 
+
         try {
-            users.register(email, pass); // (opcional: hashear pass)
-            toggleLoading(false);
+            users.register(email, pass, rol, zona);
             Toast.makeText(this, "Registro exitoso. Inicia sesión.", Toast.LENGTH_SHORT).show();
             finish();
         } catch (Exception e) {
