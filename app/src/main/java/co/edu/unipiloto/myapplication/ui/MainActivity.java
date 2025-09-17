@@ -27,8 +27,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
-        new co.edu.unipiloto.myapplication.db.DBHelper(this).getReadableDatabase();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 

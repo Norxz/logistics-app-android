@@ -29,9 +29,9 @@ public class LoginActivity extends AppCompatActivity {
         session = new SessionManager(this);
         users   = new UserRepository(this);
 
-        // Si ya hay sesión, saltar directo al panel (Main)
+        // Si ya hay sesión, redirige según rol
         if (session.getUserId() != -1L) {
-            startActivity(new Intent(this, MainActivity.class));
+            goToHomeByRole(session.getRole());
             finish();
             return;
         }
@@ -52,12 +52,22 @@ public class LoginActivity extends AppCompatActivity {
 
         UserRepository.UserInfo u = users.login(email, pass);
         if (u != null) {
-            session.saveUser(u); // guarda id, role, zona
+            // Guarda en sesión (usa tu método: saveUser(id, role, zona) o saveUser(u))
+            session.saveUser(u.id, u.role, u.zona);
+
             Toast.makeText(this, "Login OK", Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(LoginActivity.this, MainActivity.class));
+            goToHomeByRole(u.role);
             finish();
         } else {
             Toast.makeText(this, "Credenciales inválidas", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void goToHomeByRole(String role) {
+        if ("RECOLECTOR".equalsIgnoreCase(role)) {
+            startActivity(new Intent(this, RecolectorActivity.class));
+        } else { // CLIENTE (default)
+            startActivity(new Intent(this, MainActivity.class));
         }
     }
 }

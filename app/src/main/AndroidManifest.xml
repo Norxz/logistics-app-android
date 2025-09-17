@@ -21,6 +21,8 @@
         <activity android:name=".ui.MainActivity"/>
         <!-- Nueva pantalla para HU3 -->
         <activity android:name=".ui.SolicitudActivity"/>
+        <activity android:name=".ui.RecolectorActivity"/>
+
     </application>
 
 </manifest>
