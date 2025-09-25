@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DBHelper extends SQLiteOpenHelper {
     public static final String DB_NAME = "logistica.db";
-    public static final int DB_VERSION = 1;
+    public static final int DB_VERSION = 2;
 
     public DBHelper(Context context) { super(context, DB_NAME, null, DB_VERSION); }
 
@@ -31,6 +31,9 @@ public class DBHelper extends SQLiteOpenHelper {
                 "recolector_id INTEGER," +
                 "estado TEXT NOT NULL DEFAULT 'PENDIENTE'," +
                 "created_at INTEGER NOT NULL," +
+                "en_camino_at INTEGER," +
+                "entregado_at INTEGER," +
+                "confirmado_at INTEGER," +
                 "FOREIGN KEY(user_id) REFERENCES users(id)," +
                 "FOREIGN KEY(recolector_id) REFERENCES users(id))");
 
@@ -42,8 +45,10 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldV, int newV) {
-        db.execSQL("DROP TABLE IF EXISTS solicitudes");
-        db.execSQL("DROP TABLE IF EXISTS users");
-        onCreate(db);
+        if (oldV < 2) {
+            db.execSQL("ALTER TABLE solicitudes ADD COLUMN en_camino_at INTEGER");
+            db.execSQL("ALTER TABLE solicitudes ADD COLUMN entregado_at INTEGER");
+            db.execSQL("ALTER TABLE solicitudes ADD COLUMN confirmacion_at INTEGER");
+        }
     }
 }

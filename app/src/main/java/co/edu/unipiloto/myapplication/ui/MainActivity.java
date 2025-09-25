@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -24,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView rv;
     private Button btnNueva;
     private TextView tvEmpty;
+    private SolicitudAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,12 +33,23 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         session = new SessionManager(this);
+
+        // Si no hay sesión -> Login
         if (session.getUserId() == -1L) {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
             return;
         }
 
+        // Si el usuario es RECOLECTOR, redirigir al panel recolector
+        String role = session.getRole(); // asumo que session tiene getRole()
+        if (role != null && role.equalsIgnoreCase("RECOLECTOR")) {
+            startActivity(new Intent(this, RecolectorActivity.class));
+            finish();
+            return;
+        }
+
+        // ------ panel cliente (si llegamos aquí)
         repo = new SolicitudRepository(this);
 
         rv = findViewById(R.id.rvSolicitudes);
@@ -56,7 +69,6 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
         });
-
     }
 
     @Override
@@ -74,6 +86,21 @@ public class MainActivity extends AppCompatActivity {
         } else {
             tvEmpty.setVisibility(View.GONE);
         }
-        rv.setAdapter(new SolicitudAdapter(items));
+
+        adapter = SolicitudAdapter.forCliente(items);
+        rv.setAdapter(adapter);
+
+        if (adapter != null) {
+            adapter.setOnCancelListener((solicitudId, pos) -> {
+                int rows = repo.cancelarSolicitud(solicitudId, session.getUserId());
+                if (rows > 0) {
+                    adapter.removeAt(pos);
+                    Toast.makeText(this, "Solicitud cancelada", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "No se pudo cancelar (quizá ya fue aceptada)", Toast.LENGTH_SHORT).show();
+                    cargarLista();
+                }
+            });
+        }
     }
 }
