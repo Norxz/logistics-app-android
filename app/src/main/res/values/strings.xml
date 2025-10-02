@@ -3,9 +3,9 @@
     <string name="welcome_collector">Bienvenido Recolector</string>
     <string name="close_session">Cerrar sesión</string>
     <string name="email">Email</string>
-    <string name="password">Password</string>
-    <string name="login">Login</string>
-    <string name="register">Ir a Registro</string>
+    <string name="password">Contraseña</string>
+    <string name="login">Ingresar</string>
+    <string name="register">Registrarse</string>
     <string name="pick_recolection">Solicitar recolección</string>
     <string name="no_solicitudes">Aún no tienes solicitudes</string>
     <string name="logo_name">LogiApp</string>
@@ -13,6 +13,20 @@
     <string name="welcome_button_send">Solicitar un Envío</string>
     <string name="welcome_button_functionary">Soy Funcionario</string>
     <string name="welcome_button_driver">Soy Conductor</string>
+    <string name="logo_description">Logo de la Aplicación de Envíos</string>
+    <string name="make_register">Registrarse</string>
+    <string name="back_login">Volver al inicio de sesión</string>
+    <string name="create_account">Crea tu Cuenta</string>
+    <string name="repeat_password">Repite la contraseña</string>
+    <string name="choose_role">Selecciona tu Rol:</string>
+    <string name="choose_zone">Selecciona tu Zona:</string>
+    <string name="login_welcome_text">¡Bienvenido!</string>
+    <string name="login_description_text">Ingresa tus credenciales para continuar.</string>
+    <string name="forgot_password">Olvidé mi contraseña</string>
+    <string name="driver_title_text">Acceso de Conductor</string>
+    <string name="driver_description_text">Ingresa tus credenciales de flota.</string>
+    <string name="functionary_title_text">Acceso Funcionario</string>
+    <string name="functionary_description_text">Ingresa tu correo y contraseña institucional.</string>
     <string-array name="roles_array">
         <item>REMITENTE</item>
         <item>RECOLECTOR</item>
