@@ -313,13 +313,13 @@
             android:layout_marginBottom="12dp" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnBack"
-            android:layout_width="match_parent"
+            android:id="@+id/btnLogout"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/logout"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:textColor="@color/on_surface_secondary"
-            android:paddingVertical="14dp" />
+            android:text="Cerrar sesión"
+            android:layout_marginTop="16dp"
+            app:cornerRadius="12dp"
+            android:layout_gravity="center_horizontal" />
 
     </LinearLayout>
 </ScrollView>
