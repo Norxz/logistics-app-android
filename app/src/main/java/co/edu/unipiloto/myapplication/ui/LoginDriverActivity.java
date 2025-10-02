@@ -28,8 +28,11 @@ public class LoginDriverActivity extends Activity {
         session = new SessionManager(this);
         users   = new UserRepository(this);
 
-        // Si ya hay sesión, redirige si es conductor
-        if (session.getUserId() != -1L && "CONDUCTOR".equalsIgnoreCase(session.getRole())) {
+        // Si ya hay sesión, redirige si es conductor o recolector
+        if (session.getUserId() != -1L && (
+                "CONDUCTOR".equalsIgnoreCase(session.getRole()) ||
+                "RECOLECTOR".equalsIgnoreCase(session.getRole())
+            )) {
             goToHome();
             finish();
             return;
@@ -48,13 +51,16 @@ public class LoginDriverActivity extends Activity {
         }
 
         UserRepository.UserInfo u = users.login(email, pass);
-        if (u != null && "CONDUCTOR".equalsIgnoreCase(u.role)) {
+        if (u != null && (
+                "CONDUCTOR".equalsIgnoreCase(u.role) ||
+                "RECOLECTOR".equalsIgnoreCase(u.role)
+            )) {
             session.saveUser(u.id, u.role, u.zona);
             Toast.makeText(this, "Login OK", Toast.LENGTH_SHORT).show();
             goToHome();
             finish();
         } else {
-            Toast.makeText(this, "Credenciales inválidas o no es conductor", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Credenciales inválidas o no es conductor/recolector", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -62,4 +68,3 @@ public class LoginDriverActivity extends Activity {
         startActivity(new Intent(this, RecolectorActivity.class));
     }
 }
-

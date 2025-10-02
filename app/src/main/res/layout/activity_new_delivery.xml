@@ -313,9 +313,10 @@
             android:layout_marginBottom="12dp" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnBack"
-            android:layout_width="match_parent"
+            android:id="@+id/btnLogout"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+gravity="center_horizontal" />
             android:text="@string/logout"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:textColor="@color/on_surface_secondary"
