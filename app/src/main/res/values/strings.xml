@@ -27,6 +27,24 @@
     <string name="driver_description_text">Ingresa tus credenciales de flota.</string>
     <string name="functionary_title_text">Acceso Funcionario</string>
     <string name="functionary_description_text">Ingresa tu correo y contraseña institucional.</string>
+    <string name="delivery_title_text">Datos del Nuevo Envío</string>
+    <string name="delivery_send_text">1. Datos del Remitente</string>
+    <string name="delivery_send_text_name">Nombre completo del remitente</string>
+    <string name="delivery_id_text">Identificación</string>
+    <string name="delivery_phone">Teléfono</string>
+    <string name="delivery_package_text">2. Información del Paquete</string>
+    <string name="delivery_package_height">Alto (cm)</string>
+    <string name="delivery_package_width">Ancho (cm)</string>
+    <string name="delivery_package_large">Largo (cm)</string>
+    <string name="delivery_package_weight">Peso (kg)</string>
+    <string name="delivery_package_content">Contenido (ej. Ropa)</string>
+    <string name="delivery_destination_title">3. Datos del Destino</string>
+    <string name="delivery_destination_name">Nombre completo del receptor</string>
+    <string name="delivery_adress">Dirección</string>
+    <string name="delivery_price">4. Precio del Envío</string>
+    <string name="delivery_total_price">Precio total (ej. $50.000)</string>
+    <string name="send_guide">Enviar Solicitud</string>
+    <string name="back">Regresar</string>
     <string-array name="roles_array">
         <item>REMITENTE</item>
         <item>RECOLECTOR</item>
