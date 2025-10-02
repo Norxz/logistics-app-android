@@ -45,6 +45,13 @@
     <string name="delivery_total_price">Precio total (ej. $50.000)</string>
     <string name="send_guide">Enviar Solicitud</string>
     <string name="back">Regresar</string>
+    <string name="guide_description_text">Icono de éxito</string>
+    <string name="guide_title_text">¡Envío Creado Exitosamente!</string>
+    <string name="guide_description">Se ha procesado la solicitud. Selecciona la siguiente acción.</string>
+    <string name="guide_button_send">Generar y Enviar Guía al Correo</string>
+    <string name="guide_button_download">Generar Guía (Descargar)</string>
+    <string name="back_to_main">Volver a la pantalla principal</string>
+    <string name="logout">Cerrar Sesión</string>
     <string-array name="roles_array">
         <item>REMITENTE</item>
         <item>RECOLECTOR</item>
