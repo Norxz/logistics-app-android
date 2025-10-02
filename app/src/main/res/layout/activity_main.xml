@@ -14,7 +14,7 @@
         android:id="@+id/btnNuevaSolicitud"
         android:layout_width="379dp"
         android:layout_height="wrap_content"
-        android:text="@string/solicitar_recolecci_n" />
+        android:text="@string/pick_recolection" />
 
     <Button
         android:id="@+id/btnLogout"
