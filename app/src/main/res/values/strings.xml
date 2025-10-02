@@ -52,6 +52,17 @@
     <string name="guide_button_download">Generar Guía (Descargar)</string>
     <string name="back_to_main">Volver a la pantalla principal</string>
     <string name="logout">Cerrar Sesión</string>
+    <string name="user_last_deliverys">Historial de Envíos</string>
+    <string name="user_status">Ver Estado de mis Envíos</string>
+    <string name="user_new_delivery">Solicitar Nueva Recogida</string>
+    <string name="user_welcome">Bienvenido, %s</string>
+    <string name="user_description">¿Qué deseas hacer hoy? Selecciona una opción:</string>
+    <string name="pick_up_title">Indica tu Punto de Recogida</string>
+    <string name="pick_up_description">Escribe la dirección donde tenemos que buscar tu paquete o usa tu ubicación actual.</string>
+    <string name="pick_up_adress">Dirección completa (Calle, Número, Ciudad)</string>
+    <string name="pick_up_icon">Usar mi ubicación actual</string>
+    <string name="pick_up_map_text">El pin indicará el punto de recogida</string>
+    <string name="pick_up_button">Confirmar Dirección de Recogida</string>
     <string-array name="roles_array">
         <item>REMITENTE</item>
         <item>RECOLECTOR</item>

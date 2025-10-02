@@ -316,10 +316,11 @@
             android:id="@+id/btnLogout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Cerrar sesión"
-            android:layout_marginTop="16dp"
-            app:cornerRadius="12dp"
-            android:layout_gravity="center_horizontal" />
+gravity="center_horizontal" />
+            android:text="@string/logout"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:textColor="@color/on_surface_secondary"
+            android:paddingVertical="14dp" />
 
     </LinearLayout>
 </ScrollView>
