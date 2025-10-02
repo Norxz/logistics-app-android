@@ -16,7 +16,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "email TEXT UNIQUE NOT NULL," +
                 "password TEXT NOT NULL," +
-                "role TEXT NOT NULL CHECK(role IN ('CLIENTE','RECOLECTOR'))," +
+                "role TEXT NOT NULL CHECK(role IN ('CLIENTE','RECOLECTOR', 'FUNCIONARIO'))," +
                 "zona TEXT" +
                 ")");
 

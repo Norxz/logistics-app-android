@@ -19,9 +19,10 @@
 
         <activity android:name=".ui.RegisterActivity"/>
         <activity android:name=".ui.MainActivity"/>
-        <!-- Nueva pantalla para HU3 -->
         <activity android:name=".ui.SolicitudActivity"/>
         <activity android:name=".ui.RecolectorActivity"/>
+        <activity android:name=".ui.LoginActivity" />
+        <activity android:name=".ui.FunctionaryActivity" />
 
     </application>
 

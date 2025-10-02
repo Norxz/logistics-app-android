@@ -1,16 +1,16 @@
 package co.edu.unipiloto.myapplication.ui;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
 import co.edu.unipiloto.myapplication.R;
 import co.edu.unipiloto.myapplication.db.UserRepository;
 import co.edu.unipiloto.myapplication.storage.SessionManager;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends Activity {
     EditText etEmail, etPass;
     Button btnLogin, btnGoRegister;
     SessionManager session;
@@ -64,10 +64,22 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void goToHomeByRole(String role) {
-        if ("RECOLECTOR".equalsIgnoreCase(role)) {
-            startActivity(new Intent(this, RecolectorActivity.class));
-        } else { // CLIENTE (default)
-            startActivity(new Intent(this, MainActivity.class));
+        if (role == null) role = "";
+
+        // normalizamos
+        String r = role.trim().toUpperCase();
+        if ("CONDUCTOR".equals(r)) r = "RECOLECTOR";
+
+        switch (r) {
+            case "RECOLECTOR":
+                startActivity(new Intent(this, RecolectorActivity.class));
+                break;
+            case "FUNCIONARIO":
+                startActivity(new Intent(this, FunctionaryActivity.class)); // crea esta Activity si la necesitas
+                break;
+            default: // CLIENTE u otros
+                startActivity(new Intent(this, MainActivity.class));
+                break;
         }
     }
 }
