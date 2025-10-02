@@ -1,7 +1,18 @@
 <resources>
     <string name="app_name">MyApplication</string>
-    <string name="bienvenido_recolector">Bienvenido Recolector</string>
-    <string name="cerrar_sesi_n">Cerrar sesión</string>
+    <string name="welcome_collector">Bienvenido Recolector</string>
+    <string name="close_session">Cerrar sesión</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="register">Ir a Registro</string>
+    <string name="pick_recolection">Solicitar recolección</string>
+    <string name="no_solicitudes">Aún no tienes solicitudes</string>
+    <string name="logo_name">LogiApp</string>
+    <string name="welcome_description">¡Bienvenido! Estamos aquí para conectar tus envíos de manera rápida, segura y eficiente.</string>
+    <string name="welcome_button_send">Solicitar un Envío</string>
+    <string name="welcome_button_functionary">Soy Funcionario</string>
+    <string name="welcome_button_driver">Soy Conductor</string>
     <string-array name="roles_array">
         <item>REMITENTE</item>
         <item>RECOLECTOR</item>

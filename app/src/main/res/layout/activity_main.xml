@@ -14,26 +14,26 @@
         android:id="@+id/btnNuevaSolicitud"
         android:layout_width="379dp"
         android:layout_height="wrap_content"
-        android:text="Solicitar recolección" />
+        android:text="@string/pick_recolection" />
 
     <Button
         android:id="@+id/btnLogout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Cerrar sesión" />
+        android:text="@string/close_session" />
 
     <TextView
         android:id="@+id/tvEmpty"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Aún no tienes solicitudes"
+        android:text="@string/no_solicitudes"
         android:paddingTop="12dp"
         android:visibility="gone" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvSolicitudes"
         android:layout_width="372dp"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_marginTop="100dp"
         android:layout_weight="1" />
 

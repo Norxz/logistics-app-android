@@ -9,7 +9,7 @@
 
         <!-- LAUNCHER -->
         <activity
-            android:name=".ui.LoginActivity"
+            android:name=".ui.WelcomeActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
