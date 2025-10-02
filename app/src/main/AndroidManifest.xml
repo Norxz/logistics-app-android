@@ -24,6 +24,7 @@
         <activity android:name=".ui.LoginActivity" />
         <activity android:name=".ui.FunctionaryActivity" />
         <activity android:name=".ui.LoginDriverActivity" />
+        <activity android:name=".ui.LoginFunctionaryActivity" />
 
     </application>
 
