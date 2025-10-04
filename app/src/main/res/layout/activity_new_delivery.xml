@@ -14,29 +14,29 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
             android:text="@string/delivery_title_text"
-            android:textSize="28sp"
-            android:textStyle="bold"
             android:textColor="@color/primary_color"
-            android:layout_marginBottom="24dp" />
+            android:textSize="28sp"
+            android:textStyle="bold" />
 
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:text="@string/delivery_send_text"
-            android:textSize="20sp"
-            android:textStyle="bold"
             android:textColor="@color/on_surface"
-            android:layout_marginBottom="16dp"/>
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
         <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:hint="@string/delivery_send_text_name"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            app:boxStrokeColor="@color/primary_color"
-            android:layout_marginBottom="16dp">
+            app:boxStrokeColor="@color/primary_color">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etSenderName"
@@ -49,23 +49,23 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="16dp"
+            android:orientation="horizontal">
 
             <Spinner
                 android:id="@+id/spIDType"
+                style="@style/Widget.AppCompat.Spinner.Underlined"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                style="@style/Widget.AppCompat.Spinner.Underlined"/>
+                android:layout_weight="1" />
 
             <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:hint="@string/delivery_id_text"
                 android:layout_weight="2"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:hint="@string/delivery_id_text"
                 app:boxStrokeColor="@color/primary_color">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -80,23 +80,23 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="32dp">
+            android:layout_marginBottom="32dp"
+            android:orientation="horizontal">
 
             <Spinner
                 android:id="@+id/spSenderCountryCode"
+                style="@style/Widget.AppCompat.Spinner.Underlined"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                style="@style/Widget.AppCompat.Spinner.Underlined"/>
+                android:layout_weight="1" />
 
             <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:hint="@string/delivery_phone"
                 android:layout_weight="2"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:hint="@string/delivery_phone"
                 app:boxStrokeColor="@color/primary_color">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -112,27 +112,28 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:text="@string/delivery_package_text"
-            android:textSize="20sp"
-            android:textStyle="bold"
             android:textColor="@color/on_surface"
-            android:layout_marginBottom="16dp"/>
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:layout_marginBottom="16dp"
             android:baselineAligned="false"
-            android:layout_marginBottom="16dp">
+            android:orientation="horizontal">
 
             <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:hint="@string/delivery_package_height"
-                android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_weight="1"
+                android:hint="@string/delivery_package_height"
                 app:boxStrokeColor="@color/primary_color">
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etPackageHeight"
                     android:layout_width="match_parent"
@@ -141,13 +142,14 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:hint="@string/delivery_package_width"
-                android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_weight="1"
+                android:hint="@string/delivery_package_width"
                 app:boxStrokeColor="@color/primary_color">
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etPackageWidth"
                     android:layout_width="match_parent"
@@ -156,12 +158,13 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:hint="@string/delivery_package_large"
                 android:layout_weight="1"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:hint="@string/delivery_package_large"
                 app:boxStrokeColor="@color/primary_color">
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etPackageLength"
                     android:layout_width="match_parent"
@@ -173,17 +176,19 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:baselineAligned="false" android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="16dp"
+            android:baselineAligned="false"
+            android:orientation="horizontal">
 
             <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:hint="@string/delivery_package_weight"
-                android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_weight="1"
+                android:hint="@string/delivery_package_weight"
                 app:boxStrokeColor="@color/primary_color">
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etPackageWeight"
                     android:layout_width="match_parent"
@@ -192,12 +197,13 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:hint="@string/delivery_package_content"
                 android:layout_weight="2"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:hint="@string/delivery_package_content"
                 app:boxStrokeColor="@color/primary_color">
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etPackageContent"
                     android:layout_width="match_parent"
@@ -210,19 +216,20 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:text="@string/delivery_destination_title"
-            android:textSize="20sp"
-            android:textStyle="bold"
             android:textColor="@color/on_surface"
-            android:layout_marginBottom="16dp"/>
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
         <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:hint="@string/delivery_destination_name"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            app:boxStrokeColor="@color/primary_color"
-            android:layout_marginBottom="16dp">
+            app:boxStrokeColor="@color/primary_color">
+
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etReceiverName"
                 android:layout_width="match_parent"
@@ -233,24 +240,25 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="16dp"
+            android:orientation="horizontal">
 
             <Spinner
                 android:id="@+id/spReceiverCountryCode"
+                style="@style/Widget.AppCompat.Spinner.Underlined"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                style="@style/Widget.AppCompat.Spinner.Underlined"/>
+                android:layout_weight="1" />
 
             <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:hint="@string/delivery_phone"
                 android:layout_weight="2"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:hint="@string/delivery_phone"
                 app:boxStrokeColor="@color/primary_color">
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etReceiverPhone"
                     android:layout_width="match_parent"
@@ -260,12 +268,13 @@
         </LinearLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"
             android:hint="@string/delivery_adress"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            app:boxStrokeColor="@color/primary_color"
-            android:layout_marginBottom="32dp">
+            app:boxStrokeColor="@color/primary_color">
+
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etReceiverAddress"
                 android:layout_width="match_parent"
@@ -277,19 +286,19 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:text="@string/delivery_price"
-            android:textSize="20sp"
-            android:textStyle="bold"
             android:textColor="@color/on_surface"
-            android:layout_marginBottom="16dp"/>
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
         <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="40dp"
             android:hint="@string/delivery_total_price"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            app:boxStrokeColor="@color/primary_color"
-            android:layout_marginBottom="40dp">
+            app:boxStrokeColor="@color/primary_color">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPrice"
@@ -305,21 +314,22 @@
             android:id="@+id/btnSend"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/send_guide"
-            android:paddingVertical="14dp"
+            android:layout_marginBottom="12dp"
             android:backgroundTint="@color/primary_color"
+            android:paddingVertical="14dp"
+            android:text="@string/send_guide"
             android:textSize="18sp"
-            app:cornerRadius="12dp"
-            android:layout_marginBottom="12dp" />
+            app:cornerRadius="12dp" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnBack"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/logout"
+            android:id="@+id/btnLogout"
             style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:textColor="@color/on_surface_secondary"
-            android:paddingVertical="14dp" />
+            android:layout_gravity="center_horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingVertical="14dp"
+            android:text="@string/logout"
+            android:textColor="@color/on_surface_secondary" />
 
     </LinearLayout>
 </ScrollView>

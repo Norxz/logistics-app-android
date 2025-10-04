@@ -27,7 +27,7 @@ public class RecolectorActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_recolector);
+        setContentView(R.layout.activity_driver);
 
         session = new SessionManager(this);
         repo = new SolicitudRepository(this);
