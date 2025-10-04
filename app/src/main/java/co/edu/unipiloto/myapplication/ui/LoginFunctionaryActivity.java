@@ -3,42 +3,39 @@ package co.edu.unipiloto.myapplication.ui;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Button;
 import android.widget.Toast;
 import co.edu.unipiloto.myapplication.R;
 import co.edu.unipiloto.myapplication.db.UserRepository;
 import co.edu.unipiloto.myapplication.storage.SessionManager;
 
-public class LoginActivity extends Activity {
+public class LoginFunctionaryActivity extends Activity {
     EditText etEmail, etPass;
-    Button btnLogin, btnGoRegister;
+    Button btnLogin;
     SessionManager session;
     UserRepository users;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
+        setContentView(R.layout.activity_login_functionary);
 
         etEmail = findViewById(R.id.etEmail);
         etPass = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
-        btnGoRegister = findViewById(R.id.btnGoRegister);
 
         session = new SessionManager(this);
         users   = new UserRepository(this);
 
-        // Si ya hay sesión, redirige según rol
-        if (session.getUserId() != -1L) {
-            goToHomeByRole(session.getRole());
+        // Si ya hay sesión, redirige si es funcionario
+        if (session.getUserId() != -1L && "FUNCIONARIO".equalsIgnoreCase(session.getRole())) {
+            goToHome();
             finish();
             return;
         }
 
         btnLogin.setOnClickListener(v -> doLogin());
-        btnGoRegister.setOnClickListener(v ->
-                startActivity(new Intent(LoginActivity.this, RegisterActivity.class)));
     }
 
     private void doLogin() {
@@ -51,35 +48,18 @@ public class LoginActivity extends Activity {
         }
 
         UserRepository.UserInfo u = users.login(email, pass);
-        if (u != null) {
-            // Guarda en sesión (usa tu método: saveUser(id, role, zona) o saveUser(u))
+        if (u != null && "FUNCIONARIO".equalsIgnoreCase(u.role)) {
             session.saveUser(u.id, u.role, u.zona);
-
             Toast.makeText(this, "Login OK", Toast.LENGTH_SHORT).show();
-            goToHomeByRole(u.role);
+            goToHome();
             finish();
         } else {
-            Toast.makeText(this, "Credenciales inválidas", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Credenciales inválidas o no es funcionario", Toast.LENGTH_SHORT).show();
         }
     }
 
-    private void goToHomeByRole(String role) {
-        if (role == null) role = "";
-
-        // normalizamos
-        String r = role.trim().toUpperCase();
-        if ("CONDUCTOR".equals(r)) r = "RECOLECTOR";
-
-        switch (r) {
-            case "RECOLECTOR":
-                startActivity(new Intent(this, RecolectorActivity.class));
-                break;
-            case "FUNCIONARIO":
-                startActivity(new Intent(this, FunctionaryActivity.class)); // crea esta Activity si la necesitas
-                break;
-            default: // CLIENTE u otros
-                startActivity(new Intent(this, MainActivity.class));
-                break;
-        }
+    private void goToHome() {
+        startActivity(new Intent(this, FunctionaryActivity.class));
     }
 }
+
