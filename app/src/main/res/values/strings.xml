@@ -63,6 +63,15 @@
     <string name="pick_up_icon">Usar mi ubicación actual</string>
     <string name="pick_up_map_text">El pin indicará el punto de recogida</string>
     <string name="pick_up_button">Confirmar Dirección de Recogida</string>
+    <string name="picker_title">Bienvenido, Recolector</string>
+    <string name="manager_dashboard_title">Panel de Control de Gestión</string>
+    <string name="manager_dashboard_subtitle">Coordina las recogidas y las entregas.</string>
+    <string name="tab_recogidas">Recogidas Pendientes</string>
+    <string name="tab_entregas">Entregas Pendientes</string>
+    <string name="picker_description">Aquí están tus solicitudes de recogida pendientes.</string>
+    <string name="guide_example">Guía: #875423</string>
+    <string name="manager_description_delivery">¡Todas las entregas han sido completadas!</string>
+    <string name="manager_description_pickups">¡No hay recogidas pendientes por hoy!</string>
     <string-array name="roles_array">
         <item>REMITENTE</item>
         <item>RECOLECTOR</item>
