@@ -1,18 +1,21 @@
 package co.edu.unipiloto.myapplication.ui;
 
-import android.app.Activity;
+
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
 import co.edu.unipiloto.myapplication.R;
 import co.edu.unipiloto.myapplication.db.UserRepository;
 import co.edu.unipiloto.myapplication.storage.SessionManager;
+import com.google.android.material.button.MaterialButton;
 
-public class LoginActivity extends Activity {
+public class LoginActivity extends AppCompatActivity {
     EditText etEmail, etPass;
-    Button btnLogin, btnGoRegister;
+    MaterialButton btnLogin, btnGoRegister;
     SessionManager session;
     UserRepository users;
 
@@ -37,8 +40,10 @@ public class LoginActivity extends Activity {
         }
 
         btnLogin.setOnClickListener(v -> doLogin());
-        btnGoRegister.setOnClickListener(v ->
-                startActivity(new Intent(LoginActivity.this, RegisterActivity.class)));
+        btnGoRegister.setOnClickListener(v -> {
+            Intent i = new Intent(LoginActivity.this, RegisterActivity.class);
+            startActivity(i);
+        });
     }
 
     private void doLogin() {

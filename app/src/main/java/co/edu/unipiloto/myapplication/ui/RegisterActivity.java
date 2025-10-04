@@ -11,7 +11,7 @@ import co.edu.unipiloto.myapplication.db.UserRepository;
 public class RegisterActivity extends AppCompatActivity {
 
     private EditText etEmail, etPassword, etPassword2;
-    private Button btnRegister, btnGoLogin;
+    private Button btnGoRegister, btnGoLogin;
     private ProgressBar progress;
     private UserRepository users;
 
@@ -28,7 +28,7 @@ public class RegisterActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.etPassword);
         etPassword2 = findViewById(R.id.etPassword2);
         spRol = findViewById(R.id.spRol);
-        btnRegister = findViewById(R.id.btnRegister);
+        btnGoRegister = findViewById(R.id.btnGoRegister);
         btnGoLogin = findViewById(R.id.btnGoLogin);
         progress = findViewById(R.id.progress);
         tvZonaLabel = findViewById(R.id.tvZonaLabel);
@@ -36,7 +36,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         users = new UserRepository(this);
 
-        btnRegister.setOnClickListener(v -> doRegister());
+        btnGoRegister.setOnClickListener(v -> doRegister());
         btnGoLogin.setOnClickListener(v -> finish());
 
         ArrayAdapter<String> roles = new ArrayAdapter<>(this,
@@ -119,6 +119,7 @@ public class RegisterActivity extends AppCompatActivity {
 
             toggleLoading(false);
             Toast.makeText(this, "Registro exitoso. Inicia sesión.", Toast.LENGTH_SHORT).show();
+            // Redirige a LoginActivity
             finish();
         } catch (Exception e) {
             toggleLoading(false);
@@ -128,7 +129,7 @@ public class RegisterActivity extends AppCompatActivity {
 
     private void toggleLoading(boolean loading) {
         progress.setVisibility(loading ? View.VISIBLE : View.GONE);
-        btnRegister.setEnabled(!loading);
+        btnGoRegister.setEnabled(!loading);
         btnGoLogin.setEnabled(!loading);
     }
 }
