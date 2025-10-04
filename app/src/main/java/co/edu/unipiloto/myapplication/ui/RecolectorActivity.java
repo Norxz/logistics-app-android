@@ -32,8 +32,8 @@ public class RecolectorActivity extends AppCompatActivity {
         session = new SessionManager(this);
         repo = new SolicitudRepository(this);
 
-        TextView tvInfo = findViewById(R.id.tvInfo);
-        tvInfo.setText("Bienvenido Recolector\nZona: " + session.getZona());
+        TextView tvWelcomeTitle = findViewById(R.id.tvWelcomeTitle);
+        tvWelcomeTitle.setText("Bienvenido Recolector\nZona: " + session.getZona());
 
         rv = findViewById(R.id.rvSolicitudes);
         rv.setLayoutManager(new LinearLayoutManager(this));
