@@ -19,7 +19,7 @@ public class LoginFunctionaryActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login_functionary);
+        setContentView(R.layout.activity_login);
 
         etEmail = findViewById(R.id.etEmail);
         etPass = findViewById(R.id.etPassword);

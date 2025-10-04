@@ -25,7 +25,7 @@ public class WelcomeActivity extends Activity {
 
         // botón funcionarios
         btnOfficials.setOnClickListener(v -> {
-            Intent i = new Intent(WelcomeActivity.this, LoginFunctionaryActivity.class);
+            Intent i = new Intent(WelcomeActivity.this, LoginActivity.class);
             startActivity(i);
         });
     }
