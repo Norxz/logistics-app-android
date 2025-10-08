@@ -25,6 +25,7 @@
         <activity android:name=".ui.FunctionaryActivity" />
         <activity android:name=".ui.LoginDriverActivity" />
         <activity android:name=".ui.LoginFunctionaryActivity" />
+        <activity android:name=".ui.AdminPanelActivity" />
 
     </application>
 

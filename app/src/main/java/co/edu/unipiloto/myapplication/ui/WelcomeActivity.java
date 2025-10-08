@@ -27,6 +27,7 @@ public class WelcomeActivity extends AppCompatActivity {
         Button btnRequestShipping = findViewById(R.id.btnRequestShipping);
         Button btnDrivers = findViewById(R.id.btnDrivers);
         Button btnOfficials = findViewById(R.id.btnOfficials);
+        Button btnAdmin = findViewById(R.id.btnAdmin);
 
         // Botón para usuarios/clientes que solicitan envío
         btnRequestShipping.setOnClickListener(v -> {
@@ -43,6 +44,12 @@ public class WelcomeActivity extends AppCompatActivity {
         // Botón para funcionarios
         btnOfficials.setOnClickListener(v -> {
             Intent i = new Intent(WelcomeActivity.this, LoginFunctionaryActivity.class);
+            startActivity(i);
+        });
+
+        // Botón para gestión de administradores
+        btnAdmin.setOnClickListener(v -> {
+            Intent i = new Intent(WelcomeActivity.this, AdminPanelActivity.class);
             startActivity(i);
         });
     }
