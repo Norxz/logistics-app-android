@@ -72,6 +72,7 @@
     <string name="guide_example">Guía: #875423</string>
     <string name="manager_description_delivery">¡Todas las entregas han sido completadas!</string>
     <string name="manager_description_pickups">¡No hay recogidas pendientes por hoy!</string>
+    <string name="admin_panel">Panel de Administrador</string>
     <string-array name="roles_array">
         <item>REMITENTE</item>
         <item>RECOLECTOR</item>
