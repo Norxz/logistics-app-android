@@ -127,7 +127,7 @@
             android:layout_marginBottom="16dp"/>
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnRegister"
+            android:id="@+id/btnGoRegister"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/make_register"

@@ -43,7 +43,7 @@ public class WelcomeActivity extends AppCompatActivity {
 
         // Botón para funcionarios
         btnOfficials.setOnClickListener(v -> {
-            Intent i = new Intent(WelcomeActivity.this, LoginFunctionaryActivity.class);
+            Intent i = new Intent(WelcomeActivity.this, LoginActivity.class);
             startActivity(i);
         });
 
