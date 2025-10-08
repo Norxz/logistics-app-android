@@ -1,5 +1,6 @@
 package co.edu.unipiloto.myapplication.ui;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
@@ -24,6 +25,7 @@ public class RecolectorActivity extends AppCompatActivity {
     private SessionManager session;
     private RecyclerView rv;
 
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
