@@ -18,15 +18,23 @@ import co.edu.unipiloto.myapplication.db.SolicitudRepository;
 import co.edu.unipiloto.myapplication.db.SolicitudRepository.SolicitudItem;
 import co.edu.unipiloto.myapplication.storage.SessionManager;
 
+/**
+ * Actividad principal que muestra la lista de solicitudes de un usuario cliente.
+ * También gestiona la navegación a otras actividades como el login, la creación de solicitudes y el panel de recolector.
+ */
 public class MainActivity extends AppCompatActivity {
 
     private SessionManager session;
     private SolicitudRepository repo;
     private RecyclerView rv;
-    private Button btnNueva;
     private TextView tvEmpty;
     private SolicitudAdapter adapter;
 
+    /**
+     * Se llama cuando se crea la actividad por primera vez.
+     *
+     * @param savedInstanceState Si la actividad se reinicia después de haber sido destruida, este Bundle contiene los datos que suministró más recientemente en onSaveInstanceState(Bundle).
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
         tvEmpty = findViewById(R.id.tvEmpty);
 
-        btnNueva = findViewById(R.id.btnNuevaSolicitud);
+        Button btnNueva = findViewById(R.id.btnNuevaSolicitud);
         btnNueva.setOnClickListener(v ->
                 startActivity(new Intent(this, SolicitudActivity.class)));
 
@@ -71,12 +79,18 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Se llama cuando la actividad vuelve a estar en primer plano.
+     */
     @Override
     protected void onResume() {
         super.onResume();
         cargarLista();
     }
 
+    /**
+     * Carga la lista de solicitudes del usuario actual desde la base de datos y la muestra en el RecyclerView.
+     */
     private void cargarLista() {
         long userId = session.getUserId();
         List<SolicitudItem> items = repo.listarPorUsuario(userId);
