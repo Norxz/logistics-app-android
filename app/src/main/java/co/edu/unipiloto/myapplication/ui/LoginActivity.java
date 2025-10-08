@@ -1,9 +1,9 @@
 package co.edu.unipiloto.myapplication.ui;
 
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,7 +15,8 @@ import com.google.android.material.button.MaterialButton;
 
 public class LoginActivity extends AppCompatActivity {
     EditText etEmail, etPass;
-    MaterialButton btnLogin, btnGoRegister;
+    Button btnLogin, btnGoRegister, btnForgotPassword;
+    ImageButton btnGoBack;
     SessionManager session;
     UserRepository users;
 
@@ -24,13 +25,16 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        // Inicializar vistas
         etEmail = findViewById(R.id.etEmail);
         etPass = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
         btnGoRegister = findViewById(R.id.btnGoRegister);
+        btnGoBack = findViewById(R.id.btnGoBack);
+        btnForgotPassword = findViewById(R.id.btnForgotPassword);
 
         session = new SessionManager(this);
-        users   = new UserRepository(this);
+        users = new UserRepository(this);
 
         // Si ya hay sesión, redirige según rol
         if (session.getUserId() != -1L) {
@@ -39,16 +43,25 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
+        // Configurar listeners
         btnLogin.setOnClickListener(v -> doLogin());
-        btnGoRegister.setOnClickListener(v -> {
-            Intent i = new Intent(LoginActivity.this, RegisterActivity.class);
-            startActivity(i);
+        btnGoRegister.setOnClickListener(v ->
+                startActivity(new Intent(LoginActivity.this, RegisterActivity.class)));
+
+        // Botón de Devolver
+        btnGoBack.setOnClickListener(v -> {
+            finish(); // Cierra la actividad actual y regresa a la anterior
+        });
+
+        // Botón de Olvidé Contraseña
+        btnForgotPassword.setOnClickListener(v -> {
+            Toast.makeText(LoginActivity.this, "Próximamente", Toast.LENGTH_SHORT).show();
         });
     }
 
     private void doLogin() {
         String email = etEmail.getText().toString().trim();
-        String pass  = etPass.getText().toString();
+        String pass = etPass.getText().toString();
 
         if (email.isEmpty() || pass.isEmpty()) {
             Toast.makeText(this, "Campos vacíos", Toast.LENGTH_SHORT).show();
@@ -57,9 +70,7 @@ public class LoginActivity extends AppCompatActivity {
 
         UserRepository.UserInfo u = users.login(email, pass);
         if (u != null) {
-            // Guarda en sesión (usa tu método: saveUser(id, role, zona) o saveUser(u))
             session.saveUser(u.id, u.role, u.zona);
-
             Toast.makeText(this, "Login OK", Toast.LENGTH_SHORT).show();
             goToHomeByRole(u.role);
             finish();
@@ -71,7 +82,7 @@ public class LoginActivity extends AppCompatActivity {
     private void goToHomeByRole(String role) {
         if (role == null) role = "";
 
-        // normalizamos
+        // Normalizamos
         String r = role.trim().toUpperCase();
         if ("CONDUCTOR".equals(r)) r = "RECOLECTOR";
 
@@ -80,7 +91,7 @@ public class LoginActivity extends AppCompatActivity {
                 startActivity(new Intent(this, RecolectorActivity.class));
                 break;
             case "FUNCIONARIO":
-                startActivity(new Intent(this, FunctionaryActivity.class)); // crea esta Activity si la necesitas
+                startActivity(new Intent(this, FunctionaryActivity.class));
                 break;
             default: // CLIENTE u otros
                 startActivity(new Intent(this, MainActivity.class));
