@@ -21,20 +21,36 @@ public class SolicitudRepository {
     public SolicitudRepository(Context ctx){ this.helper = new DBHelper(ctx); }
 
     /**
-     * Crear solicitud: siempre queda PENDIENTE y sin recolector asignado.
+     * Crear solicitud: ahora guarda también una fila mínima en "direcciones" y referencia su id.
+     * Esto mantiene la columna textual "direccion" para compatibilidad.
      */
     public long crear(long userId, String dir, String fecha, String franja, String notas, String zona){
         SQLiteDatabase db = helper.getWritableDatabase();
 
+        // 1) crear entrada en direcciones (guardamos full_address para fallback)
+        long direccionId = -1L;
+        try {
+            ContentValues dirCv = new ContentValues();
+            dirCv.put("full_address", dir != null ? dir : "");
+            dirCv.put("created_at", System.currentTimeMillis());
+            direccionId = db.insert("direcciones", null, dirCv);
+        } catch (Exception ex) {
+            // si falla la inserción en direcciones, continuamos sin dirección_id (no bloqueante)
+            direccionId = -1L;
+        }
+
+        // 2) crear solicitud usando la columna textual y la referencia direccion_id (si disponible)
         ContentValues cv = new ContentValues();
         cv.put("user_id", userId);
-        cv.put("direccion", dir);
+        cv.put("direccion", dir != null ? dir : "");
+        if (direccionId != -1L) cv.put("direccion_id", direccionId);
         cv.put("fecha", fecha);
         cv.put("franja", franja);
         cv.put("notas", notas);
         cv.put("zona", zona);
-        cv.put("estado", "PENDIENTE");
+        cv.put("estado", EST_PENDIENTE);
         cv.put("created_at", System.currentTimeMillis());
+        // guia_id queda null al crear
         return db.insert("solicitudes", null, cv);
     }
 

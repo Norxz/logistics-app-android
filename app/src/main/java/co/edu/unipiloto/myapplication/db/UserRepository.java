@@ -50,4 +50,16 @@ public class UserRepository {
             return null;
         } finally { c.close(); }
     }
+
+    /** Devuelve el id del primer usuario que tenga el rol indicado, o -1 si no existe. */
+    public long getFirstIdByRole(String role) {
+        SQLiteDatabase db = helper.getReadableDatabase();
+        Cursor c = db.rawQuery("SELECT id FROM users WHERE role=? LIMIT 1", new String[]{ role });
+        try {
+            if (c.moveToFirst()) {
+                return c.getLong(0);
+            }
+            return -1L;
+        } finally { c.close(); }
+    }
 }

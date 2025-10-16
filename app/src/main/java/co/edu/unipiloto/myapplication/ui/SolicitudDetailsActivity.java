@@ -1,6 +1,7 @@
 package co.edu.unipiloto.myapplication.ui;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -13,10 +14,8 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 import co.edu.unipiloto.myapplication.R;
-// Asegúrate de importar tu repositorio
-// import co.edu.unipiloto.myapplication.db.SolicitudRepository;
-// import co.edu.unipiloto.myapplication.storage.SessionManager;
-
+import co.edu.unipiloto.myapplication.db.SolicitudRepository; // <-- added
+import co.edu.unipiloto.myapplication.db.UserRepository; // <-- added
 
 /**
  * Actividad encargada de capturar los detalles completos del envío (remitente, paquete, destinatario).
@@ -52,6 +51,16 @@ public class SolicitudDetailsActivity extends AppCompatActivity {
     // Dirección de Recolección (viene de la actividad anterior)
     private String pickupAddress;
 
+    // repository
+    private SolicitudRepository solicitudRepo;
+    private UserRepository userRepo; // <-- added
+
+    // SharedPreferences name/key (consistente con LoginActivity)
+    private static final String PREFS_NAME = "APP_PREFS";
+    private static final String PREFS_KEY_USER_ID = "USER_ID";
+    // legacy key sometimes usado en otras pantallas
+    private static final String PREFS_KEY_CURRENT_USER_ID = "CURRENT_USER_ID";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,10 +70,13 @@ public class SolicitudDetailsActivity extends AppCompatActivity {
         // 1. Obtener la dirección de recolección de la actividad anterior
         pickupAddress = getIntent().getStringExtra("PICKUP_ADDRESS");
         if (pickupAddress == null) {
-            Toast.makeText(this, "Error: Dirección de recolección no recibida.", Toast.LENGTH_LONG).show();
-            finish();
-            return;
+            // No abortamos: permitimos continuar (usuario puede teclear o usar dirección destino).
+            pickupAddress = "";
         }
+
+        // init repositories
+        solicitudRepo = new SolicitudRepository(this);
+        userRepo = new UserRepository(this); // <-- added
 
         // 2. Inicialización de Vistas
         initViews();
@@ -128,34 +140,82 @@ public class SolicitudDetailsActivity extends AppCompatActivity {
     /** Valida los campos, crea la solicitud y navega a la pantalla de guía. */
     private void createSolicitud() {
         // 1. Obtener valores y validación básica
-        String senderName = etSenderName.getText().toString().trim();
-        String packageContent = etPackageContent.getText().toString().trim();
-        String receiverName = etReceiverName.getText().toString().trim();
-        String receiverAddress = etReceiverAddress.getText().toString().trim();
-        // ... (obtener y validar todos los demás campos)
+        String senderName = etSenderName.getText() != null ? etSenderName.getText().toString().trim() : "";
+        String packageContent = etPackageContent.getText() != null ? etPackageContent.getText().toString().trim() : "";
+        String receiverName = etReceiverName.getText() != null ? etReceiverName.getText().toString().trim() : "";
+        String receiverAddress = etReceiverAddress.getText() != null ? etReceiverAddress.getText().toString().trim() : "";
+        String price = etPrice.getText() != null ? etPrice.getText().toString().trim() : "";
 
         if (senderName.isEmpty() || packageContent.isEmpty() || receiverName.isEmpty() || receiverAddress.isEmpty()) {
             Toast.makeText(this, "Por favor, completa todos los campos obligatorios.", Toast.LENGTH_LONG).show();
             return;
         }
 
-        // 2. Ejecutar la creación de la solicitud en la DB.
-        // SolicitudRepository repo = new SolicitudRepository(this);
-        // long newId = repo.insertSolicitud(/* todos los datos */);
+        // 2. Obtener user id (primero intent, si no SharedPreferences)
+        long userId = getCurrentUserId();
+        if (userId == -1L) {
+            // No hay usuario autenticado: mostrar indicación clara
+            Toast.makeText(this, "Usuario no autenticado. Inicia sesión nuevamente.", Toast.LENGTH_LONG).show();
+            return;
+        }
 
-        // 3. Resultado
-        Toast.makeText(this, "¡Solicitud procesada! Generando guía...", Toast.LENGTH_LONG).show();
+        // 3. Obtener datos opcionales desde el intent (FRANJA, ZONA, FECHA) o usar valores por defecto
+        String franja = getIntent().getStringExtra("FRANJA");
+        if (franja == null) franja = "";
 
-        // 🛑 CAMBIO CLAVE: Navegar a GuideActivity (la pantalla exitosa)
+        String zona = getIntent().getStringExtra("ZONA");
+        if (zona == null) zona = "";
+
+        String fecha = getIntent().getStringExtra("FECHA");
+        if (fecha == null) fecha = String.valueOf(System.currentTimeMillis());
+
+        // 4. Construir notas básicas combinando info relevante
+        String notas = "Remitente: " + senderName
+                + " | Destinatario: " + receiverName
+                + " | Contenido: " + packageContent
+                + (price.isEmpty() ? "" : " | Precio: " + price);
+
+        // 5. Insertar en la base de datos (direccion usamos pickupAddress si está; sino usamos receiverAddress)
+        String direccionFinal = !pickupAddress.isEmpty() ? pickupAddress : receiverAddress;
+        long newId = solicitudRepo.crear(userId, direccionFinal, fecha, franja, notas, zona);
+
+        if (newId == -1L) {
+            Toast.makeText(this, "Error al crear la solicitud. Intenta nuevamente.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // 6. Resultado: navegar a GuideActivity y pasar el id de la nueva solicitud/guía
+        Toast.makeText(this, "¡Solicitud creada! ID: " + newId, Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(this, GuideActivity.class);
-
-        // Opcional: Pasar el ID de la nueva guía o un mensaje de éxito
-        // intent.putExtra("GUIDE_ID", newId);
-
+        intent.putExtra("GUIDE_ID", newId);
         startActivity(intent);
 
         // Finalizamos esta actividad para que el usuario no pueda regresar a llenar el formulario
         finish();
+    }
+
+    /** Obtiene el id del usuario autenticado: intenta intent extra, luego SharedPreferences, luego busca un CLIENTE en la DB. */
+    private long getCurrentUserId() {
+        long userId = getIntent().getLongExtra("USER_ID", -1L);
+        if (userId != -1L) return userId;
+
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        userId = prefs.getLong(PREFS_KEY_USER_ID, -1L);
+        if (userId != -1L) return userId;
+
+        // intentar clave alternativa
+        userId = prefs.getLong(PREFS_KEY_CURRENT_USER_ID, -1L);
+        if (userId != -1L) return userId;
+
+        // FALLBACK: buscar en la BD un usuario con rol CLIENTE (primer resultado)
+        long clientId = userRepo.getFirstIdByRole("CLIENTE");
+        if (clientId != -1L) {
+            // opcional: informar que se usó un fallback (no obligatorio)
+            Toast.makeText(this, "Usuario cliente detectado (fallback).", Toast.LENGTH_SHORT).show();
+            return clientId;
+        }
+
+        return -1L;
     }
 
     /** Cierra la sesión y regresa a la pantalla de Login. */
@@ -167,3 +227,4 @@ public class SolicitudDetailsActivity extends AppCompatActivity {
         finish();
     }
 }
+
