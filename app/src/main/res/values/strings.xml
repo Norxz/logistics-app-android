@@ -92,6 +92,7 @@
     <string name="driver_dashboard_title">Mis Rutas Asignadas</string>
     <string name="driver_dashboard_subtitle">Tareas pendientes de recogida y entrega</string>
     <string name="no_assigned_routes">¡Felicidades! No tienes rutas asignadas por ahora.</string>
+    <string name="welcome_button_check_status">Consultar Estado de mi Entrega</string>
     <string-array name="roles_array">
         <item>REMITENTE</item>
         <item>RECOLECTOR</item>
