@@ -46,7 +46,7 @@ public class LoginActivity extends AppCompatActivity {
         // Configurar listeners
         btnLogin.setOnClickListener(v -> doLogin());
         btnGoRegister.setOnClickListener(v ->
-                startActivity(new Intent(LoginActivity.this, RegisterActivity.class)));
+                startActivity(new Intent(LoginActivity.this, GestorActivity.class)));
 
         // Botón de Devolver
         btnGoBack.setOnClickListener(v -> {
