@@ -14,7 +14,7 @@
         android:id="@+id/tvWelcomeTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="@string/picker_title"
+        android:text="Bienvenido"
         android:textSize="28sp"
         android:textStyle="bold"
         android:textColor="@color/primary_color"

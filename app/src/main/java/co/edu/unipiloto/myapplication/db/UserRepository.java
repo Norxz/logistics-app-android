@@ -16,9 +16,22 @@ public class UserRepository {
         cv.put("password", password);
         cv.put("role", role);
         if ("RECOLECTOR".equals(role)) cv.put("zona", zona);
-        long id = db.insert("users", null, cv);
-        if (id == -1) throw new Exception("Email ya registrado");
-        return id;
+        try {
+            long id = db.insertOrThrow("users", null, cv);
+            return id;
+        } catch (android.database.sqlite.SQLiteConstraintException ex) {
+            String msg = ex.getMessage();
+            if (msg != null) {
+                String lower = msg.toLowerCase();
+                if (lower.contains("unique") && lower.contains("email")) {
+                    throw new Exception("Email ya registrado");
+                }
+                if (lower.contains("check") || lower.contains("constraint")) {
+                    throw new Exception("Valor inválido para rol o zona");
+                }
+            }
+            throw new Exception("Error al registrar: " + ex.getMessage());
+        }
     }
 
 

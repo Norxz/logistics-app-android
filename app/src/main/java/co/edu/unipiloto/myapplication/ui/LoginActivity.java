@@ -39,33 +39,45 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        btnLogin.setOnClickListener(v -> doLogin());
+        btnLogin.setOnClickListener(v -> {
+            String email = etEmail.getText().toString().trim();
+            String password = etPass.getText().toString();
+
+            if (email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, "Por favor, completa todos los campos", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            try {
+                UserRepository.UserInfo userInfo = users.login(email, password);
+
+                if (userInfo == null) {
+                    Toast.makeText(this, "Credenciales inválidas", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Extraer el rol del usuario
+                String role = userInfo.role;
+
+                if ("RECOLECTOR".equalsIgnoreCase(role) || "CONDUCTOR".equalsIgnoreCase(role)) {
+                    // Redirigir a DriverActivity con el rol
+                    Intent intent = new Intent(this, DriverActivity.class);
+                    intent.putExtra("role", role);
+                    startActivity(intent);
+                } else if ("FUNCIONARIO".equalsIgnoreCase(role)) {
+                    Intent intent = new Intent(this, FunctionaryActivity.class);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(this, "Rol no reconocido", Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception e) {
+                Toast.makeText(this, "Error al iniciar sesión", Toast.LENGTH_SHORT).show();
+            }
+        });
         btnGoRegister.setOnClickListener(v -> {
             Intent i = new Intent(LoginActivity.this, RegisterActivity.class);
             startActivity(i);
         });
-    }
-
-    private void doLogin() {
-        String email = etEmail.getText().toString().trim();
-        String pass  = etPass.getText().toString();
-
-        if (email.isEmpty() || pass.isEmpty()) {
-            Toast.makeText(this, "Campos vacíos", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        UserRepository.UserInfo u = users.login(email, pass);
-        if (u != null) {
-            // Guarda en sesión (usa tu método: saveUser(id, role, zona) o saveUser(u))
-            session.saveUser(u.id, u.role, u.zona);
-
-            Toast.makeText(this, "Login OK", Toast.LENGTH_SHORT).show();
-            goToHomeByRole(u.role);
-            finish();
-        } else {
-            Toast.makeText(this, "Credenciales inválidas", Toast.LENGTH_SHORT).show();
-        }
     }
 
     private void goToHomeByRole(String role) {
