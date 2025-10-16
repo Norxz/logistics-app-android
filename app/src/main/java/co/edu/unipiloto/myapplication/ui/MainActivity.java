@@ -4,7 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageButton; // Necesitas este import
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,17 +28,12 @@ public class MainActivity extends AppCompatActivity {
 
     private SessionManager session;
     private SolicitudRepository repo;
-
-    // Nuevas variables para los dos RecyclerViews
     private RecyclerView rvSolicitados;
     private RecyclerView rvFinalizados;
-
-    // Nuevas variables para los adaptadores y botones de toggle
     private SolicitudAdapter adapterSolicitados;
     private SolicitudAdapter adapterFinalizados;
     private ImageButton btnToggleSolicitados;
     private ImageButton btnToggleFinalizados;
-
     private TextView tvEmpty;
 
     @Override
@@ -80,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Botón Nueva Solicitud
         Button btnNueva = findViewById(R.id.btnNuevaSolicitud);
+        // MODIFICACIÓN CLAVE: Iniciar UserAddressActivity en lugar de SolicitudActivity
         btnNueva.setOnClickListener(v ->
                 startActivity(new Intent(this, SolicitudActivity.class)));
 
@@ -132,11 +128,9 @@ public class MainActivity extends AppCompatActivity {
         if (allItems != null) {
             for (SolicitudItem item : allItems) {
                 // Lógica de filtrado simple:
-                // Asumo que 'ENTREGADA' o 'CANCELADA' son FINALIZADAS
                 if ("ENTREGADA".equalsIgnoreCase(item.estado) || "CANCELADA".equalsIgnoreCase(item.estado)) {
                     itemsFinalizadas.add(item);
                 } else {
-                    // PENDIENTE, ASIGNADA, EN_CAMINO, etc.
                     itemsActivas.add(item);
                 }
             }
@@ -147,12 +141,11 @@ public class MainActivity extends AppCompatActivity {
         rvSolicitados.setAdapter(adapterSolicitados);
 
         if (adapterSolicitados != null) {
-            // Configurar el listener de cancelación SOLO para las solicitudes activas
             adapterSolicitados.setOnCancelListener((solicitudId, pos) -> {
                 int rows = repo.cancelarSolicitud(solicitudId, session.getUserId());
                 if (rows > 0) {
                     Toast.makeText(this, "Solicitud cancelada", Toast.LENGTH_SHORT).show();
-                    cargarLista(); // Recargar para actualizar y mover el item
+                    cargarLista();
                 } else {
                     Toast.makeText(this, "No se pudo cancelar (quizá ya fue aceptada)", Toast.LENGTH_SHORT).show();
                     cargarLista();
@@ -171,12 +164,11 @@ public class MainActivity extends AppCompatActivity {
             tvEmpty.setVisibility(View.GONE);
         }
 
-        // Si la lista activa está vacía, la ocultamos y bajamos el toggle.
         if (itemsActivas.isEmpty()) {
             rvSolicitados.setVisibility(View.GONE);
             btnToggleSolicitados.setImageResource(R.drawable.ic_arrow_down);
         }
-        // Si la lista finalizada está vacía, la ocultamos y bajamos el toggle.
+
         if (itemsFinalizadas.isEmpty() && rvFinalizados.getVisibility() == View.VISIBLE) {
             rvFinalizados.setVisibility(View.GONE);
             btnToggleFinalizados.setImageResource(R.drawable.ic_arrow_down);
