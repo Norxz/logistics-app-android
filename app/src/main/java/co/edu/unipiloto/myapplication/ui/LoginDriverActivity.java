@@ -1,18 +1,22 @@
 package co.edu.unipiloto.myapplication.ui;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.EditText;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
 import co.edu.unipiloto.myapplication.R;
 import co.edu.unipiloto.myapplication.db.UserRepository;
 import co.edu.unipiloto.myapplication.storage.SessionManager;
 
-public class LoginDriverActivity extends Activity {
+public class LoginDriverActivity extends AppCompatActivity {
     EditText etEmail, etPass;
     Button btnLogin;
+    ImageButton btnGoBack;
     SessionManager session;
     UserRepository users;
 
@@ -24,26 +28,32 @@ public class LoginDriverActivity extends Activity {
         etEmail = findViewById(R.id.etEmail);
         etPass = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
+        btnGoBack = findViewById(R.id.btnGoBack);
 
         session = new SessionManager(this);
-        users   = new UserRepository(this);
+        users = new UserRepository(this);
 
         // Si ya hay sesión, redirige si es conductor o recolector
         if (session.getUserId() != -1L && (
                 "CONDUCTOR".equalsIgnoreCase(session.getRole()) ||
-                "RECOLECTOR".equalsIgnoreCase(session.getRole())
-            )) {
+                        "RECOLECTOR".equalsIgnoreCase(session.getRole())
+        )) {
             goToHome();
             finish();
             return;
         }
 
         btnLogin.setOnClickListener(v -> doLogin());
+
+        // Listener para el botón de retroceso
+        btnGoBack.setOnClickListener(v -> {
+            finish(); // Cierra la actividad actual y regresa a la anterior
+        });
     }
 
     private void doLogin() {
         String email = etEmail.getText().toString().trim();
-        String pass  = etPass.getText().toString();
+        String pass = etPass.getText().toString();
 
         if (email.isEmpty() || pass.isEmpty()) {
             Toast.makeText(this, "Campos vacíos", Toast.LENGTH_SHORT).show();
@@ -53,8 +63,8 @@ public class LoginDriverActivity extends Activity {
         UserRepository.UserInfo u = users.login(email, pass);
         if (u != null && (
                 "CONDUCTOR".equalsIgnoreCase(u.role) ||
-                "RECOLECTOR".equalsIgnoreCase(u.role)
-            )) {
+                        "RECOLECTOR".equalsIgnoreCase(u.role)
+        )) {
             session.saveUser(u.id, u.role, u.zona);
             Toast.makeText(this, "Login OK", Toast.LENGTH_SHORT).show();
             goToHome();
