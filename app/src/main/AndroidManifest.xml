@@ -20,7 +20,7 @@
         <activity android:name=".ui.GestorActivity" />
         <activity android:name=".ui.LoginActivity" />
         <activity android:name=".ui.RegisterActivity" />
-        <activity android:name=".ui.FunctionaryActivity" />
+        <activity android:name=".ui.BranchDashboardActivity" />
         <activity android:name=".ui.LoginDriverActivity" />
         <activity android:name=".ui.LoginFunctionaryActivity" />
         <activity android:name=".ui.AdminPanelActivity" />
