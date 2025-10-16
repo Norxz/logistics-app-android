@@ -41,7 +41,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         ArrayAdapter<String> roles = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_item,
-                new String[]{"CLIENTE","RECOLECTOR", "FUNCIONARIO", "CONDUCTOR"});
+                new String[]{"CLIENTE","RECOLECTOR", "FUNCIONARIO", "CONDUCTOR", "ANALISTA"});
         roles.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spRol.setAdapter(roles);
 
@@ -123,7 +123,10 @@ public class RegisterActivity extends AppCompatActivity {
             finish();
         } catch (Exception e) {
             toggleLoading(false);
-            etEmail.setError("Email ya registrado");
+            // mostrar el mensaje real para depuración (p. ej. "Valor inválido para rol o zona")
+            String msg = (e.getMessage() != null) ? e.getMessage() : "Error al registrar";
+            etEmail.setError(msg);
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
         }
     }
 
