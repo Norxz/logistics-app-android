@@ -18,6 +18,7 @@ public class SolicitudRepository {
     public static final String EST_ENTREGADA = "ENTREGADA";
     public static final String EST_CONFIRMADA= "CONFIRMADA";
     public static final String EST_CANCELADA = "CANCELADA";
+
     public SolicitudRepository(Context ctx){ this.helper = new DBHelper(ctx); }
 
     /**
@@ -51,7 +52,9 @@ public class SolicitudRepository {
         cv.put("estado", EST_PENDIENTE);
         cv.put("created_at", System.currentTimeMillis());
         // guia_id queda null al crear
-        return db.insert("solicitudes", null, cv);
+        long newRowId = db.insert("solicitudes", null, cv);
+        db.close();
+        return newRowId;
     }
 
     /**
@@ -75,7 +78,10 @@ public class SolicitudRepository {
                 it.zona = c.getString(6);
                 list.add(it);
             }
-        } finally { c.close(); }
+        } finally {
+            c.close();
+            db.close();
+        }
         return list;
     }
 
@@ -105,8 +111,18 @@ public class SolicitudRepository {
                 );
                 lista.add(s);
             }
-        } finally { c.close(); }
+        } finally {
+            c.close();
+            db.close();
+        }
         return lista;
+    }
+
+    /**
+     * Obtener solicitudes asignadas a un recolector (útil para DriverDashboardActivity.loadAssignedRoutes)
+     */
+    public List<Solicitud> getAssignedRoutesByDriver(long recolectorId) {
+        return asignadasA(recolectorId);
     }
 
     /**
@@ -117,10 +133,12 @@ public class SolicitudRepository {
         SQLiteDatabase db = helper.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put("recolector_id", recolectorId);
-        cv.put("estado", "ASIGNADA");
+        cv.put("estado", EST_ASIGNADA);
         // solo actualizar si estaba pendiente
-        return db.update("solicitudes", cv, "id=? AND (estado IS NULL OR estado='PENDIENTE')",
-                new String[]{String.valueOf(solicitudId)});
+        int rows = db.update("solicitudes", cv, "id=? AND (estado IS NULL OR estado=?)",
+                new String[]{String.valueOf(solicitudId), EST_PENDIENTE});
+        db.close();
+        return rows;
     }
 
     /**
@@ -129,9 +147,11 @@ public class SolicitudRepository {
     public int cancelarSolicitud(long solicitudId, long userId) {
         SQLiteDatabase db = helper.getWritableDatabase();
         ContentValues cv = new ContentValues();
-        cv.put("estado", "CANCELADA");
-        return db.update("solicitudes", cv, "id=? AND user_id=? AND (estado IS NULL OR estado='PENDIENTE')",
-                new String[]{String.valueOf(solicitudId), String.valueOf(userId)});
+        cv.put("estado", EST_CANCELADA);
+        int rows = db.update("solicitudes", cv, "id=? AND user_id=? AND (estado IS NULL OR estado=?)",
+                new String[]{String.valueOf(solicitudId), String.valueOf(userId), EST_PENDIENTE});
+        db.close();
+        return rows;
     }
 
     /**
@@ -152,15 +172,53 @@ public class SolicitudRepository {
                         c.getString(4), c.getString(5), c.getString(6), c.getString(7), c.getLong(8)
                 ));
             }
-        } finally { c.close(); }
+        } finally {
+            c.close();
+            db.close();
+        }
         return out;
     }
+
+    // --------------------------------------------------------------------------------------
+    // 🆕 NUEVA FUNCIONALIDAD: Actualizar Estado y Guardar Código de Confirmación 🆕
+    // --------------------------------------------------------------------------------------
+
+    /**
+     * Actualiza el estado a EN_CAMINO y guarda el código de confirmación de 4 dígitos.
+     * @param solicitudId ID de la solicitud.
+     * @param status El nuevo estado (debería ser EST_EN_CAMINO).
+     * @param code El código de 4 dígitos generado.
+     * @return Número de filas afectadas (1 si fue exitoso).
+     */
+    public int updateStatusAndCode(long solicitudId, String status, String code) {
+        SQLiteDatabase db = helper.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+
+        // 1. Datos a actualizar
+        cv.put("estado", status); // EST_EN_CAMINO
+        cv.put("en_camino_at", System.currentTimeMillis());
+        cv.put("confirmation_code", code); // Guarda el código de 4 dígitos
+
+        // Condición: La solicitud debe estar pendiente o asignada para iniciar el trayecto
+        int rows = db.update("solicitudes", cv,
+                "id=? AND (estado=? OR estado=?)",
+                new String[]{
+                        String.valueOf(solicitudId),
+                        EST_ASIGNADA,
+                        EST_PENDIENTE
+                });
+
+        db.close();
+        return rows;
+    }
+
 
     public static class SolicitudItem {
         public long id; public String direccion; public String fecha; public String franja;
         public String estado; public long createdAt; public String zona;
     }
 
+    // Método genérico para actualizar estado (mantenido por compatibilidad)
     public int actualizarEstado(long solicitudId, String nuevoEstado, String timestampField) {
         SQLiteDatabase db = helper.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -168,18 +226,23 @@ public class SolicitudRepository {
         if (timestampField != null) {
             cv.put(timestampField, System.currentTimeMillis());
         }
-        return db.update("solicitudes", cv, "id=?", new String[]{ String.valueOf(solicitudId) });
+        int rows = db.update("solicitudes", cv, "id=?", new String[]{ String.valueOf(solicitudId) });
+        db.close();
+        return rows;
     }
 
-    /** Métodos concretos para conveniencia */
+    /** Métodos concretos para conveniencia (mantenidos, pero updateStatusAndCode es preferido para SMS) */
     public int marcarEnCamino(long solicitudId, long recolectorId) {
+        // NOTA: Este método NO guarda el confirmation_code. Usa updateStatusAndCode para SMS.
         SQLiteDatabase db = helper.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put("estado", EST_EN_CAMINO);
         cv.put("recolector_id", recolectorId);
         cv.put("en_camino_at", System.currentTimeMillis());
-        return db.update("solicitudes", cv, "id=? AND (estado IS NULL OR estado='PENDIENTE' OR estado='ASIGNADA')",
-                new String[]{ String.valueOf(solicitudId) });
+        int rows = db.update("solicitudes", cv, "id=? AND (estado IS NULL OR estado=? OR estado=?)",
+                new String[]{ String.valueOf(solicitudId), EST_PENDIENTE, EST_ASIGNADA });
+        db.close();
+        return rows;
     }
 
     public int marcarEntregada(long solicitudId, long recolectorId) {
@@ -188,9 +251,11 @@ public class SolicitudRepository {
         cv.put("estado", EST_ENTREGADA);
         cv.put("entregado_at", System.currentTimeMillis());
         cv.put("recolector_id", recolectorId);
-        return db.update("solicitudes", cv,
-                "id=? AND (estado='ASIGNADA' OR estado='EN_CAMINO')",
-                new String[]{ String.valueOf(solicitudId) });
+        int rows = db.update("solicitudes", cv,
+                "id=? AND (estado=? OR estado=?)",
+                new String[]{ String.valueOf(solicitudId), EST_ASIGNADA, EST_EN_CAMINO });
+        db.close();
+        return rows;
     }
 
     // Dentro de co.edu.unipiloto.myapplication.db.SolicitudRepository
