@@ -14,4 +14,5 @@
     <color name="status_error">#FF3B30</color>
     <color name="status_warning">#FFCC00</color>
     <color name="status_pending">#FFCC00</color>
+    <color name="status_in_route">#FFCC00</color>
 </resources>

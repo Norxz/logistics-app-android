@@ -83,7 +83,10 @@
     <string name="no_pending_deliveries">No hay solicitudes de entrega pendientes de asignación.</string>
     <string name="no_pending_pickups">No hay solicitudes de recogida pendientes de asignación.</string>
     <string name="no_assigned_requests">No hay solicitudes asignadas en este momento.</string>
+    <string name="no_requests_in_branch_list">No hay solicitudes en este estado para tu sucursal.</string>
     <string name="assign">ASIGNAR</string>
+    <string name="branch_dashboard_title">Gestión de Envíos</string>
+    <string name="branch_dashboard_subtitle">Control de pedidos de tu sucursal</string>
     <string name="select_driver_prompt">Selecciona un Conductor</string>
     <string-array name="roles_array">
         <item>REMITENTE</item>

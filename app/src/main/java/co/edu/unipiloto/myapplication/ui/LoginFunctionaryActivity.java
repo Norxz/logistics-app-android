@@ -67,9 +67,14 @@ public class LoginFunctionaryActivity extends AppCompatActivity {
         }
     }
 
+    // En LoginFunctionaryActivity.java
+
     private void goToHome() {
-        startActivity(new Intent(this, FunctionaryActivity.class));
+        // 🛑 Asegúrate de que apunte a la nueva Activity que contiene el ViewPager/Tabs
+        startActivity(new Intent(this, BranchDashboardActivity.class));
     }
+
+
 
     private void onClick(View v) {
         // 🛑 CAMBIO CLAVE AQUÍ: Usamos LoginFunctionaryActivity.this
