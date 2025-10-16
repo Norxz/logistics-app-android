@@ -91,7 +91,7 @@ public class LoginActivity extends AppCompatActivity {
                 startActivity(new Intent(this, GestorActivity.class));
                 break;
             case "FUNCIONARIO":
-                startActivity(new Intent(this, FunctionaryActivity.class));
+                startActivity(new Intent(this, BranchDashboardActivity.class));
                 break;
             default: // CLIENTE u otros
                 startActivity(new Intent(this, MainActivity.class));
