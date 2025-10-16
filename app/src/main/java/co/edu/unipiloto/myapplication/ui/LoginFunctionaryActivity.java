@@ -2,6 +2,7 @@ package co.edu.unipiloto.myapplication.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -43,9 +44,7 @@ public class LoginFunctionaryActivity extends AppCompatActivity {
         btnLogin.setOnClickListener(v -> doLogin());
 
         // Listener para el botón de retroceso
-        btnGoBack.setOnClickListener(v -> {
-            finish(); // Cierra la actividad actual y regresa a la anterior
-        });
+        btnGoBack.setOnClickListener(this::onClick);
     }
 
     private void doLogin() {
@@ -70,5 +69,10 @@ public class LoginFunctionaryActivity extends AppCompatActivity {
 
     private void goToHome() {
         startActivity(new Intent(this, FunctionaryActivity.class));
+    }
+
+    private void onClick(View v) {
+        // 🛑 CAMBIO CLAVE AQUÍ: Usamos LoginFunctionaryActivity.this
+        startActivity(new Intent(LoginFunctionaryActivity.this, WelcomeActivity.class));
     }
 }
