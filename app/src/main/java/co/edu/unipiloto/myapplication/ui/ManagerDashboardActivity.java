@@ -63,4 +63,6 @@ public class ManagerDashboardActivity extends AppCompatActivity {
         finish();
         Toast.makeText(this, "Sesión cerrada.", Toast.LENGTH_SHORT).show();
     }
+
+
 }

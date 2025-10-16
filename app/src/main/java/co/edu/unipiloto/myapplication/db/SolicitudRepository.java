@@ -296,4 +296,37 @@ public class SolicitudRepository {
         db.close();
         return rows;
     }
+
+    // Dentro de co.edu.unipiloto.myapplication.db.SolicitudRepository
+
+    /**
+     * Listar todas las solicitudes asignadas a un funcionario/recolector (para su dashboard).
+     */
+    public List<SolicitudItem> listarPorFuncionario(long funcionarioId){
+        SQLiteDatabase db = helper.getReadableDatabase();
+        // 🛑 Consulta SQL modificada
+        Cursor c = db.rawQuery(
+                "SELECT id, direccion, fecha, franja, estado, created_at, zona FROM solicitudes " +
+                        "WHERE recolector_id=? " + // Trae las que le están asignadas
+                        "OR (estado='PENDIENTE' AND recolector_id IS NULL OR recolector_id = 0) " + // Trae las pendientes sin asignar
+                        "ORDER BY created_at DESC",
+                new String[]{String.valueOf(funcionarioId)});
+
+        List<SolicitudItem> list = new ArrayList<>();
+        try {
+            while(c.moveToNext()){
+                SolicitudItem it = new SolicitudItem();
+                it.id = c.getLong(0);
+                it.direccion = c.getString(1);
+                it.fecha = c.getString(2);
+                it.franja = c.getString(3);
+                it.estado = c.getString(4);
+                it.createdAt = c.getLong(5);
+                it.zona = c.getString(6);
+                list.add(it);
+            }
+        } finally { c.close(); }
+        return list;
+    }
+
 }

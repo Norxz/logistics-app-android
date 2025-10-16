@@ -188,6 +188,30 @@ public class SolicitudDetailsActivity extends AppCompatActivity {
         Toast.makeText(this, "¡Solicitud creada! ID: " + newId, Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(this, GuideActivity.class);
         intent.putExtra("GUIDE_ID", newId);
+
+        // --- NEW: pass user id and role so GuideActivity can route by role ---
+        intent.putExtra("USER_ID", userId);
+
+        // try to obtain role first from SharedPreferences
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        String role = prefs.getString("USER_ROLE", "");
+        if (role == null) role = "";
+
+        // if role empty, try to fetch from DB via UserRepository and persist it
+        if (role.isEmpty()) {
+            try {
+                role = userRepo.getRoleById(userId); // assumes UserRepository provides this method
+            } catch (Exception e) {
+                role = "";
+            }
+            if (role != null && !role.isEmpty()) {
+                prefs.edit().putString("USER_ROLE", role).apply();
+            }
+        }
+        if (role == null) role = "";
+        intent.putExtra("USER_ROLE", role);
+        // --- END new code ---
+
         startActivity(intent);
 
         // Finalizamos esta actividad para que el usuario no pueda regresar a llenar el formulario
@@ -207,12 +231,14 @@ public class SolicitudDetailsActivity extends AppCompatActivity {
         userId = prefs.getLong(PREFS_KEY_CURRENT_USER_ID, -1L);
         if (userId != -1L) return userId;
 
-        // FALLBACK: buscar en la BD un usuario con rol CLIENTE (primer resultado)
-        long clientId = userRepo.getFirstIdByRole("CLIENTE");
-        if (clientId != -1L) {
-            // opcional: informar que se usó un fallback (no obligatorio)
-            Toast.makeText(this, "Usuario cliente detectado (fallback).", Toast.LENGTH_SHORT).show();
-            return clientId;
+        // FALLBACK: buscar en la BD por varios roles permitidos (case-insensitive en el repo)
+        String[] fallbackRoles = new String[] { "CLIENTE", "FUNCIONARIO", "CONDUCTOR", "RECOLECTOR" };
+        for (String role : fallbackRoles) {
+            long candidate = userRepo.getFirstIdByRole(role);
+            if (candidate != -1L) {
+                Toast.makeText(this, "Usuario " + role + " detectado (fallback).", Toast.LENGTH_SHORT).show();
+                return candidate;
+            }
         }
 
         return -1L;
@@ -227,4 +253,3 @@ public class SolicitudDetailsActivity extends AppCompatActivity {
         finish();
     }
 }
-
