@@ -180,6 +180,45 @@ public class SolicitudRepository {
     }
 
     // --------------------------------------------------------------------------------------
+    // 🆕 FUNCIÓN DE RASTREO: Obtener Solicitud por ID 🆕
+    // --------------------------------------------------------------------------------------
+
+    /**
+     * Obtiene una Solicitud completa por su ID (usado como código de guía en la búsqueda del cliente).
+     * @param solicitudId El ID único de la solicitud.
+     * @return El objeto Solicitud o null si no se encuentra.
+     */
+    public Solicitud getSolicitudById(long solicitudId) {
+        SQLiteDatabase db = helper.getReadableDatabase();
+        Solicitud s = null;
+        Cursor c = db.rawQuery(
+                "SELECT id, user_id, direccion, fecha, franja, notas, estado, zona, created_at " +
+                        "FROM solicitudes WHERE id=?",
+                new String[]{String.valueOf(solicitudId)}
+        );
+
+        try {
+            if (c.moveToFirst()) {
+                s = new Solicitud(
+                        c.getLong(0),   // id
+                        c.getLong(1),   // user_id
+                        c.getString(2), // direccion
+                        c.getString(3), // fecha
+                        c.getString(4), // franja
+                        c.getString(5), // notas
+                        c.getString(6), // estado
+                        c.getString(7), // zona
+                        c.getLong(8)    // created_at
+                );
+            }
+        } finally {
+            c.close();
+            db.close();
+        }
+        return s;
+    }
+
+    // --------------------------------------------------------------------------------------
     // 🆕 NUEVA FUNCIONALIDAD: Actualizar Estado y Guardar Código de Confirmación 🆕
     // --------------------------------------------------------------------------------------
 
