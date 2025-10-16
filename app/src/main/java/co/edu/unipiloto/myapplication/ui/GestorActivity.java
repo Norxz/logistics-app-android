@@ -8,7 +8,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import co.edu.unipiloto.myapplication.R;
 import co.edu.unipiloto.myapplication.db.UserRepository;
 
-public class RegisterActivity extends AppCompatActivity {
+public class GestorActivity extends AppCompatActivity {
 
     private EditText etEmail, etPassword, etPassword2;
     private Button btnGoRegister, btnGoLogin;
@@ -41,7 +41,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         ArrayAdapter<String> roles = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_item,
-                new String[]{"CLIENTE","RECOLECTOR", "FUNCIONARIO", "CONDUCTOR", "ANALISTA"});
+                new String[]{"CLIENTE","GESTOR", "FUNCIONARIO", "CONDUCTOR", "ANALISTA"});
         roles.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spRol.setAdapter(roles);
 
@@ -57,7 +57,7 @@ public class RegisterActivity extends AppCompatActivity {
         spRol.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
                 String rol = (String) spRol.getSelectedItem();
-                int vis = "RECOLECTOR".equals(rol) || "CONDUCTOR".equalsIgnoreCase(rol) ? View.VISIBLE : View.GONE;
+                int vis = "GESTOR".equals(rol) || "CONDUCTOR".equalsIgnoreCase(rol) ? View.VISIBLE : View.GONE;
                 tvZonaLabel.setVisibility(vis);
                 spZona.setVisibility(vis);
             }
@@ -88,12 +88,12 @@ public class RegisterActivity extends AppCompatActivity {
         // mapear alias: CONDUCTOR -> RECOLECTOR (guardamos el rol canónico)
         String rol = (rolRaw == null) ? "CLIENTE" : rolRaw.trim().toUpperCase();
         if ("CONDUCTOR".equalsIgnoreCase(rol)) {
-            rol = "RECOLECTOR";
+            rol = "GESTOR";
         }
 
         // zona sólo si es recolector
         String zona = null;
-        if ("RECOLECTOR".equalsIgnoreCase(rol)) {
+        if ("GESTOR".equalsIgnoreCase(rol)) {
             Object sel = spZona.getSelectedItem();
             zona = (sel != null) ? sel.toString() : null;
         }

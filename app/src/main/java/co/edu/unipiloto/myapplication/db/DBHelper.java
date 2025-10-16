@@ -18,7 +18,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "email TEXT UNIQUE NOT NULL," +
                 "password TEXT NOT NULL," +
                 // agregar RECOLECTOR al CHECK
-                "role TEXT NOT NULL CHECK(role IN ('CLIENTE','CONDUCTOR', 'FUNCIONARIO', 'RECOLECTOR', 'ANALISTA'))," +
+                "role TEXT NOT NULL CHECK(role IN ('CLIENTE','CONDUCTOR', 'FUNCIONARIO', 'GESTOR', 'ANALISTA'))," +
                 "zona TEXT" +
                 ")");
 
