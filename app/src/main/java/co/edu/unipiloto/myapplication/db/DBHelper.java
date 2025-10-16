@@ -6,7 +6,8 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DBHelper extends SQLiteOpenHelper {
     public static final String DB_NAME = "logistica.db";
-    public static final int DB_VERSION = 2;
+    // bump version to add RECOLECTOR into allowed roles and provide migration
+    public static final int DB_VERSION = 3;
 
     public DBHelper(Context context) { super(context, DB_NAME, null, DB_VERSION); }
 
@@ -16,7 +17,8 @@ public class DBHelper extends SQLiteOpenHelper {
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "email TEXT UNIQUE NOT NULL," +
                 "password TEXT NOT NULL," +
-                "role TEXT NOT NULL CHECK(role IN ('CLIENTE','CONDUCTOR', 'FUNCIONARIO'))," +
+                // agregar RECOLECTOR al CHECK
+                "role TEXT NOT NULL CHECK(role IN ('CLIENTE','CONDUCTOR', 'FUNCIONARIO', 'RECOLECTOR', 'ANALISTA'))," +
                 "zona TEXT" +
                 ")");
 
@@ -45,6 +47,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldV, int newV) {
+        // si venimos de <2, añadimos las columnas nuevas de solicitudes (v2)
         if (oldV < 2) {
             db.execSQL("ALTER TABLE solicitudes ADD COLUMN en_camino_at INTEGER");
             db.execSQL("ALTER TABLE solicitudes ADD COLUMN entregado_at INTEGER");
