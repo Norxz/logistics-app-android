@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
         // Si el usuario es RECOLECTOR, redirigir al panel recolector
         String role = session.getRole();
         if (role != null && role.equalsIgnoreCase("RECOLECTOR")) {
-            startActivity(new Intent(this, RecolectorActivity.class));
+            startActivity(new Intent(this, GestorActivity.class));
             finish();
             return;
         }

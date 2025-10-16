@@ -75,6 +75,6 @@ public class LoginDriverActivity extends AppCompatActivity {
     }
 
     private void goToHome() {
-        startActivity(new Intent(this, RecolectorActivity.class));
+        startActivity(new Intent(this, GestorActivity.class));
     }
 }
