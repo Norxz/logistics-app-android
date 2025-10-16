@@ -1,6 +1,7 @@
 package co.edu.unipiloto.myapplication.ui;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
@@ -12,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.button.MaterialButton;
 
 import co.edu.unipiloto.myapplication.R;
+import co.edu.unipiloto.myapplication.db.UserRepository;
 
 /**
  * Actividad de confirmación (Guía Exitosa) que se muestra después de crear una solicitud.
@@ -51,14 +53,35 @@ public class GuideActivity extends AppCompatActivity {
      * Esta función es la que ejecuta el botón "Regresar".
      */
     private void navigateToMainActivity() {
-        Intent intent = new Intent(this, MainActivity.class);
+        // Determine role: prefer explicit extra, then SharedPreferences, then (optionally) DB fallback
+        String role = getIntent().getStringExtra("USER_ROLE");
+        if (role == null || role.isEmpty()) {
+            SharedPreferences prefs = getSharedPreferences("APP_PREFS", MODE_PRIVATE);
+            role = prefs.getString("USER_ROLE", "");
+        }
 
-        // Flags para limpiar el historial de actividades:
-        // Cierra GuideActivity y todas las actividades anteriores (como SolicitudDetailsActivity)
-        // hasta llegar a MainActivity, colocándola en la cima del historial.
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        // Optional: if still empty and we have a USER_ID extra, try to fetch role from DB (tolerant)
+        if ((role == null || role.isEmpty())) {
+            long userId = getIntent().getLongExtra("USER_ID", -1L);
+            if (userId != -1L) {
+                try {
+                    UserRepository userRepo = new UserRepository(this);
+                    role = userRepo.getRoleById(userId); // assumes this method exists
+                } catch (Exception ignored) {
+                    role = "";
+                }
+            }
+        }
 
-        startActivity(intent);
-        finish(); // Cierra GuideActivity
+        Intent dest;
+        if (role != null && role.equalsIgnoreCase("FUNCIONARIO")) {
+            dest = new Intent(this, BranchDashboardActivity.class);
+        } else {
+            dest = new Intent(this, MainActivity.class);
+        }
+
+        dest.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(dest);
+        finish();
     }
 }
