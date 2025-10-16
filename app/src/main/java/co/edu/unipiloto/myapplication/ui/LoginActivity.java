@@ -50,7 +50,7 @@ public class LoginActivity extends AppCompatActivity {
 
         // Botón de Devolver
         btnGoBack.setOnClickListener(v -> {
-            finish(); // Cierra la actividad actual y regresa a la anterior
+            startActivity(new Intent(LoginActivity.this, WelcomeActivity.class));
         });
 
         // Botón de Olvidé Contraseña

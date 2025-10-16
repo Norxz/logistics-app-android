@@ -1,26 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:paddingTop="8dp"
+    android:background="@color/background_surface">
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvEntregas"
+        android:id="@+id/recyclerViewAssigned"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:scrollbars="vertical"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:listitem="@layout/item_solicitud_pendiente" />
 
     <TextView
-        android:id="@+id/tvEmptyStateEntregas"
+        android:id="@+id/tvNoPendingRequests"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/manager_description_delivery"
+        android:text="@string/no_pending_deliveries"
         android:textSize="18sp"
         android:textColor="@color/on_surface_secondary"
+        android:gravity="center"
         android:visibility="gone"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"

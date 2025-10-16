@@ -80,6 +80,11 @@
     <string name="toggle_history">Mostrar/Ocultar historial</string>
     <string name="show_pickups">Mostrar/Ocultar solicitados</string>
     <string name="error_required_field">Este campo es obligatorio.</string>
+    <string name="no_pending_deliveries">No hay solicitudes de entrega pendientes de asignación.</string>
+    <string name="no_pending_pickups">No hay solicitudes de recogida pendientes de asignación.</string>
+    <string name="no_assigned_requests">No hay solicitudes asignadas en este momento.</string>
+    <string name="assign">ASIGNAR</string>
+    <string name="select_driver_prompt">Selecciona un Conductor</string>
     <string-array name="roles_array">
         <item>REMITENTE</item>
         <item>RECOLECTOR</item>

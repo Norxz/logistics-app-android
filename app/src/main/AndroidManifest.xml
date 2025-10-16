@@ -25,7 +25,8 @@
         <activity android:name=".ui.LoginFunctionaryActivity" />
         <activity android:name=".ui.AdminPanelActivity" />
         <activity android:name=".ui.SolicitudDetailsActivity" />
-        <activity android:name=".ui.GuideActivity"/>
+        <activity android:name=".ui.GuideActivity" />
+        <activity android:name=".ui.ManagerDashboardActivity" />
     </application>
 
 </manifest>
