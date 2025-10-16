@@ -1,138 +1,117 @@
 package co.edu.unipiloto.myapplication.ui;
 
+import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
-import android.util.Patterns;
-import android.view.View;
-import android.widget.*;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.List;
+
 import co.edu.unipiloto.myapplication.R;
-import co.edu.unipiloto.myapplication.db.UserRepository;
+import co.edu.unipiloto.myapplication.db.SolicitudRepository;
+import co.edu.unipiloto.myapplication.model.Solicitud;
+import co.edu.unipiloto.myapplication.storage.SessionManager;
 
 public class GestorActivity extends AppCompatActivity {
 
-    private EditText etEmail, etPassword, etPassword2;
-    private Button btnGoRegister, btnGoLogin;
-    private ProgressBar progress;
-    private UserRepository users;
+    private SolicitudRepository repo;
+    private SolicitudAdapter adapter;
+    private SessionManager session;
+    private RecyclerView rv;
 
-    private Spinner spRol, spZona;
-    private TextView tvZonaLabel;
-
-
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_register);
+        setContentView(R.layout.activity_driver);
 
-        etEmail = findViewById(R.id.etEmail);
-        etPassword = findViewById(R.id.etPassword);
-        etPassword2 = findViewById(R.id.etPassword2);
-        spRol = findViewById(R.id.spRol);
-        btnGoRegister = findViewById(R.id.btnGoRegister);
-        btnGoLogin = findViewById(R.id.btnGoLogin);
-        progress = findViewById(R.id.progress);
-        tvZonaLabel = findViewById(R.id.tvZonaLabel);
-        spZona      = findViewById(R.id.spZona);
+        session = new SessionManager(this);
+        repo = new SolicitudRepository(this);
 
-        users = new UserRepository(this);
+        TextView tvWelcomeTitle = findViewById(R.id.tvWelcomeTitle);
+        tvWelcomeTitle.setText("Bienvenido Recolector\nZona: " + session.getZona());
 
-        btnGoRegister.setOnClickListener(v -> doRegister());
-        btnGoLogin.setOnClickListener(v -> finish());
+        rv = findViewById(R.id.rvSolicitudes);
+        rv.setLayoutManager(new LinearLayoutManager(this));
 
-        ArrayAdapter<String> roles = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item,
-                new String[]{"CLIENTE","GESTOR", "FUNCIONARIO", "CONDUCTOR", "ANALISTA"});
-        roles.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spRol.setAdapter(roles);
-
-        ArrayAdapter<CharSequence> zonas = ArrayAdapter.createFromResource(
-                this,
-                R.array.zonas_bogota,
-                android.R.layout.simple_spinner_item
-        );
-        zonas.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spZona.setAdapter(zonas);
-
-
-        spRol.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-                String rol = (String) spRol.getSelectedItem();
-                int vis = "GESTOR".equals(rol) || "CONDUCTOR".equalsIgnoreCase(rol) ? View.VISIBLE : View.GONE;
-                tvZonaLabel.setVisibility(vis);
-                spZona.setVisibility(vis);
-            }
-            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        Button btnLogout = findViewById(R.id.btnLogout);
+        btnLogout.setOnClickListener(v -> {
+            session.clear();
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
         });
 
-        String requested = null;
-        if (getIntent() != null) requested = getIntent().getStringExtra("role");
-        if (requested != null) {
-            String norm = requested.trim().toUpperCase();
-            // mapear conductor->RECOLECTOR para la selección del spinner
-            if ("CONDUCTOR".equals(norm)) norm = "CONDUCTOR";
-            for (int i = 0; i < roles.getCount(); i++) {
-                if (roles.getItem(i).equalsIgnoreCase(norm)) {
-                    spRol.setSelection(i);
-                    break;
-                }
+        cargarLista();
+    }
+
+    private void cargarLista() {
+        // 1) obtener pendientes de la zona (para aceptar)
+        List<Solicitud> pendientes = repo.pendientesPorZona(session.getZona());
+        // 2) obtener las que ya están asignadas a este recolector
+        List<Solicitud> asignadas = repo.asignadasA(session.getUserId());
+
+        // 3) fusionar evitando duplicados (usar LinkedHashMap para mantener orden)
+        java.util.Map<Long, Solicitud> map = new java.util.LinkedHashMap<>();
+        if (pendientes != null) {
+            for (Solicitud s : pendientes) map.put(s.id, s);
+        }
+        if (asignadas != null) {
+            for (Solicitud s : asignadas) map.put(s.id, s);
+        }
+
+        List<Solicitud> lista = new java.util.ArrayList<>(map.values());
+
+        adapter = SolicitudAdapter.forRecolector(lista);
+        rv.setAdapter(adapter);
+
+        // listeners: aceptar, en camino, entregado
+        adapter.setOnAcceptListener((solicitudId, pos) -> {
+            long recolectorId = session.getUserId();
+            int rows = repo.asignarARecolector(solicitudId, recolectorId);
+            if (rows > 0) {
+                adapter.updateEstadoAt(pos, "ASIGNADA");
+                Toast.makeText(this, "Solicitud aceptada", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "No se pudo aceptar (quizá ya fue tomada)", Toast.LENGTH_SHORT).show();
+                cargarLista();
             }
-        }
+        });
+
+        adapter.setOnEnCaminoListener((solicitudId, pos) -> {
+            long recolectorId = session.getUserId();
+            int rows = repo.marcarEnCamino(solicitudId, recolectorId);
+            if (rows > 0) {
+                adapter.updateEstadoAt(pos, "EN_CAMINO");
+                Toast.makeText(this, "Marcada como EN_CAMINO", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "No se pudo actualizar a EN_CAMINO", Toast.LENGTH_SHORT).show();
+                cargarLista();
+            }
+        });
+
+        adapter.setOnEntregadoListener((solicitudId, pos) -> {
+            long recolectorId = session.getUserId();
+            int rows = repo.marcarEntregada(solicitudId, recolectorId);
+            if (rows > 0) {
+                adapter.updateEstadoAt(pos, "ENTREGADA");
+                Toast.makeText(this, "Marcada como ENTREGADA", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "No se pudo marcar ENTREGADA", Toast.LENGTH_SHORT).show();
+                cargarLista();
+            }
+        });
     }
 
-    private void doRegister() {
-        String email = etEmail.getText().toString().trim();
-        String pass  = etPassword.getText().toString();
-        String pass2 = etPassword2.getText().toString();
-        String rolRaw = (String) spRol.getSelectedItem();
 
-        // mapear alias: CONDUCTOR -> RECOLECTOR (guardamos el rol canónico)
-        String rol = (rolRaw == null) ? "CLIENTE" : rolRaw.trim().toUpperCase();
-        if ("CONDUCTOR".equalsIgnoreCase(rol)) {
-            rol = "GESTOR";
-        }
-
-        // zona sólo si es recolector
-        String zona = null;
-        if ("GESTOR".equalsIgnoreCase(rol)) {
-            Object sel = spZona.getSelectedItem();
-            zona = (sel != null) ? sel.toString() : null;
-        }
-
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            etEmail.setError("Email inválido");
-            return;
-        }
-        if (pass.length() < 6) {
-            etPassword.setError("Mínimo 6 caracteres");
-            return;
-        }
-        if (!pass.equals(pass2)) {
-            etPassword2.setError("No coincide");
-            return;
-        }
-
-        toggleLoading(true);
-
-        try {
-            // llamar al repo - asume users.register(email, pass, rol, zona)
-            users.register(email, pass, rol, zona);
-
-            toggleLoading(false);
-            Toast.makeText(this, "Registro exitoso. Inicia sesión.", Toast.LENGTH_SHORT).show();
-            // Redirige a LoginActivity
-            finish();
-        } catch (Exception e) {
-            toggleLoading(false);
-            // mostrar el mensaje real para depuración (p. ej. "Valor inválido para rol o zona")
-            String msg = (e.getMessage() != null) ? e.getMessage() : "Error al registrar";
-            etEmail.setError(msg);
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void toggleLoading(boolean loading) {
-        progress.setVisibility(loading ? View.VISIBLE : View.GONE);
-        btnGoRegister.setEnabled(!loading);
-        btnGoLogin.setEnabled(!loading);
+    @Override
+    protected void onResume() {
+        super.onResume();
+        cargarLista();
     }
 }

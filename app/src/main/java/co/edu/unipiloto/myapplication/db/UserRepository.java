@@ -15,7 +15,7 @@ public class UserRepository {
         cv.put("email", email);
         cv.put("password", password);
         cv.put("role", role);
-        if ("RECOLECTOR".equals(role)) cv.put("zona", zona);
+        if ("Gestor".equals(role)) cv.put("zona", zona);
         try {
             long id = db.insertOrThrow("users", null, cv);
             return id;

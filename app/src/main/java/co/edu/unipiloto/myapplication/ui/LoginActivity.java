@@ -46,7 +46,7 @@ public class LoginActivity extends AppCompatActivity {
         // Configurar listeners
         btnLogin.setOnClickListener(v -> doLogin());
         btnGoRegister.setOnClickListener(v ->
-                startActivity(new Intent(LoginActivity.this, GestorActivity.class)));
+                startActivity(new Intent(LoginActivity.this, RegisterActivity.class)));
 
         // Botón de Devolver
         btnGoBack.setOnClickListener(v -> {
@@ -88,7 +88,7 @@ public class LoginActivity extends AppCompatActivity {
 
         switch (r) {
             case "RECOLECTOR":
-                startActivity(new Intent(this, RecolectorActivity.class));
+                startActivity(new Intent(this, GestorActivity.class));
                 break;
             case "FUNCIONARIO":
                 startActivity(new Intent(this, FunctionaryActivity.class));
