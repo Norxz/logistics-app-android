@@ -73,6 +73,12 @@
     <string name="manager_description_delivery">¡Todas las entregas han sido completadas!</string>
     <string name="manager_description_pickups">¡No hay recogidas pendientes por hoy!</string>
     <string name="admin_panel">Panel de Administrador</string>
+    <string name="client_dashboard_title">Bienvenido, Cliente</string>
+    <string name="header_active_requests">Mis Solicitudes Activas</string>
+    <string name="header_finished_history">Historial de Envíos Finalizados</string>
+    <string name="toggle_requests">Mostrar/Ocultar solicitudes activas</string>
+    <string name="toggle_history">Mostrar/Ocultar historial</string>
+    <string name="show_pickups">Mostrar/Ocultar solicitados</string>
     <string-array name="roles_array">
         <item>REMITENTE</item>
         <item>RECOLECTOR</item>
