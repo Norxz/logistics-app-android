@@ -24,6 +24,7 @@ import java.util.Map;
 
 import co.edu.unipiloto.myapplication.R;
 import co.edu.unipiloto.myapplication.db.SolicitudRepository;
+import co.edu.unipiloto.myapplication.db.UserRepository;
 import co.edu.unipiloto.myapplication.model.Solicitud;
 
 public class SolicitudAdapter extends RecyclerView.Adapter<SolicitudAdapter.VH> {
@@ -74,13 +75,30 @@ public class SolicitudAdapter extends RecyclerView.Adapter<SolicitudAdapter.VH> 
             this.data.addAll(items);
         }
 
-        // Inicializar datos de Conductores (MOCK)
-        conductorNames.add("Seleccionar Conductor"); // Placeholder
+        // Ya no inicializamos datos MOCK, solo el placeholder
+        conductorNames.add("Seleccionar Conductor");
         conductorMap.put("Seleccionar Conductor", -1L);
-        conductorMap.put("Juan Pérez (Conductor 1)", 101L);
-        conductorNames.add("Juan Pérez (Conductor 1)");
-        conductorMap.put("Ana Gómez (Conductor 2)", 102L);
-        conductorNames.add("Ana Gómez (Conductor 2)");
+    }
+
+    /**
+     * Establece la lista de conductores reales para el Spinner de asignación.
+     * DEBE llamarse antes de que el adaptador se vincule.
+     */
+    public void setConductores(List<UserRepository.ConductorInfo> conductores) {
+        this.conductorMap.clear();
+        this.conductorNames.clear();
+
+        // Agregar siempre el placeholder
+        this.conductorNames.add("Seleccionar Conductor");
+        this.conductorMap.put("Seleccionar Conductor", -1L);
+
+        if (conductores != null) {
+            for (UserRepository.ConductorInfo c : conductores) {
+                // Usamos el email (ej: andres@gmail.com) como nombre visible
+                this.conductorNames.add(c.email);
+                this.conductorMap.put(c.email, c.id);
+            }
+        }
     }
 
     /** fábrica para cliente */

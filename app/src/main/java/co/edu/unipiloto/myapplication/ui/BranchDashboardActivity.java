@@ -18,31 +18,27 @@ import java.util.List;
 
 import co.edu.unipiloto.myapplication.R;
 import co.edu.unipiloto.myapplication.db.SolicitudRepository;
+import co.edu.unipiloto.myapplication.db.UserRepository; // ¡NUEVO!
 import co.edu.unipiloto.myapplication.storage.SessionManager;
-// Importamos la nueva interfaz del adaptador
 import co.edu.unipiloto.myapplication.ui.SolicitudAdapter.OnAssignListener;
-// Las importaciones que ya tenías
 import co.edu.unipiloto.myapplication.ui.LoginFunctionaryActivity;
 import co.edu.unipiloto.myapplication.ui.SolicitudAdapter;
 import co.edu.unipiloto.myapplication.ui.SolicitudDetailsActivity;
 
 public class BranchDashboardActivity extends AppCompatActivity {
 
-    // Vistas del encabezado
     private MaterialButton btnLogout;
     private MaterialButton btnNewRequest;
 
-    // Repositorio y Adaptadores
     private SolicitudRepository repo;
+    private UserRepository usersRepo; // <--- Instancia de UserRepository
     private SessionManager session;
     private SolicitudAdapter adapterPending;
     private SolicitudAdapter adapterInRoute;
     private SolicitudAdapter adapterCompleted;
 
-    // Vistas de las listas desplegables
     private RecyclerView rvPending;
     private ImageButton btnTogglePending;
-    // Usaremos el tvEmpty genérico de tu XML como mensaje de 'Lista Vacía' para todas las secciones
     private TextView tvEmpty;
 
     private RecyclerView rvInRoute;
@@ -57,7 +53,6 @@ public class BranchDashboardActivity extends AppCompatActivity {
         setContentView(R.layout.activity_branch_dashboard);
 
         session = new SessionManager(this);
-        // Si no hay sesión, redirigir al login (buena práctica)
         if (session.getUserId() == -1L) {
             startActivity(new Intent(this, LoginFunctionaryActivity.class));
             finish();
@@ -65,41 +60,31 @@ public class BranchDashboardActivity extends AppCompatActivity {
         }
 
         repo = new SolicitudRepository(this);
+        usersRepo = new UserRepository(this); // <--- INICIALIZACIÓN
 
-        // 1. Inicialización de vistas clave
         btnLogout = findViewById(R.id.btnLogout);
         btnNewRequest = findViewById(R.id.btnNewRequest);
-        tvEmpty = findViewById(R.id.tvEmpty); // TextView genérico para 'Lista Vacía'
+        tvEmpty = findViewById(R.id.tvEmpty);
 
-        // 2. Inicialización de las listas y sus elementos
-
-        // Pendientes
         rvPending = findViewById(R.id.rvPending);
         rvPending.setLayoutManager(new LinearLayoutManager(this));
         btnTogglePending = findViewById(R.id.btnTogglePending);
 
-        // En Ruta
         rvInRoute = findViewById(R.id.rvInRoute);
         rvInRoute.setLayoutManager(new LinearLayoutManager(this));
         btnToggleInRoute = findViewById(R.id.btnToggleInRoute);
 
-        // Finalizadas (Historial)
         rvCompleted = findViewById(R.id.rvCompleted);
         rvCompleted.setLayoutManager(new LinearLayoutManager(this));
         btnToggleCompleted = findViewById(R.id.btnToggleCompleted);
 
-
-        // 3. Configurar Click Listeners
         btnNewRequest.setOnClickListener(v -> goToNewDeliveryRegistration());
         btnLogout.setOnClickListener(v -> logout());
 
-        // Configurar los Toggles
-        // Se pasa tvEmpty solo a la primera lista para controlarla globalmente.
         btnTogglePending.setOnClickListener(v -> toggleRecyclerView(rvPending, btnTogglePending));
         btnToggleInRoute.setOnClickListener(v -> toggleRecyclerView(rvInRoute, btnToggleInRoute));
         btnToggleCompleted.setOnClickListener(v -> toggleRecyclerView(rvCompleted, btnToggleCompleted));
 
-        // 4. Cargar datos
         loadDashboardData();
     }
 
@@ -109,10 +94,7 @@ public class BranchDashboardActivity extends AppCompatActivity {
         loadDashboardData();
     }
 
-    // --- LÓGICA DE NAVEGACIÓN Y CIERRE DE SESIÓN ---
-
     private void goToNewDeliveryRegistration() {
-        // Asumiendo que SolicitudDetailsActivity es donde se registra un nuevo envío
         startActivity(new Intent(this, SolicitudDetailsActivity.class));
     }
 
@@ -124,11 +106,6 @@ public class BranchDashboardActivity extends AppCompatActivity {
         finish();
     }
 
-    // --- LÓGICA DE CARGA DE DATOS Y FILTRADO ---
-
-    /**
-     * Carga y separa la lista de solicitudes asignadas al funcionario actual.
-     */
     private void loadDashboardData() {
         long funcionarioId = session.getUserId();
 
@@ -137,7 +114,6 @@ public class BranchDashboardActivity extends AppCompatActivity {
             return;
         }
 
-        // 🛑 Lógica clave: Listar solicitudes filtradas por el ID del funcionario (incluye PENDIENTES sin asignar)
         List<SolicitudRepository.SolicitudItem> allItems = repo.listarPorFuncionario(funcionarioId);
 
         List<SolicitudRepository.SolicitudItem> pendingItems = new ArrayList<>();
@@ -148,26 +124,32 @@ public class BranchDashboardActivity extends AppCompatActivity {
             for (SolicitudRepository.SolicitudItem item : allItems) {
                 String estado = item.estado.toUpperCase();
 
-                if ("ENTREGADA".equals(estado) || "CANCELADA".equals(estado)) {
-                    completedItems.add(item);
+                // 🛑 FILTRADO CORREGIDO
+                if ("PENDIENTE".equals(estado) || "ASIGNADA".equals(estado)) {
+                    // La vista de asignación debe mostrar PENDIENTES y las ya ASIGNADAS
+                    // para que el Gestor pueda ver a quién se la asignó.
+                    pendingItems.add(item);
                 } else if ("EN_CAMINO".equals(estado) || "EN_BODEGA".equals(estado) || "LLEGADA_DESTINO".equals(estado)) {
                     inRouteItems.add(item);
-                } else {
-                    // PENDIENTE, ASIGNADA, RECOLECCION, etc.
-                    pendingItems.add(item);
+                } else if ("ENTREGADA".equals(estado) || "CANCELADA".equals(estado)) {
+                    completedItems.add(item);
                 }
             }
         }
 
+        // Obtenemos la lista de conductores (GESTOR/CONDUCTOR)
+        List<UserRepository.ConductorInfo> conductores = usersRepo.getConductores();
+
         // 1. Configuración de Pendientes
         adapterPending = SolicitudAdapter.forFuncionario(pendingItems);
-        // CONFIGURAR EL NUEVO LISTENER DE ASIGNACIÓN SOLO PARA EL ADAPTADOR PENDIENTE
+        adapterPending.setConductores(conductores); // <--- INYECTAMOS LA LISTA DE CONDUCTORES
         adapterPending.setOnAssignListener(assignListenerImplementation);
         setupRecyclerView(rvPending, btnTogglePending, pendingItems, adapterPending);
 
-
         // 2. Configuración de En Ruta
         adapterInRoute = SolicitudAdapter.forFuncionario(inRouteItems);
+        // Si el adaptador de En Ruta necesita conductores, también se inyectan aquí
+        adapterInRoute.setConductores(conductores);
         setupRecyclerView(rvInRoute, btnToggleInRoute, inRouteItems, adapterInRoute);
 
         // 3. Configuración de Finalizadas (Historial)
@@ -182,33 +164,17 @@ public class BranchDashboardActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Implementación del listener para el botón 'Asignar'.
-     */
-    /**
-     * Implementación del listener para el botón 'Asignar'.
-     */
     private final OnAssignListener assignListenerImplementation = (solicitudId, conductorId, position) -> {
-        // Asignar la solicitud al conductor en la base de datos
-        // Usamos asignarARecolector ya que el conductor es un tipo de recolector en tu modelo
-        int rowsAffected = repo.asignarARecolector(solicitudId, conductorId);
+        int rowsAffected = repo.asignarAConductor(solicitudId, conductorId); // <--- USAMOS EL NUEVO MÉTODO
 
         if (rowsAffected > 0) {
             Toast.makeText(BranchDashboardActivity.this, "Solicitud #" + solicitudId + " asignada al conductor ID: " + conductorId, Toast.LENGTH_LONG).show();
-            // Recargar los datos para que la solicitud se mueva de 'Pendientes' a 'En Ruta'
             loadDashboardData();
         } else {
-            // LÍNEA CORREGIDA AQUÍ ⬇️
             Toast.makeText(BranchDashboardActivity.this, "Error al asignar. La solicitud ya puede estar asignada o su estado cambió.", Toast.LENGTH_LONG).show();
         }
     };
 
-
-    // --- MÉTODOS DE UTILIDAD PARA VISTAS ---
-
-    /**
-     * Alterna la visibilidad de un RecyclerView y actualiza el ícono del botón.
-     */
     private void toggleRecyclerView(RecyclerView recyclerView, ImageButton toggleButton) {
         if (recyclerView.getVisibility() == View.GONE) {
             recyclerView.setVisibility(View.VISIBLE);
@@ -219,24 +185,17 @@ public class BranchDashboardActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Configura el RecyclerView, el adaptador, y maneja la visibilidad inicial.
-     */
     private void setupRecyclerView(RecyclerView rv, ImageButton toggleBtn, List<SolicitudRepository.SolicitudItem> items, SolicitudAdapter adapter) {
         rv.setAdapter(adapter);
 
         if (items.isEmpty()) {
-            // Si está vacía, se oculta y se pone el ícono de cerrado
             rv.setVisibility(View.GONE);
             toggleBtn.setImageResource(R.drawable.ic_arrow_down);
         } else {
-            // Si hay items, se usa la visibilidad definida en el XML, y se pone el ícono correcto
-            // Solo rvPending está visible por defecto en tu XML.
             if (rv.getId() == R.id.rvPending) {
                 rv.setVisibility(View.VISIBLE);
                 toggleBtn.setImageResource(R.drawable.ic_arrow_up);
             } else {
-                // Las demás listas (En Ruta, Historial) inician ocultas
                 rv.setVisibility(View.GONE);
                 toggleBtn.setImageResource(R.drawable.ic_arrow_down);
             }

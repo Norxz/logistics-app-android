@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.Toast;
+import android.widget.Toolbar;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -60,6 +61,9 @@ public class SolicitudDetailsActivity extends AppCompatActivity {
     private static final String PREFS_KEY_USER_ID = "USER_ID";
     // legacy key sometimes usado en otras pantallas
     private static final String PREFS_KEY_CURRENT_USER_ID = "CURRENT_USER_ID";
+
+    private Toolbar mainToolbar;
+    private MaterialButton btnShareForm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

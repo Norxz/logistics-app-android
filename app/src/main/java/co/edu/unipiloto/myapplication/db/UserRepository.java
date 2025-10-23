@@ -5,9 +5,50 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class UserRepository {
     private final DBHelper helper;
     public UserRepository(Context ctx){ this.helper = new DBHelper(ctx); }
+
+
+    public static class ConductorInfo {
+        public long id;
+        public String email; // Usaremos el email como nombre
+    }
+
+    /** Devuelve una lista de usuarios con el rol GESTOR o CONDUCTOR. */
+    public List<ConductorInfo> getConductores() {
+        SQLiteDatabase db = helper.getReadableDatabase();
+        List<ConductorInfo> conductores = new ArrayList<>();
+
+        // Filtrar por roles GESTOR (asumido como rol de conductor en DB) y CONDUCTOR
+        String selection = "UPPER(role)=UPPER(?) OR UPPER(role)=UPPER(?)";
+        String[] selectionArgs = new String[]{"GESTOR", "CONDUCTOR"};
+
+        Cursor c = db.query(
+                "users",
+                new String[]{"id", "email"},
+                selection,
+                selectionArgs,
+                null,
+                null,
+                "email ASC"
+        );
+
+        try {
+            while (c.moveToNext()) {
+                ConductorInfo info = new ConductorInfo();
+                info.id = c.getLong(0);
+                info.email = c.getString(1);
+                conductores.add(info);
+            }
+            return conductores;
+        } finally {
+            c.close();
+        }
+    }
 
     public long register(String email, String password, String role, String zona) throws Exception {
         SQLiteDatabase db = helper.getWritableDatabase();

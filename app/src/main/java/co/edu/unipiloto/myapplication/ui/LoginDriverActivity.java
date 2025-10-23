@@ -61,9 +61,12 @@ public class LoginDriverActivity extends AppCompatActivity {
         }
 
         UserRepository.UserInfo u = users.login(email, pass);
+
         if (u != null && (
                 "CONDUCTOR".equalsIgnoreCase(u.role) ||
-                        "RECOLECTOR".equalsIgnoreCase(u.role)
+                        "RECOLECTOR".equalsIgnoreCase(u.role) ||
+                        // ✅ AGREGAR GESTOR A LA LISTA DE ROLES PERMITIDOS
+                        "GESTOR".equalsIgnoreCase(u.role)
         )) {
             session.saveUser(u.id, u.role, u.zona);
             Toast.makeText(this, "Login OK", Toast.LENGTH_SHORT).show();
@@ -75,6 +78,6 @@ public class LoginDriverActivity extends AppCompatActivity {
     }
 
     private void goToHome() {
-        startActivity(new Intent(this, GestorActivity.class));
+        startActivity(new Intent(this, DriverDashboardActivity.class));
     }
 }

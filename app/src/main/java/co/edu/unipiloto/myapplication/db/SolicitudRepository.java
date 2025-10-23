@@ -126,19 +126,15 @@ public class SolicitudRepository {
     }
 
     /**
-     * Asignar/aceptar una solicitud por parte de un recolector.
-     * Solo actualiza si la solicitud todavía está PENDIENTE (evita race conditions).
+     * Asigna una solicitud a un conductor (o recolector) y cambia su estado a 'ASIGNADA'.
+     * @return El número de filas afectadas (debería ser 1).
      */
-    public int asignarARecolector(long solicitudId, long recolectorId) {
+    public int asignarAConductor(long solicitudId, long conductorId) {
         SQLiteDatabase db = helper.getWritableDatabase();
         ContentValues cv = new ContentValues();
-        cv.put("recolector_id", recolectorId);
-        cv.put("estado", EST_ASIGNADA);
-        // solo actualizar si estaba pendiente
-        int rows = db.update("solicitudes", cv, "id=? AND (estado IS NULL OR estado=?)",
-                new String[]{String.valueOf(solicitudId), EST_PENDIENTE});
-        db.close();
-        return rows;
+        cv.put("estado", "ASIGNADA");
+        cv.put("conductorId", conductorId);
+        return db.update("solicitudes", cv, "id = ?", new String[]{String.valueOf(solicitudId)});
     }
 
     /**
@@ -326,6 +322,38 @@ public class SolicitudRepository {
                 list.add(it);
             }
         } finally { c.close(); }
+        return list;
+    }
+
+    /**
+     * Devuelve TODAS las solicitudes del sistema en formato SolicitudItem.
+     * Este método es usado por el Gestor/Funcionario para ver el estado general y asignar.
+     */
+    public List<SolicitudItem> getAllSolicitudesAsItem() {
+        SQLiteDatabase db = helper.getReadableDatabase();
+        Cursor c = db.rawQuery(
+                "SELECT id, direccion, fecha, franja, estado, created_at, zona FROM solicitudes " +
+                        "ORDER BY estado ASC, created_at DESC",
+                null
+        ); // No hay WHERE clause, trae todas.
+
+        List<SolicitudItem> list = new ArrayList<>();
+        try {
+            while(c.moveToNext()){
+                SolicitudItem it = new SolicitudItem();
+                it.id = c.getLong(0);
+                it.direccion = c.getString(1);
+                it.fecha = c.getString(2);
+                it.franja = c.getString(3);
+                it.estado = c.getString(4);
+                it.createdAt = c.getLong(5);
+                it.zona = c.getString(6);
+                list.add(it);
+            }
+        } finally {
+            c.close();
+            db.close();
+        }
         return list;
     }
 

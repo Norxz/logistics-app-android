@@ -12,15 +12,18 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
+import java.util.stream.Collectors; // Necesario para la conversión (si usas Java 8+)
 
 import co.edu.unipiloto.myapplication.R;
 import co.edu.unipiloto.myapplication.db.SolicitudRepository;
+import co.edu.unipiloto.myapplication.db.UserRepository; // ¡NUEVO!
 import co.edu.unipiloto.myapplication.model.Solicitud;
 import co.edu.unipiloto.myapplication.storage.SessionManager;
 
 public class GestorActivity extends AppCompatActivity {
 
     private SolicitudRepository repo;
+    private UserRepository usersRepo; // Instancia para acceder a los conductores
     private SolicitudAdapter adapter;
     private SessionManager session;
     private RecyclerView rv;
@@ -33,9 +36,11 @@ public class GestorActivity extends AppCompatActivity {
 
         session = new SessionManager(this);
         repo = new SolicitudRepository(this);
+        usersRepo = new UserRepository(this); // Inicialización del repositorio de usuarios
 
         TextView tvWelcomeTitle = findViewById(R.id.tvWelcomeTitle);
-        tvWelcomeTitle.setText("Bienvenido Recolector\nZona: " + session.getZona());
+        // Cambiamos el mensaje de bienvenida para reflejar el rol de Gestor/Funcionario
+        tvWelcomeTitle.setText("Gestión de Envíos\nRol: " + session.getRole());
 
         rv = findViewById(R.id.rvSolicitudes);
         rv.setLayoutManager(new LinearLayoutManager(this));
@@ -51,67 +56,54 @@ public class GestorActivity extends AppCompatActivity {
     }
 
     private void cargarLista() {
-        // 1) obtener pendientes de la zona (para aceptar)
-        List<Solicitud> pendientes = repo.pendientesPorZona(session.getZona());
-        // 2) obtener las que ya están asignadas a este recolector
-        List<Solicitud> asignadas = repo.asignadasA(session.getUserId());
+        // Obtenemos todas las solicitudes (o al menos las que un Gestor debe ver)
+        // **IMPORTANTE**: Necesitas un método en SolicitudRepository que devuelva List<SolicitudRepository.SolicitudItem>
+        // Si no existe, usamos la conversión si es posible.
 
-        // 3) fusionar evitando duplicados (usar LinkedHashMap para mantener orden)
-        java.util.Map<Long, Solicitud> map = new java.util.LinkedHashMap<>();
-        if (pendientes != null) {
-            for (Solicitud s : pendientes) map.put(s.id, s);
-        }
-        if (asignadas != null) {
-            for (Solicitud s : asignadas) map.put(s.id, s);
-        }
+        // 1. Obtener los conductores reales de la DB
+        List<UserRepository.ConductorInfo> conductores = usersRepo.getConductores();
 
-        List<Solicitud> lista = new java.util.ArrayList<>(map.values());
+        // 2. Obtener las solicitudes que se mostrarán. Usamos el método existente
+        //    y lo convertimos a SolicitudItem si es necesario, o creamos un nuevo método en el repo.
 
-        adapter = SolicitudAdapter.forRecolector(lista);
+        // **ASUMIENDO un nuevo método en SolicitudRepository:**
+        List<SolicitudRepository.SolicitudItem> items = repo.getAllSolicitudesAsItem();
+
+        // Si el método getAllSolicitudesAsItem() no existe, tendrías que usar otra lógica
+        // o hacer la conversión aquí (si repo.pendientesPorZona devuelve los campos necesarios).
+
+        // 3. Crear el adaptador usando la fábrica para el Funcionario/Gestor
+        adapter = SolicitudAdapter.forFuncionario(items);
+
+        // 4. Inyectar los conductores en el adaptador
+        adapter.setConductores(conductores);
+
         rv.setAdapter(adapter);
 
-        // listeners: aceptar, en camino, entregado
-        adapter.setOnAcceptListener((solicitudId, pos) -> {
-            long recolectorId = session.getUserId();
-            int rows = repo.asignarARecolector(solicitudId, recolectorId);
+        // 5. Configurar el NUEVO Listener de Asignación (para el Spinner)
+        adapter.setOnAssignListener((solicitudId, conductorId, pos) -> {
+            // Lógica para asignar en la DB. Asumimos que tienes el método asignarAConductor.
+            int rows = repo.asignarAConductor(solicitudId, conductorId);
             if (rows > 0) {
                 adapter.updateEstadoAt(pos, "ASIGNADA");
-                Toast.makeText(this, "Solicitud aceptada", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Solicitud #" + solicitudId + " asignada.", Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(this, "No se pudo aceptar (quizá ya fue tomada)", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Error al asignar.", Toast.LENGTH_SHORT).show();
                 cargarLista();
             }
         });
 
-        adapter.setOnEnCaminoListener((solicitudId, pos) -> {
-            long recolectorId = session.getUserId();
-            int rows = repo.marcarEnCamino(solicitudId, recolectorId);
-            if (rows > 0) {
-                adapter.updateEstadoAt(pos, "EN_CAMINO");
-                Toast.makeText(this, "Marcada como EN_CAMINO", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "No se pudo actualizar a EN_CAMINO", Toast.LENGTH_SHORT).show();
-                cargarLista();
-            }
-        });
-
-        adapter.setOnEntregadoListener((solicitudId, pos) -> {
-            long recolectorId = session.getUserId();
-            int rows = repo.marcarEntregada(solicitudId, recolectorId);
-            if (rows > 0) {
-                adapter.updateEstadoAt(pos, "ENTREGADA");
-                Toast.makeText(this, "Marcada como ENTREGADA", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "No se pudo marcar ENTREGADA", Toast.LENGTH_SHORT).show();
-                cargarLista();
-            }
-        });
+        // 6. Remover los listeners de Recolector que ya no son relevantes (o déjalos vacíos)
+        // Los otros listeners (Aceptar, EnCamino, Entregado) no son necesarios para la vista de asignación.
+        // Los dejamos como stubs, pero asegúrate de que el botón "Aceptar" del layout estándar no se muestre
+        // para las solicitudes PENDIENTES, ya que en la vista de Funcionario/Gestor es reemplazado por la vista de asignación.
     }
 
 
     @Override
     protected void onResume() {
         super.onResume();
+        // Recargamos la lista solo si es necesario, pero si hay cambios en el estado es mejor recargar siempre
         cargarLista();
     }
 }
