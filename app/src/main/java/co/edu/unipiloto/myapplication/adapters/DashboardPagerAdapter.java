@@ -5,9 +5,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
-import co.edu.unipiloto.myapplication.ui.AssignedRequestsFragment;
-import co.edu.unipiloto.myapplication.ui.PendingRequestsFragment;
-
 public class DashboardPagerAdapter extends FragmentStateAdapter {
 
     private static final int NUM_TABS = 2;

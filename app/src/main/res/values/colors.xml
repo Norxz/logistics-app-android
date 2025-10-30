@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="md_white">#FFFFFF</color>
+    <color name="md_black">#000000</color>
+
     <color name="background_surface">#F2F2F7</color>
     <color name="on_surface">#1C1C1E</color>
     <color name="on_surface_secondary">#6D6D72</color>
@@ -10,9 +12,12 @@
     <color name="primary_light_color">#A8D7FF</color>
     <color name="accent_orange">#FF9500</color>
     <color name="accent_light">#FFBB4D</color>
+
     <color name="status_success">#34C759</color>
     <color name="status_error">#FF3B30</color>
+    <color name="status_cancelled">#FF3B30</color>
     <color name="status_warning">#FFCC00</color>
     <color name="status_pending">#FFCC00</color>
-    <color name="status_in_route">#FFCC00</color>
+    <color name="status_active">#007AFF</color>
+    <color name="status_default">#9E9E9E</color>
 </resources>

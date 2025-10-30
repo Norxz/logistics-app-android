@@ -1,98 +1,127 @@
 <resources>
+    <string name="accent_orange">#FF9500</string>
+    <string name="accent_light">#FFBB4D</string>
+    <string name="admin_panel">Panel de Administrador</string>
     <string name="app_name">MyApplication</string>
-    <string name="welcome_collector">Bienvenido Recolector</string>
-    <string name="close_session">Cerrar sesión</string>
-    <string name="email">Email</string>
-    <string name="password">Contraseña</string>
-    <string name="login">Ingresar</string>
-    <string name="register">Registrarse</string>
-    <string name="pick_recolection">Solicitar recolección</string>
-    <string name="no_solicitudes">Aún no tienes solicitudes</string>
-    <string name="logo_name">LogiApp</string>
-    <string name="welcome_description">¡Bienvenido! Estamos aquí para conectar tus envíos de manera rápida, segura y eficiente.</string>
-    <string name="welcome_button_send">Solicitar un Envío</string>
-    <string name="welcome_button_functionary">Soy Funcionario</string>
-    <string name="welcome_button_driver">Soy Conductor</string>
-    <string name="logo_description">Logo de la Aplicación de Envíos</string>
-    <string name="make_register">Registrarse</string>
+    <string name="assign">ASIGNAR</string>
+    <string name="back">Regresar</string>
     <string name="back_login">Volver al inicio de sesión</string>
-    <string name="create_account">Crea tu Cuenta</string>
-    <string name="repeat_password">Repite la contraseña</string>
+    <string name="back_to_main">Volver a la pantalla principal</string>
+    <string name="background_surface">#F2F2F7</string>
+    <string name="branch_dashboard_subtitle">Control de pedidos de tu sucursal</string>
+    <string name="branch_dashboard_title">Gestión de Envíos</string>
     <string name="choose_role">Selecciona tu Rol:</string>
     <string name="choose_zone">Selecciona tu Zona:</string>
-    <string name="login_welcome_text">¡Bienvenido!</string>
-    <string name="login_description_text">Ingresa tus credenciales para continuar.</string>
-    <string name="forgot_password">Olvidé mi contraseña</string>
-    <string name="driver_title_text">Acceso de Conductor</string>
-    <string name="driver_description_text">Ingresa tus credenciales de flota.</string>
-    <string name="functionary_title_text">Acceso Funcionario</string>
-    <string name="functionary_description_text">Ingresa tu correo y contraseña institucional.</string>
-    <string name="delivery_title_text">Datos del Nuevo Envío</string>
+    <string name="client_dashboard_title">Bienvenido, Cliente</string>
+    <string name="close_session">Cerrar sesión</string>
+    <string name="create_account">Crea tu Cuenta</string>
+
+    <string name="delivery_adress">Dirección</string>
+    <string name="delivery_destination_name">Nombre completo del receptor</string>
+    <string name="delivery_destination_title">3. Datos del Destino</string>
+    <string name="delivery_id_text">Identificación</string>
+    <string name="delivery_package_content">Contenido (ej. Ropa)</string>
+    <string name="delivery_package_height">Alto (cm)</string>
+    <string name="delivery_package_large">Largo (cm)</string>
+    <string name="delivery_package_text">2. Información del Paquete</string>
+    <string name="delivery_package_weight">Peso (kg)</string>
+    <string name="delivery_package_width">Ancho (cm)</string>
+    <string name="delivery_phone">Teléfono</string>
+    <string name="delivery_price">4. Precio del Envío</string>
     <string name="delivery_send_text">1. Datos del Remitente</string>
     <string name="delivery_send_text_name">Nombre completo del remitente</string>
-    <string name="delivery_id_text">Identificación</string>
-    <string name="delivery_phone">Teléfono</string>
-    <string name="delivery_package_text">2. Información del Paquete</string>
-    <string name="delivery_package_height">Alto (cm)</string>
-    <string name="delivery_package_width">Ancho (cm)</string>
-    <string name="delivery_package_large">Largo (cm)</string>
-    <string name="delivery_package_weight">Peso (kg)</string>
-    <string name="delivery_package_content">Contenido (ej. Ropa)</string>
-    <string name="delivery_destination_title">3. Datos del Destino</string>
-    <string name="delivery_destination_name">Nombre completo del receptor</string>
-    <string name="delivery_adress">Dirección</string>
-    <string name="delivery_price">4. Precio del Envío</string>
+    <string name="delivery_title_text">Datos del Nuevo Envío</string>
     <string name="delivery_total_price">Precio total (ej. $50.000)</string>
-    <string name="send_guide">Enviar Solicitud</string>
-    <string name="back">Regresar</string>
-    <string name="guide_description_text">Icono de éxito</string>
-    <string name="guide_title_text">¡Envío Creado Exitosamente!</string>
-    <string name="guide_description">Se ha procesado la solicitud. Selecciona la siguiente acción.</string>
-    <string name="guide_button_send">Generar y Enviar Guía al Correo</string>
+    <string name="driver_dashboard_subtitle">Tareas pendientes en zona: %s</string>
+    <string name="driver_dashboard_title">Bienvenido, %s</string>
+    <string name="driver_description_text">Ingresa tus credenciales de flota.</string>
+    <string name="driver_title_text">Acceso de Conductor</string>
+    <string name="email">Email</string>
+    <string name="error_required_field">Este campo es obligatorio.</string>
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="forgot_password">Olvidé mi contraseña</string>
+    <string name="functionary_description_text">Ingresa tu correo y contraseña institucional.</string>
+    <string name="functionary_title_text">Acceso Funcionario</string>
     <string name="guide_button_download">Generar Guía (Descargar)</string>
-    <string name="back_to_main">Volver a la pantalla principal</string>
-    <string name="logout">Cerrar Sesión</string>
-    <string name="user_last_deliverys">Historial de Envíos</string>
-    <string name="user_status">Ver Estado de mis Envíos</string>
-    <string name="user_new_delivery">Solicitar Nueva Recogida</string>
-    <string name="user_welcome">Bienvenido, %s</string>
-    <string name="user_description">¿Qué deseas hacer hoy? Selecciona una opción:</string>
-    <string name="pick_up_title">Indica tu Punto de Recogida</string>
-    <string name="pick_up_description">Escribe la dirección donde tenemos que buscar tu paquete o usa tu ubicación actual.</string>
-    <string name="pick_up_adress">Dirección completa (Calle, Número, Ciudad)</string>
-    <string name="pick_up_icon">Usar mi ubicación actual</string>
-    <string name="pick_up_map_text">El pin indicará el punto de recogida</string>
-    <string name="pick_up_button">Confirmar Dirección de Recogida</string>
-    <string name="picker_title">Bienvenido, Recolector</string>
-    <string name="manager_dashboard_title">Panel de Control de Gestión</string>
-    <string name="manager_dashboard_subtitle">Coordina las recogidas y las entregas.</string>
-    <string name="tab_recogidas">Recogidas Pendientes</string>
-    <string name="tab_entregas">Entregas Pendientes</string>
-    <string name="picker_description">Aquí están tus solicitudes de recogida pendientes.</string>
-    <string name="guide_example">Guía: #875423</string>
-    <string name="manager_description_delivery">¡Todas las entregas han sido completadas!</string>
-    <string name="manager_description_pickups">¡No hay recogidas pendientes por hoy!</string>
-    <string name="admin_panel">Panel de Administrador</string>
-    <string name="client_dashboard_title">Bienvenido, Cliente</string>
+    <string name="guide_button_send">Generar y Enviar Guía al Correo</string>
+    <string name="guide_description">Se ha procesado la solicitud. Selecciona la siguiente acción.</string>
+    <string name="guide_description_text">Icono de éxito</string>
+    <string name="guide_example">Guía: #%1$s</string>
+    <string name="guide_title_text">¡Envío Creado Exitosamente!</string>
+
     <string name="header_active_requests">Mis Solicitudes Activas</string>
     <string name="header_finished_history">Historial de Envíos Finalizados</string>
-    <string name="toggle_requests">Mostrar/Ocultar solicitudes activas</string>
-    <string name="toggle_history">Mostrar/Ocultar historial</string>
-    <string name="show_pickups">Mostrar/Ocultar solicitados</string>
-    <string name="error_required_field">Este campo es obligatorio.</string>
+    <string name="lorem_ipsum">...</string>
+    <string name="login">Ingresar</string>
+    <string name="login_description_text">Ingresa tus credenciales para continuar.</string>
+    <string name="login_welcome_text">¡Bienvenido!</string>
+    <string name="logo_description">Logo de la Aplicación de Envíos</string>
+    <string name="logo_name">LogiApp</string>
+    <string name="logout">Cerrar Sesión</string>
+
+    <string name="make_register">Registrarse</string>
+    <string name="manager_dashboard_subtitle">Coordina las recogidas y las entregas.</string>
+    <string name="manager_dashboard_title">Panel de Control de Gestión</string>
+    <string name="manager_description_delivery">¡Todas las entregas han sido completadas!</string>
+    <string name="manager_description_pickups">¡No hay recogidas pendientes por hoy!</string>
+    <string name="md_white">#FFFFFF</string>
+    <string name="next">Next</string>
+    <string name="no_assigned_requests">No hay solicitudes asignadas en este momento.</string>
+    <string name="no_assigned_routes">¡Felicidades! No tienes rutas asignadas por ahora.</string>
     <string name="no_pending_deliveries">No hay solicitudes de entrega pendientes de asignación.</string>
     <string name="no_pending_pickups">No hay solicitudes de recogida pendientes de asignación.</string>
-    <string name="no_assigned_requests">No hay solicitudes asignadas en este momento.</string>
     <string name="no_requests_in_branch_list">No hay solicitudes en este estado para tu sucursal.</string>
-    <string name="assign">ASIGNAR</string>
-    <string name="branch_dashboard_title">Gestión de Envíos</string>
-    <string name="branch_dashboard_subtitle">Control de pedidos de tu sucursal</string>
+    <string name="no_solicitudes">Aún no tienes solicitudes</string>
+    <string name="on_surface">#1C1C1E</string>
+    <string name="on_surface_secondary">#6D6D72</string>
+    <string name="password">Contraseña</string>
+    <string name="pick_recoleccion">Solicitar recolección</string>
+    <string name="pick_up_adress">Dirección completa (Calle, Número, Ciudad)</string>
+    <string name="pick_up_button">Confirmar Dirección de Recogida</string>
+    <string name="pick_up_description">Escribe la dirección donde tenemos que buscar tu paquete o usa tu ubicación actual.</string>
+    <string name="pick_up_icon">Usar mi ubicación actual</string>
+    <string name="pick_up_map_text">El pin indicará el punto de recogida</string>
+    <string name="pick_up_title">Indica tu Punto de Recogida</string>
+    <string name="picker_description">Aquí están tus solicitudes de recogida pendientes.</string>
+    <string name="picker_title">Bienvenido, Recolector</string>
+    <string name="previous">Previous</string>
+    <string name="primary_color">#007AFF</string>
+    <string name="primary_dark_color">#005BCC</string>
+    <string name="primary_light_color">#A8D7FF</string>
+
+    <string name="register">Registrarse</string>
     <string name="register_new_request">Registrar nuevo envío</string>
+    <string name="repeat_password">Repite la contraseña</string>
+    <string name="second_fragment_label">Second Fragment</string>
     <string name="select_driver_prompt">Selecciona un Conductor</string>
-    <string name="driver_dashboard_title">Mis Rutas Asignadas</string>
-    <string name="driver_dashboard_subtitle">Tareas pendientes de recogida y entrega</string>
-    <string name="no_assigned_routes">¡Felicidades! No tienes rutas asignadas por ahora.</string>
+    <string name="send_guide">Enviar Solicitud</string>
+    <string name="separator">#E5E5EA</string>
+    <string name="show_pickups">Mostrar/Ocultar solicitados</string>
+    <string name="status_active">#007AFF</string>
+    <string name="status_cancelled">#FF3B30</string>
+    <string name="status_error">#FF3B30</string>
+    <string name="status_in_route">#FFCC00</string>
+    <string name="status_pending">#FFCC00</string>
+    <string name="status_success">#34C759</string>
+    <string name="status_warning">#FFCC00</string>
+
+    <string name="tab_entregas">Entregas Pendientes</string>
+    <string name="tab_recogidas">Recogidas Pendientes</string>
+    <string name="toggle_history">Mostrar/Ocultar historial</string>
+    <string name="toggle_requests">Mostrar/Ocultar solicitudes activas</string>
+    <string name="tracking_label">Guía #%1$s</string>
+    <string name="user_description">¿Qué deseas hacer hoy? Selecciona una opción:</string>
+    <string name="user_last_deliverys">Historial de Envíos</string>
+    <string name="user_new_delivery">Solicitar Nueva Recogida</string>
+    <string name="user_status">Ver Estado de mis Envíos</string>
+    <string name="user_welcome">Bienvenido, %s</string>
     <string name="welcome_button_check_status">Consultar Estado de mi Entrega</string>
+    <string name="welcome_button_driver">Soy Conductor</string>
+    <string name="welcome_button_functionary">Soy Funcionario</string>
+    <string name="welcome_button_send">Solicitar un Envío</string>
+    <string name="welcome_collector">Bienvenido Recolector</string>
+    <string name="welcome_description">¡Bienvenido! Estamos aquí para conectar tus envíos de manera rápida, segura y eficiente.</string>
+
     <string-array name="roles_array">
         <item>REMITENTE</item>
         <item>RECOLECTOR</item>
@@ -106,46 +135,4 @@
         <item>Bogotá - Kennedy</item>
         <item>Bogotá - Engativá</item>
     </string-array>
-    <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
-
-    <string name="lorem_ipsum">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris
-        volutpat, dolor id interdum ullamcorper, risus dolor egestas lectus, sit amet mattis purus
-        dui nec risus. Maecenas non sodales nisi, vel dictum dolor. Class aptent taciti sociosqu ad
-        litora torquent per conubia nostra, per inceptos himenaeos. Suspendisse blandit eleifend
-        diam, vel rutrum tellus vulputate quis. Aliquam eget libero aliquet, imperdiet nisl a,
-        ornare ex. Sed rhoncus est ut libero porta lobortis. Fusce in dictum tellus.\n\n
-        Suspendisse interdum ornare ante. Aliquam nec cursus lorem. Morbi id magna felis. Vivamus
-        egestas, est a condimentum egestas, turpis nisl iaculis ipsum, in dictum tellus dolor sed
-        neque. Morbi tellus erat, dapibus ut sem a, iaculis tincidunt dui. Interdum et malesuada
-        fames ac ante ipsum primis in faucibus. Curabitur et eros porttitor, ultricies urna vitae,
-        molestie nibh. Phasellus at commodo eros, non aliquet metus. Sed maximus nisl nec dolor
-        bibendum, vel congue leo egestas.\n\n
-        Sed interdum tortor nibh, in sagittis risus mollis quis. Curabitur mi odio, condimentum sit
-        amet auctor at, mollis non turpis. Nullam pretium libero vestibulum, finibus orci vel,
-        molestie quam. Fusce blandit tincidunt nulla, quis sollicitudin libero facilisis et. Integer
-        interdum nunc ligula, et fermentum metus hendrerit id. Vestibulum lectus felis, dictum at
-        lacinia sit amet, tristique id quam. Cras eu consequat dui. Suspendisse sodales nunc ligula,
-        in lobortis sem porta sed. Integer id ultrices magna, in luctus elit. Sed a pellentesque
-        est.\n\n
-        Aenean nunc velit, lacinia sed dolor sed, ultrices viverra nulla. Etiam a venenatis nibh.
-        Morbi laoreet, tortor sed facilisis varius, nibh orci rhoncus nulla, id elementum leo dui
-        non lorem. Nam mollis ipsum quis auctor varius. Quisque elementum eu libero sed commodo. In
-        eros nisl, imperdiet vel imperdiet et, scelerisque a mauris. Pellentesque varius ex nunc,
-        quis imperdiet eros placerat ac. Duis finibus orci et est auctor tincidunt. Sed non viverra
-        ipsum. Nunc quis augue egestas, cursus lorem at, molestie sem. Morbi a consectetur ipsum, a
-        placerat diam. Etiam vulputate dignissim convallis. Integer faucibus mauris sit amet finibus
-        convallis.\n\n
-        Phasellus in aliquet mi. Pellentesque habitant morbi tristique senectus et netus et
-        malesuada fames ac turpis egestas. In volutpat arcu ut felis sagittis, in finibus massa
-        gravida. Pellentesque id tellus orci. Integer dictum, lorem sed efficitur ullamcorper,
-        libero justo consectetur ipsum, in mollis nisl ex sed nisl. Donec maximus ullamcorper
-        sodales. Praesent bibendum rhoncus tellus nec feugiat. In a ornare nulla. Donec rhoncus
-        libero vel nunc consequat, quis tincidunt nisl eleifend. Cras bibendum enim a justo luctus
-        vestibulum. Fusce dictum libero quis erat maximus, vitae volutpat diam dignissim.
-    </string>
 </resources>

@@ -2,10 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.SEND_SMS" />
-
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
     <uses-permission android:name="android.permission.INTERNET" />
 
     <uses-feature
@@ -18,31 +16,18 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplication">
-
         <activity
-            android:name=".ui.WelcomeActivity"
+            android:name=".ui.LoginActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".ui.MainActivity" />
-        <activity android:name=".ui.SolicitudActivity" />
-        <activity android:name=".ui.GestorActivity" />
-        <activity android:name=".ui.LoginActivity" />
-        <activity android:name=".ui.RegisterActivity" />
-        <activity android:name=".ui.BranchDashboardActivity" />
-        <activity android:name=".ui.LoginDriverActivity" />
-        <activity android:name=".ui.LoginFunctionaryActivity" />
-        <activity android:name=".ui.AdminPanelActivity" />
-        <activity android:name=".ui.SolicitudDetailsActivity" />
-        <activity android:name=".ui.GuideActivity" />
-        <activity android:name=".ui.ManagerDashboardActivity" />
-        <activity android:name=".ui.TrackShippingActivity" />
-        <activity android:name=".ui.DriverDashboardActivity" />
-
     </application>
 
 </manifest>
