@@ -228,7 +228,7 @@ class RegisterActivity : AppCompatActivity() {
 
             // Roles específicos del personal logístico:
             "GESTOR" -> Intent(this, ManagerDashboardActivity::class.java)
-            "FUNCIONARIO" -> Intent(this, FunctionaryDashboardActivity::class.java) // ⬅️ CORREGIDO
+            "FUNCIONARIO" -> Intent(this, BranchDashboardActivity::class.java)
             "ANALISTA" -> Intent(this, ManagerDashboardActivity::class.java) // Asumimos que Analista usa el mismo dashboard que Manager
 
             else -> {

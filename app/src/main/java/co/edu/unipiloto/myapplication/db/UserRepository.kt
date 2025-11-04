@@ -219,4 +219,38 @@ class UserRepository(context: Context) {
         }
         return fullName
     }
+
+    /**
+     * Obtiene una lista de ID y nombres de usuario de todos los recolectores con el rol 'CONDUCTOR'.
+     *
+     * @return Lista de Pair<ID de Recolector, Nombre de Usuario/Conductor>.
+     */
+    fun getDriversForAssignment(): List<Pair<Long, String>> {
+        val drivers = mutableListOf<Pair<Long, String>>()
+        val db = helper.readableDatabase
+        var cursor: Cursor? = null
+
+        val query = "SELECT id, username FROM recolectores WHERE role = 'CONDUCTOR' AND is_active = 1 ORDER BY username ASC"
+
+        try {
+            cursor = db.rawQuery(query, null)
+            if (cursor.moveToFirst()) {
+                val idIndex = cursor.getColumnIndexOrThrow("id")
+                val usernameIndex = cursor.getColumnIndexOrThrow("username")
+
+                do {
+                    val id = cursor.getLong(idIndex)
+                    val username = cursor.getString(usernameIndex)
+                    drivers.add(Pair(id, username))
+                } while (cursor.moveToNext())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al obtener lista de conductores: ${e.message}")
+        } finally {
+            cursor?.close()
+            db.close()
+        }
+        return drivers
+    }
+
 }

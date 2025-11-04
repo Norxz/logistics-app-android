@@ -16,8 +16,13 @@
     <color name="status_success">#34C759</color>
     <color name="status_error">#FF3B30</color>
     <color name="status_cancelled">#FF3B30</color>
+
     <color name="status_warning">#FFCC00</color>
     <color name="status_pending">#FFCC00</color>
+
+    <color name="status_in_route">#FFCC00</color>
+
     <color name="status_active">#007AFF</color>
     <color name="status_default">#9E9E9E</color>
+
 </resources>

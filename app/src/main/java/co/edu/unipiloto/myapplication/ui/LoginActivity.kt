@@ -7,7 +7,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.db.UserRepository
-import co.edu.unipiloto.myapplication.data.SessionManager // Asegúrate de que la ruta a SessionManager sea correcta
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -66,7 +65,9 @@ class LoginActivity : AppCompatActivity() {
 
         // El layout usa un ImageButton (btnGoBack), pero para simplificar, lo tratamos como View/Button
         findViewById<View>(R.id.btnGoBack).setOnClickListener {
-            // Esto lleva al usuario a la pantalla inicial de selección de rol (ej. WelcomeActivity)
+            val intent = Intent(this, WelcomeActivity::class.java) // Redirigir a la Activity principal
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP // Limpia las actividades encima
+            startActivity(intent)
             finish()
         }
     }
@@ -81,7 +82,7 @@ class LoginActivity : AppCompatActivity() {
 
         btnGoRegister.setOnClickListener {
             // Redirigir a la Activity de registro
-            startActivity(Intent(this, RegisterActivity::class.java)) // 🚨 DEBES CREAR RegisterActivity
+            startActivity(Intent(this, RegisterActivity::class.java))
         }
 
         // Puedes agregar listener para btnForgotPassword aquí si es necesario
@@ -141,7 +142,7 @@ class LoginActivity : AppCompatActivity() {
 
             // Roles específicos del personal logístico:
             "GESTOR" -> Intent(this, ManagerDashboardActivity::class.java)
-            "FUNCIONARIO" -> Intent(this, FunctionaryDashboardActivity::class.java) // ⬅️ CORREGIDO
+            "FUNCIONARIO" -> Intent(this, BranchDashboardActivity::class.java)
             "ANALISTA" -> Intent(this, ManagerDashboardActivity::class.java) // Asumimos que Analista usa el mismo dashboard que Manager
 
             else -> {

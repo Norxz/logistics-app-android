@@ -2,9 +2,9 @@ package co.edu.unipiloto.myapplication.ui
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.ImageButton
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -12,124 +12,109 @@ import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.db.SolicitudRepository
 import co.edu.unipiloto.myapplication.storage.SessionManager
+import com.google.android.material.button.MaterialButton
+import co.edu.unipiloto.myapplication.ui.SolicitudAdapter
 
 /**
- * Actividad principal (Dashboard del Cliente) en Kotlin.
- * Muestra la lista de solicitudes y maneja la redirección de roles.
+ * Activity principal del cliente (Dashboard), mapeada al layout activity_user_dashboard.xml.
+ * Muestra solicitudes activas y finalizadas.
  */
 class MainActivity : AppCompatActivity() {
 
-    // Se recomienda usar View Binding para acceder a las vistas
-    // private lateinit var binding: ActivityMainBinding
-
     private lateinit var session: SessionManager
     private lateinit var repo: SolicitudRepository
-    private var adapterSolicitados: SolicitudAdapter? = null
-    private var adapterFinalizados: SolicitudAdapter? = null
+    private lateinit var rvSolicitados: RecyclerView
+    private lateinit var rvFinalizados: RecyclerView
+    private lateinit var btnToggleSolicitados: ImageButton
+    private lateinit var btnToggleFinalizados: ImageButton
+    private lateinit var btnNuevaSolicitud: MaterialButton
+    private lateinit var btnLogout: MaterialButton
+    private lateinit var tvEmpty: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_user_dashboard) // Usamos activity_user_dashboard.xml
 
-        // Inicialización de SessionManager
         session = SessionManager(this)
+        repo = SolicitudRepository(this)
 
-        // 1. Redirección Crítica: Verificar la sesión
-        val userId = session.getUserId()
-        if (userId == -1L) {
-            startActivity(Intent(this, LoginActivity::class.java))
+        if (!session.isLoggedIn() || session.getRole() != "CLIENTE") {
+            // Si el usuario no es cliente o no está logueado, lo enviamos al inicio
+            session.logoutUser()
+            startActivity(Intent(this, WelcomeActivity::class.java))
             finish()
             return
         }
 
-        // 2. Redirección de Roles: Si el usuario es Logístico, enviarlo a su Dashboard.
-        val role = session.getRole()
-        val upperRole = role.trim().uppercase()
-        // Comprobación de todos los roles logísticos
-        if (upperRole == "CONDUCTOR" || upperRole == "GESTOR" ||
-            upperRole == "FUNCIONARIO" || upperRole == "ANALISTA") {
-
-            val dest = getDestinationIntentByRole(upperRole)
-            startActivity(dest)
-            finish()
-            return
-        }
-        // Si no se redirige, continuamos como Cliente (MainActivity).
-
-        // ------ Panel Cliente (Lógica de la interfaz) ------
-        try {
-            repo = SolicitudRepository(this)
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Error al inicializar SolicitudRepository: ${e.message}")
-            Toast.makeText(this, "Error de base de datos. Intente de nuevo.", Toast.LENGTH_LONG).show()
-            // Si el repo falla al inicio, es mejor no continuar
-            session.clear()
-            startActivity(Intent(this, LoginActivity::class.java))
-            finish()
-            return
-        }
-
-        // 3. Inicialización de Vistas y Layouts
-        val rvSolicitados: RecyclerView = findViewById(R.id.rvSolicitados)
-        rvSolicitados.layoutManager = LinearLayoutManager(this)
-        val rvFinalizados: RecyclerView = findViewById(R.id.rvFinalizados)
-        rvFinalizados.layoutManager = LinearLayoutManager(this)
-
-        // Botones y Listeners
-        findViewById<View>(R.id.btnNuevaSolicitud).setOnClickListener {
-            startActivity(Intent(this, SolicitudActivity::class.java))
-        }
-
-        findViewById<View>(R.id.btnLogout).setOnClickListener {
-            session.clear()
-            startActivity(Intent(this, LoginActivity::class.java))
-            finish()
-        }
-
-        // Lógica de Toggle (Desplegar/Colapsar)
-        findViewById<ImageButton>(R.id.btnToggleSolicitados).setOnClickListener {
-            toggleVisibility(rvSolicitados, findViewById(R.id.btnToggleSolicitados))
-        }
-        findViewById<ImageButton>(R.id.btnToggleFinalizados).setOnClickListener {
-            toggleVisibility(rvFinalizados, findViewById(R.id.btnToggleFinalizados))
-        }
-
+        initViews()
+        setupListeners()
+        setupRecyclerViews()
         cargarLista()
+    }
+
+    private fun initViews() {
+        rvSolicitados = findViewById(R.id.rvSolicitados)
+        rvFinalizados = findViewById(R.id.rvFinalizados)
+        btnToggleSolicitados = findViewById(R.id.btnToggleSolicitados)
+        btnToggleFinalizados = findViewById(R.id.btnToggleFinalizados)
+        btnNuevaSolicitud = findViewById(R.id.btnNuevaSolicitud)
+        btnLogout = findViewById(R.id.btnLogout)
+        tvEmpty = findViewById(R.id.tvEmpty)
+        // Puedes personalizar tvWelcomeTitle si quieres usar el nombre del cliente
+    }
+
+    private fun setupListeners() {
+        btnLogout.setOnClickListener {
+            session.logoutUser()
+            // Vuelve a la pantalla de bienvenida
+            startActivity(Intent(this, WelcomeActivity::class.java))
+            finish()
+        }
+
+        btnNuevaSolicitud.setOnClickListener {
+            // Inicia el flujo de creación de solicitud
+            startActivity(Intent(this, PickUpLocationActivity::class.java))
+        }
+
+        btnToggleSolicitados.setOnClickListener {
+            toggleVisibility(rvSolicitados, btnToggleSolicitados, R.drawable.ic_arrow_up, R.drawable.ic_arrow_down)
+        }
+        btnToggleFinalizados.setOnClickListener {
+            toggleVisibility(rvFinalizados, btnToggleFinalizados, R.drawable.ic_arrow_up, R.drawable.ic_arrow_down)
+        }
+    }
+
+    private fun setupRecyclerViews() {
+        rvSolicitados.layoutManager = LinearLayoutManager(this)
+        rvFinalizados.layoutManager = LinearLayoutManager(this)
+        // Adaptadores se asignan en cargarLista()
     }
 
     override fun onResume() {
         super.onResume()
-        // Asegurarse de que el repositorio se haya inicializado antes de cargar la lista
-        if (::repo.isInitialized) {
-            cargarLista()
-        }
+        cargarLista()
     }
 
-    /**
-     * Alterna la visibilidad de un RecyclerView y actualiza el ícono del botón.
-     */
-    private fun toggleVisibility(rv: RecyclerView, btn: ImageButton) {
+    private fun toggleVisibility(rv: RecyclerView, btn: ImageButton, iconUp: Int, iconDown: Int) {
         if (rv.visibility == View.VISIBLE) {
             rv.visibility = View.GONE
-            btn.setImageResource(R.drawable.ic_arrow_down) // Asume que tienes este recurso
+            btn.setImageResource(iconDown)
         } else {
             rv.visibility = View.VISIBLE
-            btn.setImageResource(R.drawable.ic_arrow_up) // Asume que tienes este recurso
+            btn.setImageResource(iconUp)
         }
     }
 
-    /**
-     * Carga y separa la lista de solicitudes del usuario actual en Activas y Finalizadas.
-     */
     private fun cargarLista() {
         val userId = session.getUserId()
+        // Asegurarse de que el icono ic_arrow_up y ic_arrow_down existan en tus drawables
+
         val allItems = repo.listarPorUsuario(userId) ?: emptyList()
 
         val itemsActivas = mutableListOf<SolicitudRepository.SolicitudItem>()
         val itemsFinalizadas = mutableListOf<SolicitudRepository.SolicitudItem>()
 
         for (item in allItems) {
-            // Lógica de filtrado con .equals(ignoreCase = true) de Kotlin
             if (item.estado.equals("ENTREGADA", ignoreCase = true) || item.estado.equals("CANCELADA", ignoreCase = true)) {
                 itemsFinalizadas.add(item)
             } else {
@@ -137,59 +122,49 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 1. CONFIGURACIÓN DE LISTA ACTIVA
-        adapterSolicitados = SolicitudAdapter.forCliente(itemsActivas)
-        findViewById<RecyclerView>(R.id.rvSolicitados).adapter = adapterSolicitados
+        val adapterSolicitados = SolicitudAdapter.forCliente(itemsActivas)
+        rvSolicitados.adapter = adapterSolicitados
 
-        adapterSolicitados?.setOnCancelListener { solicitudId, _ ->
+        adapterSolicitados.setOnCancelListener { solicitudId, _ ->
             val rows = repo.cancelarSolicitud(solicitudId, session.getUserId())
             if (rows > 0) {
                 Toast.makeText(this, "Solicitud cancelada", Toast.LENGTH_SHORT).show()
-                cargarLista()
+                cargarLista() // Recarga la lista
             } else {
-                Toast.makeText(this, "No se pudo cancelar (quizá ya fue aceptada)", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "No se pudo cancelar (estado no es PENDIENTE).", Toast.LENGTH_SHORT).show()
                 cargarLista()
             }
         }
 
-        // 2. CONFIGURACIÓN DE LISTA FINALIZADA
-        adapterFinalizados = SolicitudAdapter.forCliente(itemsFinalizadas)
-        findViewById<RecyclerView>(R.id.rvFinalizados).adapter = adapterFinalizados
+        rvFinalizados.adapter = SolicitudAdapter.forCliente(itemsFinalizadas)
 
-        // 3. MANEJO DEL ESTADO VACÍO Y VISIBILIDAD
-        val tvEmpty = findViewById<View>(R.id.tvEmpty)
+        // Manejo del estado vacío y visibilidad
         if (itemsActivas.isEmpty() && itemsFinalizadas.isEmpty()) {
             tvEmpty.visibility = View.VISIBLE
         } else {
             tvEmpty.visibility = View.GONE
         }
 
-        // Colapsar secciones vacías
+        // Colapsar secciones vacías y configurar toggles
         if (itemsActivas.isEmpty()) {
-            findViewById<RecyclerView>(R.id.rvSolicitados).visibility = View.GONE
-            findViewById<ImageButton>(R.id.btnToggleSolicitados).setImageResource(R.drawable.ic_arrow_down)
+            rvSolicitados.visibility = View.GONE
+            btnToggleSolicitados.setImageResource(R.drawable.ic_arrow_down)
         } else {
-            findViewById<RecyclerView>(R.id.rvSolicitados).visibility = View.VISIBLE
+            // Si tiene items activos, se asegura de que esté visible (estado por defecto)
+            if (rvSolicitados.visibility == View.GONE) rvSolicitados.visibility = View.VISIBLE
+            btnToggleSolicitados.setImageResource(R.drawable.ic_arrow_up)
         }
 
         if (itemsFinalizadas.isEmpty()) {
-            findViewById<RecyclerView>(R.id.rvFinalizados).visibility = View.GONE
-            findViewById<ImageButton>(R.id.btnToggleFinalizados).setImageResource(R.drawable.ic_arrow_down)
+            rvFinalizados.visibility = View.GONE
+            btnToggleFinalizados.setImageResource(R.drawable.ic_arrow_down)
+        } else {
+            // Por defecto, historial suele estar colapsado
+            if (rvFinalizados.visibility == View.VISIBLE) {
+                btnToggleFinalizados.setImageResource(R.drawable.ic_arrow_up)
+            } else {
+                btnToggleFinalizados.setImageResource(R.drawable.ic_arrow_down)
+            }
         }
-    }
-
-    /**
-     * Obtiene el Intent de destino basándose en el rol (Consistente con LoginActivity).
-     */
-    private fun getDestinationIntentByRole(role: String): Intent {
-        val destClass = when (role.trim().toUpperCase()) {
-            "CONDUCTOR" -> DriverDashboardActivity::class.java
-            "GESTOR" -> ManagerDashboardActivity::class.java
-            "FUNCIONARIO" -> BranchDashboardActivity::class.java
-            "ANALISTA" -> AdminPanelActivity::class.java
-            "CLIENTE" -> MainActivity::class.java
-            else -> MainActivity::class.java
-        }
-        return Intent(this, destClass)
     }
 }

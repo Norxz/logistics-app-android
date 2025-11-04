@@ -76,6 +76,7 @@
     <string name="on_surface_secondary">#6D6D72</string>
     <string name="password">Contraseña</string>
     <string name="pick_recoleccion">Solicitar recolección</string>
+    <string name="pick_recolection">@string/pick_recoleccion</string>
     <string name="pick_up_adress">Dirección completa (Calle, Número, Ciudad)</string>
     <string name="pick_up_button">Confirmar Dirección de Recogida</string>
     <string name="pick_up_description">Escribe la dirección donde tenemos que buscar tu paquete o usa tu ubicación actual.</string>
