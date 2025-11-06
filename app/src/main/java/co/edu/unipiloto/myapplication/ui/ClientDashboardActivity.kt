@@ -43,7 +43,14 @@ class ClientDashboardActivity : AppCompatActivity() {
 
     // Estado de la visibilidad
     private var isSolicitadosVisible = true
-    private var isFinalizadosVisible = false // Inicialmente oculto según el layout
+    private var isFinalizadosVisible = false /**
+     * Sets up the client dashboard UI, verifies the session and role, and initializes data and event handlers.
+     *
+     * If the current session is not authenticated or the role is not "CLIENTE", the user is logged out and the activity
+     * navigates back to the login hub. Otherwise the activity binds views, loads the client's display name, and
+     * attaches UI listeners.
+     *
+     * @param savedInstanceState If non-null, the activity is being re-created from a previous saved state.
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,6 +76,12 @@ class ClientDashboardActivity : AppCompatActivity() {
         // loadSolicitudes() // ⚠️ Implementar en el siguiente paso
     }
 
+    /**
+     * Binds view references, configures RecyclerView layout managers, and synchronizes initial toggle rotation.
+     *
+     * Initializes UI fields used by the activity, sets LinearLayoutManagers for both request lists, and adjusts
+     * the history-section toggle button rotation to reflect the current visibility state.
+     */
     private fun initViews() {
         tvWelcomeTitle = findViewById(R.id.tvWelcomeTitle)
         btnLogout = findViewById(R.id.btnLogout)
@@ -92,6 +105,12 @@ class ClientDashboardActivity : AppCompatActivity() {
         if (isFinalizadosVisible) btnToggleFinalizados.rotation = 0f else btnToggleFinalizados.rotation = 180f
     }
 
+    /**
+     * Set the welcome title to a personalized greeting for the current client.
+     *
+     * If the client's full name cannot be retrieved, uses "Cliente" as a fallback and updates
+     * the `tvWelcomeTitle` TextView with the localized greeting string.
+     */
     private fun loadClientData() {
         val userId = sessionManager.getUserId()
         // Obtener el nombre para el saludo
@@ -101,6 +120,11 @@ class ClientDashboardActivity : AppCompatActivity() {
         tvWelcomeTitle.text = getString(R.string.client_dashboard_title_welcome, clientName)
     }
 
+    /**
+     * Attaches click listeners for dashboard actions: logout, create new delivery, and toggling section visibility.
+     *
+     * Configures handlers that (1) clear the session and navigate to the login hub on logout, (2) start NewDeliveryActivity for creating a new delivery, and (3) toggle visibility state and update the corresponding section UI for active requests and completed history.
+     */
     private fun setupListeners() {
 
         // 1. CERRAR SESIÓN
@@ -132,12 +156,11 @@ class ClientDashboardActivity : AppCompatActivity() {
     }
 
     /**
-     * Alterna la visibilidad de un RecyclerView y cambia el ícono del botón.
-     * 🏆 FUNCIÓN CORREGIDA: Ya no acepta el lambda 'setVisible'.
+     * Toggle visibility of a RecyclerView section and rotate its toggle button.
      *
-     * @param recyclerView El RecyclerView a mostrar/ocultar.
-     * @param button El ImageButton que muestra la flecha (para rotar).
-     * @param newState El nuevo estado deseado (true para visible, false para oculto).
+     * @param recyclerView The RecyclerView to show or hide.
+     * @param button The toggle view whose rotation indicates the section state.
+     * @param newState `true` to make the section visible, `false` to hide it.
      */
     private fun toggleSection(recyclerView: RecyclerView, button: View, newState: Boolean) {
         if (newState) {
@@ -152,7 +175,9 @@ class ClientDashboardActivity : AppCompatActivity() {
     }
 
     /**
-     * Redirige al usuario al Hub de Bienvenida/Login tras el logout.
+     * Navigates the user to the login hub (MainActivity) and clears the activity back stack.
+     *
+     * The current activity is finished after starting MainActivity so the user cannot return with Back.
      */
     private fun navigateToLoginHub() {
         val intent = Intent(this, MainActivity::class.java)

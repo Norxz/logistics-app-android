@@ -20,6 +20,14 @@ class BranchDashboardActivity : AppCompatActivity() {
 
     private lateinit var sessionManager: SessionManager
 
+    /**
+     * Initializes the activity: inflates the layout, enforces that the current session belongs to a
+     * user with role "FUNCIONARIO", and configures recyclers and UI listeners.
+     *
+     * If the user is not logged in or does not have the "FUNCIONARIO" role, the method invokes
+     * logoutUser() and exits without completing setup.
+     *
+     * @param savedInstanceState If non-null, this Activity is being re-created from a previous saved state.
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_functionary_dashboard)
@@ -37,6 +45,12 @@ class BranchDashboardActivity : AppCompatActivity() {
         setupListeners()
     }
 
+    /**
+     * Wires UI actions for the dashboard's buttons.
+     *
+     * Attaches a click listener to the logout button that signs the user out, and a click listener
+     * to the new-request button that starts SolicitudActivity.
+     */
     private fun setupListeners() {
         findViewById<MaterialButton>(R.id.btnLogout).setOnClickListener {
             logoutUser()
@@ -48,6 +62,14 @@ class BranchDashboardActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Sets up the three branch request lists (pending, in-route, completed) and their toggle controls.
+     *
+     * Configures layout managers for each RecyclerView, attaches click listeners on the toggle
+     * buttons to show/hide the corresponding lists and update toggle icons, and ensures the
+     * pending list's toggle icon matches its initial visibility. Adapters for the lists are left
+     * to be assigned (TODO).
+     */
     private fun setupRecyclerAndToggles() {
         // Inicialización y configuración simplificada de RecyclerViews
         val rvPending: RecyclerView = findViewById(R.id.rvPending)
@@ -75,6 +97,14 @@ class BranchDashboardActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Toggle visibility of a RecyclerView and update the toggle button's icon accordingly.
+     *
+     * @param rv The RecyclerView to show or hide.
+     * @param btn The ImageButton whose icon will be updated.
+     * @param iconUp Resource id for the icon to display when `rv` is visible.
+     * @param iconDown Resource id for the icon to display when `rv` is hidden.
+     */
     private fun toggleVisibility(rv: RecyclerView, btn: ImageButton, iconUp: Int, iconDown: Int) {
         if (rv.visibility == View.VISIBLE) {
             rv.visibility = View.GONE
@@ -85,6 +115,12 @@ class BranchDashboardActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Logs out the current session, navigates to the login screen, and clears the activity back stack.
+     *
+     * Calls the session manager to remove session data, starts LoginActivity with flags that
+     * create a new task and clear existing tasks, and finishes this activity.
+     */
     private fun logoutUser() {
         sessionManager.logoutUser()
         val intent = Intent(this, LoginActivity::class.java)

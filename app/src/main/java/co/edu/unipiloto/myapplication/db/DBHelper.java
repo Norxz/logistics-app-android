@@ -20,17 +20,20 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final int DB_VERSION = 8;
 
     /**
-     * Constructor de DBHelper.
-     * @param context Contexto de la aplicación.
+     * Create a DBHelper configured to manage the application's SQLite database.
+     *
+     * @param context the application context used to access or create the database
      */
     public DBHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
     }
 
     /**
-     * Crea las tablas iniciales de la base de datos.
-     * Este método se ejecuta una sola vez cuando la base de datos se crea por primera vez.
-     * @param db La base de datos.
+     * Creates the initial database schema (users, recolectores, direcciones, guia, solicitudes) and their indexes in the provided database.
+     *
+     * This method is intended to be invoked from onCreate when the database is created for the first time.
+     *
+     * @param db the writable SQLiteDatabase where tables and indexes will be created
      */
     private void createTables(SQLiteDatabase db) {
 
@@ -114,8 +117,9 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     /**
-     * Se llama cuando la base de datos es creada por primera vez.
-     * @param db La base de datos.
+     * Create the initial database schema when the database is created for the first time.
+     *
+     * @param db the writable SQLiteDatabase used to execute schema creation statements
      */
     @Override
     public void onCreate(SQLiteDatabase db) {
@@ -124,12 +128,14 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     /**
-     * Se llama cuando la base de datos necesita ser actualizada.
-     * La implementación actual elimina todas las tablas existentes y las vuelve a crear.
-     * ¡Atención! Este es un método de migración destructivo que borrará todos los datos.
-     * @param db La base de datos.
-     * @param oldV La versión antigua de la base de datos.
-     * @param newV La versión nueva de la base de datos.
+     * Performs a destructive schema migration when the database version increases.
+     *
+     * <p>If oldV is less than newV, all application tables are dropped and the schema is recreated by
+     * calling onCreate(db). This operation permanently deletes existing data.
+     *
+     * @param db the SQLiteDatabase instance being upgraded
+     * @param oldV the current (old) database version
+     * @param newV the target (new) database version
      */
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldV, int newV) {

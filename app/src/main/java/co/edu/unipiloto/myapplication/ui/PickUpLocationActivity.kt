@@ -1,4 +1,3 @@
-
 package co.edu.unipiloto.myapplication.ui
 
 import android.content.Intent
@@ -19,6 +18,11 @@ class PickUpLocationActivity : AppCompatActivity() {
     private lateinit var btnContinue: MaterialButton
     private lateinit var btnUseGps: ImageButton
 
+    /**
+     * Initializes the activity: sets the content view, binds UI components, and attaches listeners.
+     *
+     * @param savedInstanceState Bundle containing the activity's previously saved state, if available.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_recogida_ubicacion)
@@ -27,6 +31,12 @@ class PickUpLocationActivity : AppCompatActivity() {
         setupListeners()
     }
 
+    /**
+     * Binds UI views for the pickup address screen and wires the back button to close the activity.
+     *
+     * Initializes `etAddress`, `btnContinue`, and `btnUseGps` with their corresponding views
+     * and sets the back button to finish the activity when tapped.
+     */
     private fun initViews() {
         etAddress = findViewById(R.id.etAddress)
         btnContinue = findViewById(R.id.btnContinue)
@@ -35,6 +45,12 @@ class PickUpLocationActivity : AppCompatActivity() {
         findViewById<ImageButton>(R.id.btnGoBack).setOnClickListener { finish() }
     }
 
+    /**
+     * Attaches click listeners to the GPS and continue controls.
+     *
+     * The GPS button shows a short "Obtaining current location" toast as a placeholder for GPS retrieval.
+     * The continue button reads the trimmed pickup address from the address input; if the address is empty it shows a validation toast, otherwise it launches SolicitudActivity with the address under the "PICKUP_ADDRESS" extra and finishes this activity.
+     */
     private fun setupListeners() {
         btnUseGps.setOnClickListener {
             // TODO: Implementar lógica de obtención de ubicación por GPS

@@ -28,17 +28,41 @@ class SolicitudAsignacionAdapter(
     private val onAssignmentSuccess: () -> Unit
 ) : RecyclerView.Adapter<SolicitudAsignacionAdapter.ViewHolder>() {
 
+    /**
+     * Replaces the adapter's items with the provided list and refreshes the displayed list.
+     *
+     * @param newItems The new list of solicitudes to display.
+     */
     fun updateData(newItems: List<SolicitudRepository.Solicitud>) {
         items = newItems
         notifyDataSetChanged()
     }
 
+    /**
+     * Inflates the item_solicitud_pendiente layout and returns a ViewHolder for the new item view.
+     *
+     * @param parent The parent view group used to inflate layout parameters.
+     * @param viewType The view type of the new View.
+     * @return A new ViewHolder backed by the inflated item view.
+     */
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_solicitud_pendiente, parent, false)
         return ViewHolder(view)
     }
 
+    /**
+     * Bind a Solicitud item to the holder and configure the driver selection and assignment actions.
+     *
+     * Sets visible fields (request ID, destination summary, and sender ID), populates the conductor
+     * spinner with the provided driver names (preceded by a "select driver" prompt), and attaches
+     * a click listener to the assign button that validates selection, calls the repository to assign
+     * the selected driver to the solicitud, displays a success/failure toast, and invokes the
+     * onAssignmentSuccess callback when the assignment succeeds.
+     *
+     * @param holder ViewHolder containing views to bind and configure.
+     * @param position Adapter position of the Solicitud item to bind.
+     */
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
         val context = holder.itemView.context
@@ -84,7 +108,12 @@ class SolicitudAsignacionAdapter(
         }
     }
 
-    override fun getItemCount(): Int = items.size
+    /**
+ * Provides the number of solicitudes currently held by the adapter.
+ *
+ * @return The count of items displayed by the adapter.
+ */
+override fun getItemCount(): Int = items.size
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         // Mapeo de vistas de item_solicitud_pendiente.xml

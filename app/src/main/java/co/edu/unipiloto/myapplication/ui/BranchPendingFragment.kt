@@ -25,7 +25,11 @@ class BranchPendingFragment : Fragment() {
     private lateinit var solicitudRepository: SolicitudRepository
     private lateinit var sessionManager: SessionManager
     // Asumimos un adaptador para la vista de sucursal
-    // private lateinit var adapter: BranchSolicitudAdapter
+    /**
+     * Inflates and returns the fragment's layout for displaying the branch request list.
+     *
+     * @return The inflated root view for this fragment's UI (fragment_branch_list).
+     */
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -34,6 +38,15 @@ class BranchPendingFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_branch_list, container, false)
     }
 
+    /**
+     * Initializes repositories and UI elements for the fragment and starts loading pending branch requests.
+     *
+     * Binds the RecyclerView and empty-state TextView from the provided view, configures the RecyclerView's
+     * layout manager, and triggers loading of pending requests for the current session zone.
+     *
+     * @param view The fragment's root view used to find and bind child views.
+     * @param savedInstanceState Previously saved state, if any.
+     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -53,6 +66,13 @@ class BranchPendingFragment : Fragment() {
         loadPendingRequests()
     }
 
+    /**
+     * Load pending branch requests for the current session zone and update the list and empty-state views.
+     *
+     * If the session zone is not available, the function returns without changing the UI. Otherwise it fetches
+     * pending requests for that zone and shows the RecyclerView when there are items or shows the empty-state
+     * TextView when there are none.
+     */
     private fun loadPendingRequests() {
         val zona = sessionManager.getZona() ?: return
 

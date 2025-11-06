@@ -28,6 +28,13 @@ class AdminPanelActivity : AppCompatActivity() {
 
     private lateinit var sessionManager: SessionManager
 
+    /**
+     * Initializes the admin panel activity, enforces that the current session belongs to an "ANALISTA" user, and sets up the UI.
+     *
+     * If the user is not authenticated or does not have the "ANALISTA" role, the method logs out and redirects to the login screen.
+     *
+     * @param savedInstanceState Previously saved state, if any.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_admin_panel)
@@ -43,6 +50,12 @@ class AdminPanelActivity : AppCompatActivity() {
         initViews()
     }
 
+    /**
+     * Initializes admin panel UI elements and wires their click handlers.
+     *
+     * Sets up the buttons for managing officials, managing drivers, viewing all requests,
+     * and logging out; the management and view actions are currently placeholders (TODO).
+     */
     private fun initViews() {
         // Mapeo de botones de tu XML activity_admin_panel
         val btnManageOfficials: MaterialButton = findViewById(R.id.btnManageOfficials)
@@ -71,6 +84,11 @@ class AdminPanelActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Logs out the current user and navigates to the login screen.
+     *
+     * Clears the activity back stack so the user cannot return to the previous screens.
+     */
     private fun logoutUser() {
         sessionManager.logoutUser()
         val intent = Intent(this, LoginActivity::class.java)

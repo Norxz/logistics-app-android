@@ -42,16 +42,13 @@ class UserRepository(context: Context) {
     // ==========================================================
 
     /**
-     * Autentica a un usuario verificando sus credenciales contra las tablas `users` y `recolectores`.
+     * Authenticate a user by validating credentials against the clients and logistics staff tables.
      *
-     * La lógica de autenticación es polimórfica:
-     * 1. Primero, intenta encontrar un cliente en la tabla `users` usando el `usernameOrEmail` como email.
-     * 2. Si no lo encuentra, intenta encontrar un miembro del personal en la tabla `recolectores` usando
-     *    `usernameOrEmail` como `username`.
+     * First attempts to match a client using the value as an email; if not found, attempts to match an active logistics staff member using the value as a username.
      *
-     * @param usernameOrEmail El identificador del usuario, que puede ser un email (para clientes) o un nombre de usuario (para personal).
-     * @param passwordHash El hash de la contraseña del usuario.
-     * @return Un objeto [UserSessionData] con los datos de sesión si la autenticación es exitosa; de lo contrario, devuelve `null`.
+     * @param usernameOrEmail Identifier provided by the user; treated as an email when matching clients and as a username when matching logistics staff.
+     * @param passwordHash Hash of the user's password.
+     * @return `UserSessionData` with session information when credentials match a client or an active logistics staff member, `null` otherwise.
      */
     fun login(usernameOrEmail: String, passwordHash: String): UserSessionData? {
         val db = helper.readableDatabase
@@ -100,13 +97,13 @@ class UserRepository(context: Context) {
     // ==========================================================
 
     /**
-     * Registra un nuevo cliente en la tabla `users`.
+     * Insert a new client into the `users` table.
      *
-     * @param email El email del nuevo cliente. Debe ser único.
-     * @param passwordHash El hash de la contraseña del cliente.
-     * @param fullName El nombre completo del cliente.
-     * @param phoneNumber El número de teléfono del cliente.
-     * @return El ID de la fila del nuevo cliente insertado, o -1L si el registro falla (por ejemplo, si el email ya existe).
+     * @param email The client's email; expected to be unique.
+     * @param passwordHash The hashed password for the client.
+     * @param fullName The client's full name.
+     * @param phoneNumber The client's phone number.
+     * @return The row ID of the newly inserted client, or `-1L` if insertion fails.
      */
     fun registerClient(
         email: String,
@@ -137,13 +134,15 @@ class UserRepository(context: Context) {
     // ==========================================================
 
     /**
-     * Registra un nuevo miembro del personal logístico en la tabla `recolectores`.
+     * Inserts a logistics staff member into the `recolectores` table.
      *
-     * @param username El nombre de usuario para el nuevo miembro del personal. Debe ser único.
-     * @param passwordHash El hash de la contraseña.
-     * @param role El rol asignado (ej. "RECOLECTOR", "GESTOR").
-     * @param zona La zona geográfica asignada. Puede ser nula.
-     * @return El ID de la nueva fila insertada, o -1L si el registro falla (por ejemplo, si el `username` ya existe).
+     * The new record is created as active by default (is_active = 1).
+     *
+     * @param username The username for the staff member; should be unique.
+     * @param passwordHash The password hash to store.
+     * @param role The assigned role (e.g., "CONDUCTOR", "RECOLECTOR").
+     * @param zona The assigned geographic zone, or `null` if none.
+     * @return The row ID of the inserted record, or -1L if the insertion fails.
      */
     fun registerRecolector(
         username: String,
@@ -172,18 +171,10 @@ class UserRepository(context: Context) {
     }
 
     /**
-     * Obtiene el nombre completo o nombre de usuario visible de un usuario por su ID.
+     * Retrieves the display name for a user by ID, preferring a staff member's `username` over a client's `full_name`.
      *
-     * La lógica es polimórfica y busca en dos tablas:
-     * 1. Primero, busca en la tabla `recolectores` por el `username`.
-     * 2. Si no se encuentra, busca en la tabla `users` por el `full_name`.
-     *
-     * Este método es útil para mostrar el nombre del usuario en la UI sin necesidad
-     * de saber de antemano si es un cliente o un miembro del personal.
-     *
-     * @param id El ID del usuario a buscar.
-     * @return El `username` (para personal) o `full_name` (para clientes) como un [String],
-     *         o `null` si no se encuentra ningún usuario con ese ID en ninguna de las dos tablas.
+     * @param id The user ID to look up.
+     * @return The staff `username` or the client's `full_name`, or `null` if no matching user is found.
      */
     fun getFullNameById(id: Long): String? {
         val db = helper.readableDatabase
@@ -221,9 +212,9 @@ class UserRepository(context: Context) {
     }
 
     /**
-     * Obtiene una lista de ID y nombres de usuario de todos los recolectores con el rol 'CONDUCTOR'.
+     * Retrieves active drivers and their usernames for assignment.
      *
-     * @return Lista de Pair<ID de Recolector, Nombre de Usuario/Conductor>.
+     * @return A list of pairs where the first element is the driver's ID and the second is the username; the list is ordered by username. An empty list is returned if there are no matching drivers or an error occurs.
      */
     fun getDriversForAssignment(): List<Pair<Long, String>> {
         val drivers = mutableListOf<Pair<Long, String>>()

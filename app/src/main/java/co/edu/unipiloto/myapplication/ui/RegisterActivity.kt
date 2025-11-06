@@ -50,6 +50,14 @@ class RegisterActivity : AppCompatActivity() {
     private val PASSWORD_BLACKLIST = listOf("password", "123456", "qwerty", "admin", "unipiloto", "piloto")
 
 
+    /**
+     * Initializes the activity's UI, dependencies, and interaction handlers.
+     *
+     * Sets the activity layout, hides the action bar, creates repository and session manager instances,
+     * binds view references, configures spinners, and registers UI listeners.
+     *
+     * @param savedInstanceState If non-null, contains the activity's previously saved state. 
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
@@ -65,6 +73,13 @@ class RegisterActivity : AppCompatActivity() {
         setupListeners()
     }
 
+    /**
+     * Binds activity UI elements to their corresponding fields and ensures TextInputLayout references are resolved.
+     *
+     * Attempts to obtain TextInputLayout parents for the email and password inputs via parent chaining and falls back
+     * to finding the layouts by ID when the hierarchy differs. Also initializes role/zone spinners, the zone label,
+     * the register button, and the progress bar.
+     */
     private fun initViews() {
         // Inicializar EditTexts y TextInputLayouts
         etEmail = findViewById(R.id.etEmail)
@@ -86,6 +101,13 @@ class RegisterActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progress)
     }
 
+    /**
+     * Initializes and configures the role and zone spinners and toggles zone visibility based on the selected role.
+     *
+     * Sets up adapters for the role and zone dropdowns and installs a listener on the role spinner that shows
+     * the zone label and spinner when the selected role is one of the logistic roles in `ROLES_LOGISTICOS`,
+     * otherwise hides them.
+     */
     private fun setupSpinners() {
         // Configurar Spinner de Roles
         val roles = listOf("CLIENTE", "CONDUCTOR", "GESTOR", "FUNCIONARIO", "ANALISTA")
@@ -122,6 +144,12 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Set up click handlers for the registration and "go to login" buttons.
+     *
+     * Taps on the register button start the registration flow; taps on the login button
+     * finish the activity and return to the login screen.
+     */
     private fun setupListeners() {
         btnGoRegister.setOnClickListener {
             performRegistration()
@@ -134,7 +162,12 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     /**
-     * Realiza la validación de campos y el intento de registro.
+     * Validate user input and attempt to register a new user.
+     *
+     * Performs required-field checks, email format validation, password policy and confirmation checks,
+     * and enforces that a zone is selected for logistic roles. If validation passes, hashes the password,
+     * calls the repository to create the user (client or logistic personnel), shows a progress indicator,
+     * and on success navigates to the login screen; on failure shows an error message.
      */
     private fun performRegistration() {
         // Limpiar errores
@@ -234,8 +267,12 @@ class RegisterActivity : AppCompatActivity() {
     // --- FUNCIONES DE SEGURIDAD Y VALIDACIÓN ---
 
     /**
-     * Aplica políticas de seguridad a la contraseña (mín 8, mayús, minús, número, lista negra).
-     * @return String con mensaje de error, o null si es válida.
+     * Validate a password against strength and blacklist policies.
+     *
+     * Enforces a minimum length of 8 characters, presence of at least one uppercase letter, one lowercase letter, and one digit, and rejects passwords that contain any substring from the configured blacklist.
+     *
+     * @param password The password to validate.
+     * @return An error message describing the failing policy, or `null` if the password meets all requirements.
      */
     private fun isValidPassword(password: String): String? {
         if (password.length < 8) {
@@ -262,14 +299,22 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     /**
-     * Valida el formato de correo electrónico.
+     * Checks whether the given character sequence matches the standard email address pattern.
+     *
+     * @param target The character sequence to validate as an email address.
+     * @return `true` if `target` matches the email address pattern, `false` otherwise.
      */
     private fun isValidEmail(target: CharSequence): Boolean {
         return android.util.Patterns.EMAIL_ADDRESS.matcher(target).matches()
     }
 
     /**
-     * Genera un hash SHA-256 de la contraseña para almacenamiento seguro.
+     * Compute the SHA-256 hash of a password and return it as a lowercase hexadecimal string.
+     *
+     * If hashing fails, the original password is returned (insecure fallback).
+     *
+     * @param password The plaintext password to hash.
+     * @return The lowercase hexadecimal SHA-256 hash of `password`, or the original `password` if hashing fails.
      */
     private fun hashPassword(password: String): String {
         return try {

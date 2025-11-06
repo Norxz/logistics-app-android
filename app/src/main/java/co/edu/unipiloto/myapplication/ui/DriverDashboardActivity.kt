@@ -60,10 +60,11 @@ class DriverDashboardActivity : AppCompatActivity() {
     private var driverZona: String? = null
 
     /**
-     * Método principal que se llama al crear la actividad.
+     * Initialize the activity: verify session and role, set up managers and UI, and load the driver's assigned routes.
      *
-     * Se encarga de la configuración inicial, incluyendo la verificación de la sesión,
-     * la inicialización de las vistas y la carga de datos.
+     * Checks that the current user is logged in with role "CONDUCTOR" and redirects to the login screen if not.
+     * Initializes SessionManager, SolicitudRepository, and UserRepository, reads driverId and driverZona from the session,
+     * then initializes views, listeners, the RecyclerView, and loads assigned routes.
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,8 +94,11 @@ class DriverDashboardActivity : AppCompatActivity() {
     }
 
     /**
-     * Inicializa y mapea las vistas del layout a las propiedades de la clase.
-     * También personaliza los textos de bienvenida con los datos del conductor.
+     * Initialize view references and set driver greeting and zone texts.
+     *
+     * Maps layout views to the activity's properties and updates the title with the
+     * conductor's full name (or "Conductor" if not found) and the subtitle with the
+     * assigned zone (or "Sin Zona" if null).
      */
     private fun initViews() {
         tvDriverTitle = findViewById(R.id.tvDriverTitle)
@@ -115,7 +119,7 @@ class DriverDashboardActivity : AppCompatActivity() {
     }
 
     /**
-     * Configura los listeners para los elementos interactivos de la UI, como botones.
+     * Set up interaction listeners for UI elements, including the logout button.
      */
     private fun setupListeners() {
         btnLogout.setOnClickListener {
@@ -124,9 +128,9 @@ class DriverDashboardActivity : AppCompatActivity() {
     }
 
     /**
-     * Configura el RecyclerView, incluyendo su LayoutManager y su adaptador.
-     * Utiliza un método de fábrica `forConductor` para instanciar el adaptador,
-     * lo que permite una configuración específica para la vista del conductor.
+     * Initializes the routes RecyclerView with a LinearLayoutManager and a conductor-specific adapter.
+     *
+     * The adapter is created via `SolicitudAdapter.forConductor` with an empty list.
      */
     private fun setupRecyclerView() {
         // Se asume la existencia de un método de fábrica `forConductor` en SolicitudAdapter.
@@ -137,10 +141,11 @@ class DriverDashboardActivity : AppCompatActivity() {
     }
 
     /**
-     * Carga las rutas (solicitudes) asignadas al conductor desde el repositorio.
+     * Load the routes (solicitudes) assigned to the current driver and update the UI.
      *
-     * Actualiza el adaptador del RecyclerView con los datos obtenidos. Si no hay
-     * solicitudes, muestra un mensaje indicándolo y oculta la lista.
+     * Shows an error Toast if the driver ID is invalid. Retrieves assigned solicitudes,
+     * updates the RecyclerView adapter when any are found, and toggles visibility
+     * between the routes list and the "no routes" message based on the result.
      */
     private fun loadAssignedRoutes() {
         if (driverId == -1L) {
@@ -162,8 +167,9 @@ class DriverDashboardActivity : AppCompatActivity() {
     }
 
     /**
-     * Cierra la sesión del usuario actual, limpia los datos de SessionManager
-     * y redirige a la pantalla de LoginActivity.
+     * Log out the current user, clear stored session data, and navigate to the login screen.
+     *
+     * The navigation resets the activity back stack so the user cannot return to the previous screens.
      */
     private fun logoutUser() {
         sessionManager.logoutUser()

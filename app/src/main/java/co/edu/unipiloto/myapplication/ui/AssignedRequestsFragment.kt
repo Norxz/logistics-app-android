@@ -26,6 +26,11 @@ class AssignedRequestsFragment : Fragment() {
     // Usamos el BranchSolicitudAdapter que creamos en el paso anterior.
     private lateinit var adapter: BranchSolicitudAdapter
 
+    /**
+     * Inflates the fragment layout that contains the generic branch/management list UI.
+     *
+     * @return The root View of the inflated R.layout.fragment_branch_list.
+     */
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -34,6 +39,13 @@ class AssignedRequestsFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_branch_list, container, false)
     }
 
+    /**
+     * Initializes repositories and UI components, configures the RecyclerView adapter, and loads assigned requests.
+     *
+     * Initializes SolicitudRepository and SessionManager, binds the RecyclerView and empty-state TextView,
+     * sets a vertical LinearLayoutManager, attaches a BranchSolicitudAdapter with an empty list, and invokes
+     * loadAssignedRequests() to populate the list for the current session zone.
+     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -56,7 +68,11 @@ class AssignedRequestsFragment : Fragment() {
     }
 
     /**
-     * Carga las solicitudes que ya están en estado 'ASIGNADA' o 'EN CAMINO' para la zona del gestor.
+     * Loads requests in the "ASIGNADA" or "EN CAMINO" states for the current manager zone and updates the UI.
+     *
+     * Retrieves the zone from the session; if absent, the method returns early. Fetches the assigned requests
+     * for that zone and updates the RecyclerView adapter when data is present, or shows the empty-state TextView
+     * with the `no_assigned_requests` message when no items are found.
      */
     private fun loadAssignedRequests() {
         val zona = sessionManager.getZona() ?: return

@@ -29,14 +29,18 @@ class SolicitudAdapter private constructor(
     private var onCancelListener: ((Long, Int) -> Unit)? = null
 
     /**
-     * Establece el listener que será invocado cuando el usuario haga clic en el botón de cancelar.
+     * Set a callback invoked when the cancel button is clicked for an item.
+     *
+     * @param listener Function called with the cancelled item's `solicitudId` and its adapter `position`.
      */
     fun setOnCancelListener(listener: (solicitudId: Long, position: Int) -> Unit) {
         this.onCancelListener = listener
     }
 
     /**
-     * Actualiza la lista de datos del adaptador y notifica al RecyclerView.
+     * Replace the adapter's items with the given list and refresh the RecyclerView.
+     *
+     * @param newItems The new list of SolicitudItem to display; existing items are removed and replaced.
      */
     fun updateData(newItems: List<SolicitudItem>) {
         items.clear()
@@ -49,16 +53,19 @@ class SolicitudAdapter private constructor(
     // -----------------------------------------------------
     companion object {
         /**
-         * Crea una instancia del adaptador configurada para la vista de un **cliente**.
-         * Muestra el botón de cancelar.
+         * Create an adapter instance configured for a client view with the cancel button visible.
+         *
+         * @param items Initial list of SolicitudItem to display.
+         * @return A SolicitudAdapter configured to show the cancel button and initialized with the provided items.
          */
         fun forCliente(items: List<SolicitudItem>): SolicitudAdapter {
             return SolicitudAdapter(items.toMutableList(), showCancelButton = true)
         }
 
         /**
-         * Crea una instancia del adaptador configurada para el **conductor**.
-         * Oculta el botón de cancelar, ya que el conductor tiene su propia lógica de botones.
+         * Create an adapter configured for the driver view with the cancel button hidden.
+         *
+         * @return A SolicitudAdapter configured for drivers (cancel button not shown).
          */
         fun forConductor(items: List<SolicitudItem>): SolicitudAdapter {
             return SolicitudAdapter(items.toMutableList(), showCancelButton = false)
@@ -67,7 +74,13 @@ class SolicitudAdapter private constructor(
 
     // -----------------------------------------------------
     // MÉTODOS DEL RECYCLERVIEW
-    // -----------------------------------------------------
+    /**
+     * Inflates the item_solicitud layout and returns a new SolicitudViewHolder.
+     *
+     * @param parent The parent ViewGroup used to inflate the view.
+     * @param viewType The view type for the new view (unused).
+     * @return A SolicitudViewHolder backed by the inflated item_solicitud view.
+     */
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SolicitudViewHolder {
         // Asumiendo que R.layout.item_solicitud existe.
@@ -76,6 +89,16 @@ class SolicitudAdapter private constructor(
         return SolicitudViewHolder(view)
     }
 
+    /**
+     * Binds the item at the given position to the holder and configures cancel behaviour and visibility.
+     *
+     * Sets the view data via holder.bind(item), assigns the cancel button click to invoke the adapter's
+     * cancel listener with the item's id and position, and makes the cancel button visible only when
+     * the adapter is configured to show it and the item's estado is not "ENTREGADA" or "CANCELADA".
+     *
+     * @param holder ViewHolder that will be bound with the item at [position].
+     * @param position Index of the item in the adapter's list to bind.
+     */
     override fun onBindViewHolder(holder: SolicitudViewHolder, position: Int) {
         val item = items[position]
         holder.bind(item)
@@ -94,7 +117,12 @@ class SolicitudAdapter private constructor(
             if (showCancelButton && !isFinalized) View.VISIBLE else View.GONE
     }
 
-    override fun getItemCount(): Int = items.size
+    /**
+ * Get the number of items managed by the adapter.
+ *
+ * @return The number of items in the adapter.
+ */
+override fun getItemCount(): Int = items.size
 
     inner class SolicitudViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
@@ -106,7 +134,11 @@ class SolicitudAdapter private constructor(
         val btnCancelar: Button = itemView.findViewById(R.id.btnCancelar)
 
         /**
-         * Vincula los datos de un [SolicitudItem] a las vistas.
+         * Binds a SolicitudItem's data to the ViewHolder's views.
+         *
+         * Updates tracking id, address, date label, and status text, and applies a color to the status based on its value.
+         *
+         * @param item The SolicitudItem whose values will populate the views.
          */
         fun bind(item: SolicitudItem) {
             val context = itemView.context

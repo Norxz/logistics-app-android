@@ -29,6 +29,14 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var userRepository: UserRepository
 
+    /**
+     * Initialize the activity UI and core services, bind view references, and attach UI listeners.
+     *
+     * Hides the action bar, sets the activity layout, initializes SessionManager and UserRepository,
+     * then calls initViews() and setupListeners().
+     *
+     * @param savedInstanceState Bundle containing the activity's previously saved state, if any.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -44,6 +52,11 @@ class MainActivity : AppCompatActivity() {
         setupListeners()
     }
 
+    /**
+     * Checks for an active user session and, if present, redirects to the appropriate dashboard.
+     *
+     * If a session exists, retrieves the stored role and calls navigateToDashboard(role) to start the target dashboard and prevent returning to the hub.
+     */
     override fun onStart() {
         super.onStart()
         // 🏆 VERIFICACIÓN CRÍTICA: Si ya está logueado, saltar el Hub de Bienvenida.
@@ -55,6 +68,11 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+    /**
+     * Binds the activity's button views from the layout to the corresponding member variables.
+     *
+     * Binds: btnCheckStatus, btnRequestShipping, btnOfficials, btnDrivers, and btnAdmin.
+     */
     private fun initViews() {
         btnCheckStatus = findViewById(R.id.btnCheckStatus)
         btnRequestShipping = findViewById(R.id.btnRequestShipping)
@@ -63,6 +81,16 @@ class MainActivity : AppCompatActivity() {
         btnAdmin = findViewById(R.id.btnAdmin)
     }
 
+    /**
+     * Attaches click handlers for the main hub buttons to start the corresponding activities.
+     *
+     * Each button opens a specific activity:
+     * - "Check Status" starts TrackShippingActivity for tracking without login.
+     * - "Request Shipping" opens LoginActivity with `TARGET_ROLE = "CLIENTE"` to request a shipment.
+     * - "Officials" opens LoginActivity with `TARGET_ROLE = "FUNCIONARIO"`.
+     * - "Drivers" opens LoginActivity with `TARGET_ROLE = "CONDUCTOR"`.
+     * - "Admin" opens LoginActivity with `TARGET_ROLE = "ADMIN"`.
+     */
     private fun setupListeners() {
 
         // 1. CONSULTAR ESTADO (Tracking Activity)
@@ -106,8 +134,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Navega al dashboard correspondiente al rol.
-     * Esta función es la que te permite saltar el Hub de Bienvenida al iniciar la app.
+     * Navigate to the dashboard corresponding to the provided user role.
+     *
+     * Maps the role (case-insensitive) to the appropriate dashboard activity, launches it with
+     * flags that clear the back stack, and finishes the current activity. If the role is not
+     * recognized, shows a long toast, logs the user out, and returns to the main hub.
+     *
+     * @param role The user role tag expected to be one of: "CLIENTE", "CONDUCTOR", "GESTOR", "FUNCIONARIO", or "ADMIN" (case-insensitive).
      */
     private fun navigateToDashboard(role: String) {
         val intent = when (role.uppercase()) {

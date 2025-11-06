@@ -32,6 +32,11 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var userRepository: UserRepository
     private lateinit var sessionManager: SessionManager
 
+    /**
+     * Initializes the login screen: sets the layout, prepares repositories and session manager,
+     * configures the toolbar and view bindings, checks for an existing session to redirect
+     * to the appropriate dashboard, and sets up UI listeners for login and registration.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
@@ -56,7 +61,9 @@ class LoginActivity : AppCompatActivity() {
     }
 
     /**
-     * Configura la flecha de regreso y el título usando el ActionBar nativo.
+     * Configure the native ActionBar to show the up/back button and set the activity title to the login screen string.
+     *
+     * Sets the ActionBar's displayHomeAsUpEnabled to true and applies the `R.string.login_title` resource as the title when an ActionBar is present.
      */
     private fun setupToolbarBackNavigation() {
         supportActionBar?.apply {
@@ -67,7 +74,13 @@ class LoginActivity : AppCompatActivity() {
     }
 
     /**
-     * Define la acción al pulsar el botón de regreso (<) en la Toolbar.
+     * Handle toolbar home/up button presses by navigating back to MainActivity.
+     *
+     * When the home/up item is selected this starts MainActivity with
+     * FLAG_ACTIVITY_CLEAR_TOP, finishes the current activity, and returns control
+     * to the previous task state.
+     *
+     * @return `true` if the home/up item was handled and navigation started, `false` otherwise.
      */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
@@ -81,6 +94,13 @@ class LoginActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
+    /**
+     * Binds the activity's UI fields to their corresponding views in the current layout.
+     *
+     * Initializes the TextInputLayouts, TextInputEditTexts, and Buttons used for email,
+     * password, login, and navigation to registration so they can be accessed elsewhere
+     * in the activity.
+     */
     private fun initViews() {
         tilEmail = findViewById(R.id.tilEmail)
         etEmail = findViewById(R.id.etEmail)
@@ -90,6 +110,11 @@ class LoginActivity : AppCompatActivity() {
         btnGoRegister = findViewById(R.id.btnGoRegister)
     }
 
+    /**
+     * Attach click handlers for the login and register buttons.
+     *
+     * Sets the login button to invoke performLogin() and the register button to open RegisterActivity.
+     */
     private fun setupListeners() {
         btnLogin.setOnClickListener {
             performLogin()
@@ -100,6 +125,14 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Validates input and attempts to authenticate the user, creating a session and navigating on success.
+     *
+     * If email/username or password fields are empty, marks the corresponding input with a required-field error and aborts.
+     * Otherwise hashes the password and delegates authentication to the user repository.
+     * On successful authentication creates a login session with the user's id, role and zona, shows a welcome toast, and navigates to the role-specific dashboard.
+     * On authentication failure shows an error toast and marks the password input with an incorrect-credentials error.
+     */
     private fun performLogin() {
         tilEmail.error = null
         tilPassword.error = null
@@ -139,7 +172,10 @@ class LoginActivity : AppCompatActivity() {
     }
 
     /**
-     * Genera un hash SHA-256 de la contraseña. Idéntico a RegisterActivity.
+     * Produce a SHA-256 hex string for the given password.
+     *
+     * @param password The plaintext password to hash.
+     * @return The SHA-256 digest of `password` encoded as a lowercase hex string, or the original `password` if hashing fails.
      */
     private fun hashPassword(password: String): String {
         return try {
@@ -152,7 +188,19 @@ class LoginActivity : AppCompatActivity() {
     }
 
     /**
-     * Redirige al usuario a la pantalla principal correspondiente a su rol.
+     * Navigate the user to the main dashboard corresponding to their role.
+     *
+     * Maps the provided role (case-insensitive) to the appropriate Activity:
+     * - "CLIENTE" -> ClientDashboardActivity
+     * - "CONDUCTOR" -> DriverDashboardActivity
+     * - "GESTOR" -> ManagerDashboardActivity
+     * - "FUNCIONARIO" -> BranchDashboardActivity
+     * - "ANALISTA", "ADMIN" -> AdminDashboardActivity
+     *
+     * If the role is unrecognized, the current session is cleared and the LoginActivity is shown.
+     * The target activity is started with flags that clear the existing task and the current activity is finished.
+     *
+     * @param role The user's role string; comparison is case-insensitive.
      */
     private fun navigateToDashboard(role: String) {
         val intent = when (role.uppercase()) {

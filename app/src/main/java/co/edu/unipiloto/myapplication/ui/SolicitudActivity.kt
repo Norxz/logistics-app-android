@@ -29,6 +29,11 @@ class SolicitudActivity : AppCompatActivity() {
     private lateinit var etReceiverAddress: TextInputEditText
     private lateinit var btnSend: MaterialButton
 
+    /**
+     * Initializes the activity UI and dependencies, verifies the user session, and prepares view state.
+     *
+     * If no valid user session exists, shows a toast informing the user to sign in and finishes the activity.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_new_delivery)
@@ -47,6 +52,11 @@ class SolicitudActivity : AppCompatActivity() {
         setupListeners()
     }
 
+    /**
+     * Binds UI components from the activity layout to the activity's properties for sender name, sender ID, ID type spinner, receiver address, and send button.
+     *
+     * If a prior pickup address is supplied in the activity intent under "PICKUP_ADDRESS", it can be populated into the receiver address field (example code is present but commented).
+     */
     private fun initViews() {
         etSenderName = findViewById(R.id.etSenderName)
         etSenderID = findViewById(R.id.etSenderID)
@@ -60,6 +70,11 @@ class SolicitudActivity : AppCompatActivity() {
         // etReceiverAddress.setText(pickupAddress)
     }
 
+    /**
+     * Configures the ID type and country code spinners with preset options.
+     *
+     * Sets the ID type spinner to use "Cédula", "Pasaporte", "RUT" and assigns country code options "+57", "+1", "+52" to the sender and receiver country code spinners.
+     */
     private fun setupSpinners() {
         // Spinner Tipo de ID
         val idTypes = listOf("Cédula", "Pasaporte", "RUT")
@@ -75,6 +90,12 @@ class SolicitudActivity : AppCompatActivity() {
         // TODO: Configurar un spinner para seleccionar la Zona/Ciudad de recogida (necesaria para la BD)
     }
 
+    /**
+     * Attaches click listeners for activity actions.
+     *
+     * Sets the send button to submit the current solicitud and sets the logout button to clear
+     * the user session and finish the activity.
+     */
     private fun setupListeners() {
         btnSend.setOnClickListener {
             submitSolicitud()
@@ -85,6 +106,16 @@ class SolicitudActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Collects and validates delivery input, creates a new solicitud, and navigates to the confirmation screen on success.
+     *
+     * Validates required fields (address, weight, price, content) and shows an error toast if any are missing.
+     * Builds collection metadata (date, time window, zone — currently placeholders), calls `solicitudRepository.crear`
+     * using the current session user ID, and:
+     * - On success: shows a success toast, starts GuideConfirmationActivity with the created solicitud ID as the
+     *   "SOLICITUD_ID" extra, and finishes the activity.
+     * - On failure: shows an error toast indicating creation failed.
+     */
     private fun submitSolicitud() {
         // 1. Recopilar y validar datos
         val address = etReceiverAddress.text.toString().trim()

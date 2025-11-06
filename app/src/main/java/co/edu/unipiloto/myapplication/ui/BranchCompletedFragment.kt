@@ -31,6 +31,11 @@ class BranchCompletedFragment : Fragment() {
     private lateinit var solicitudRepository: SolicitudRepository
     private lateinit var sessionManager: SessionManager
 
+    /**
+     * Inflate the fragment's layout resource and return its root view.
+     *
+     * @return The root view for this fragment's UI (inflated from R.layout.fragment_branch_list).
+     */
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -38,6 +43,12 @@ class BranchCompletedFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_branch_list, container, false)
     }
 
+    /**
+     * Initializes repositories and UI for the fragment, configures the RecyclerView, and triggers loading of completed requests.
+     *
+     * @param view The root view of the fragment's layout.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state.
+     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         solicitudRepository = SolicitudRepository(requireContext())
@@ -53,6 +64,13 @@ class BranchCompletedFragment : Fragment() {
         loadCompletedRequests()
     }
 
+    /**
+     * Loads completed delivery requests (status ENTREGADA or CANCELADA) for the current session's zone
+     * and updates the UI to show the results or an empty-state message.
+     *
+     * If the current zone cannot be determined, the method does nothing. When requests are found,
+     * the RecyclerView is shown; otherwise an empty message ("No hay historial de envíos en tu zona.") is displayed.
+     */
     private fun loadCompletedRequests() {
         val zona = sessionManager.getZona() ?: return
 

@@ -39,13 +39,13 @@ class SessionManager(context: Context) {
     private val editor: SharedPreferences.Editor = pref.edit()
 
     /**
-     * Crea y guarda una sesión de usuario después de un inicio de sesión exitoso.
+     * Create and persist a user login session with the given id, role, and optional zone.
      *
-     * Almacena el ID, el rol y la zona del usuario, y marca la sesión como activa.
+     * Marks the session as active and saves the provided user attributes for later retrieval.
      *
-     * @param userId El ID único del usuario (proveniente de la base de datos).
-     * @param role El rol del usuario (ej. "CLIENTE", "CONDUCTOR", "GESTOR").
-     * @param zona La zona asignada al usuario. Es opcional y puede ser nulo, especialmente para clientes.
+     * @param userId The unique identifier of the user.
+     * @param role The user's role (for example "CLIENTE", "CONDUCTOR", "GESTOR").
+     * @param zona The zone assigned to the user; may be null when not applicable.
      */
     fun createLoginSession(userId: Long, role: String, zona: String?) {
         editor.putBoolean(KEY_IS_LOGGED_IN, true)
@@ -56,10 +56,9 @@ class SessionManager(context: Context) {
     }
 
     /**
-     * Cierra la sesión del usuario actual.
+     * Clears the current user session.
      *
-     * Borra todos los datos almacenados en SharedPreferences para esta sesión,
-     * desautenticando efectivamente al usuario.
+     * Removes all session data from SharedPreferences, deauthenticating the user.
      */
     fun logoutUser() {
         editor.clear() // Limpia todos los datos guardados.
@@ -67,36 +66,36 @@ class SessionManager(context: Context) {
     }
 
     /**
-     * Verifica si hay un usuario con sesión activa.
+     * Checks whether a user session is active.
      *
-     * @return `true` si el usuario ha iniciado sesión, `false` en caso contrario.
+     * @return `true` if a user is logged in, `false` otherwise.
      */
     fun isLoggedIn(): Boolean {
         return pref.getBoolean(KEY_IS_LOGGED_IN, false)
     }
 
     /**
-     * Obtiene el ID del usuario de la sesión actual.
+     * Gets the current session's user ID.
      *
-     * @return El ID del usuario como [Long]. Devuelve -1 si no hay ningún usuario en sesión.
+     * @return The user ID, or -1 if no user is stored in the session.
      */
     fun getUserId(): Long {
         return pref.getLong(KEY_USER_ID, -1L)
     }
 
     /**
-     * Obtiene el rol del usuario de la sesión actual.
+     * Gets the role of the current session user.
      *
-     * @return El rol del usuario como [String]. Devuelve una cadena vacía si no se encuentra el rol.
+     * @return The user's role as a String, or an empty string if none is stored.
      */
     fun getRole(): String {
         return pref.getString(KEY_ROLE, "") ?: ""
     }
 
     /**
-     * Obtiene la zona asignada al usuario actual (generalmente para recolectores o gestores).
+     * Retrieve the zone assigned to the current user.
      *
-     * @return La zona como un [String] nullable. Devuelve `null` si no hay una zona asignada o no hay sesión.
+     * @return The zone as a `String`, or `null` if no zone is assigned or there is no active session.
      */
     fun getZona(): String? {
         return pref.getString(KEY_ZONA, null)

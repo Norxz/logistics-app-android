@@ -47,7 +47,19 @@ class SolicitudRepository(context: Context) {
 
     // ==========================================================
     // OPERACIONES CRUD / CONSULTAS
-    // ==========================================================
+    /**
+     * Creates a new address and an associated delivery request (solicitud) in a single database transaction.
+     *
+     * The created solicitud is initialized with estado "PENDIENTE" and the address city is set to "Bogotá".
+     *
+     * @param userId The ID of the user who owns the solicitud.
+     * @param direccionCompleta The full address text for the associated direccion.
+     * @param fechaRecoleccion The requested collection date (as stored in the database).
+     * @param franjaHoraria The requested time slot for collection.
+     * @param notas Additional notes for the solicitud.
+     * @param zona The delivery/collection zone identifier.
+     * @return The newly inserted solicitud ID, or -1 if the creation failed.
+     */
 
     fun crear(
         userId: Long,
@@ -101,6 +113,12 @@ class SolicitudRepository(context: Context) {
         return newSolicitudId
     }
 
+    /**
+     * Retrieves the list of solicitudes for the given user, ordered by creation time (most recent first).
+     *
+     * @param userId ID of the user whose solicitudes are being queried.
+     * @return A list of `SolicitudItem` containing id, address, date, and status for the user, or `null` if an error occurs.
+     */
     fun listarPorUsuario(userId: Long): List<SolicitudItem>? {
         val db = helper.readableDatabase
         val items = mutableListOf<SolicitudItem>()
@@ -150,6 +168,13 @@ class SolicitudRepository(context: Context) {
         }
     }
 
+    /**
+     * Cancela la solicitud indicada para el usuario especificado cambiando su estado a "CANCELADA" si actualmente está en "PENDIENTE".
+     *
+     * @param solicitudId ID de la solicitud a cancelar.
+     * @param userId ID del usuario propietario de la solicitud.
+     * @return El número de filas actualizadas (`1` si la solicitud fue cancelada, `0` si no se encontró o no estaba en estado "PENDIENTE").
+     */
     fun cancelarSolicitud(solicitudId: Long, userId: Long): Int {
         val db = helper.writableDatabase
         var rowsAffected = 0
@@ -171,6 +196,12 @@ class SolicitudRepository(context: Context) {
         return rowsAffected
     }
 
+    /**
+     * Retrieves pending solicitudes for the specified zone ordered by creation time ascending.
+     *
+     * @param zona The zone name or identifier to filter solicitudes.
+     * @return A list of `Solicitud` objects whose `estado` is `"PENDIENTE"` for the given zone, ordered by `createdAt` from oldest to newest. Returns an empty list if no matches are found or an error occurs.
+     */
     fun pendientesPorZona(zona: String): List<Solicitud> {
         val db = helper.readableDatabase
         val items = mutableListOf<Solicitud>()
@@ -199,13 +230,10 @@ class SolicitudRepository(context: Context) {
     }
 
     /**
-     * Obtiene una lista de solicitudes simplificadas ([SolicitudItem]) que están en estado
-     * ASIGNADA, EN_CAMINO o EN RUTA, filtradas por zona.
+     * Devuelve las solicitudes (SolicitudItem) en estados ASIGNADA, EN_CAMINO o EN RUTA para la zona indicada.
      *
-     * Este método es usado por el Gestor/Funcionario para ver las órdenes en curso.
-     *
-     * @param zona La zona para la cual se buscan solicitudes asignadas.
-     * @return Una lista de objetos SolicitudItem.
+     * @param zona Zona por la que se filtran las solicitudes.
+     * @return Lista de SolicitudItem que coinciden con la zona y los estados ASIGNADA, EN_CAMINO o EN RUTA.
      */
     fun asignadasPorZona(zona: String): List<SolicitudItem> {
         val db = helper.readableDatabase
@@ -286,10 +314,10 @@ class SolicitudRepository(context: Context) {
     }
 
     /**
-     * Obtiene todas las solicitudes asignadas a un recolector/conductor específico.
+     * Retrieve assigned requests for a specific collector/driver.
      *
-     * @param recolectorId El ID del recolector/conductor.
-     * @return Lista de SolicitudItem (las rutas asignadas).
+     * @param recolectorId The ID of the collector/driver.
+     * @return A list of `SolicitudItem` representing the requests assigned to the collector, excluding requests in states "ENTREGADA" or "CANCELADA", ordered by `fecha` ascending.
      */
     fun getSolicitudesByRecolectorId(recolectorId: Long): List<SolicitudItem> {
         val solicitudes = mutableListOf<SolicitudItem>()
@@ -329,7 +357,14 @@ class SolicitudRepository(context: Context) {
         return solicitudes
     }
 
-    // ... [Método cursorToSolicitud, si no estaba al final] ...
+    /**
+     * Maps the current cursor row to a Solicitud instance.
+     *
+     * @param cursor A Cursor positioned at the row to map. Must contain columns: `id`, `user_id`, `direccion_id`,
+     * `fecha`, `franja`, `notas`, `zona`, `estado`, and `created_at`. Optional columns that will be read if present:
+     * `recolector_id`, `guia_id`, `confirmation_code`.
+     * @return A Solicitud populated from the cursor row, with optional fields set to `null` when absent or null in the row.
+     */
     private fun cursorToSolicitud(cursor: Cursor): Solicitud {
         val idIndex = cursor.getColumnIndexOrThrow("id")
         val userIdIndex = cursor.getColumnIndexOrThrow("user_id")

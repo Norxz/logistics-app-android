@@ -24,6 +24,11 @@ class BranchInRouteFragment : Fragment() {
     private lateinit var solicitudRepository: SolicitudRepository
     private lateinit var sessionManager: SessionManager
 
+    /**
+     * Inflates and returns the fragment layout used to display the branch list.
+     *
+     * @return The root View of the inflated fragment_branch_list layout.
+     */
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -31,6 +36,12 @@ class BranchInRouteFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_branch_list, container, false)
     }
 
+    /**
+     * Initializes UI components and data dependencies for the fragment and begins loading "in route" requests.
+     *
+     * Binds the RecyclerView and empty-state TextView, configures the RecyclerView's layout manager,
+     * initializes the SolicitudRepository and SessionManager, and calls loadInRouteRequests().
+     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         solicitudRepository = SolicitudRepository(requireContext())
@@ -46,6 +57,17 @@ class BranchInRouteFragment : Fragment() {
         loadInRouteRequests()
     }
 
+    /**
+     * Loads and displays "En Ruta" (in-route) requests for the current session zone.
+     *
+     * Retrieves the zone from SessionManager and, if present, obtains the list of in-route
+     * solicitudes for that zone. If the list contains items the RecyclerView is shown
+     * and the empty-state view is hidden (the adapter would be updated). If the list is
+     * empty the empty-state view is shown with a message and the RecyclerView is hidden.
+     *
+     * Currently the data list is a placeholder simulation; when implemented this will
+     * query SolicitudRepository for requests with status "EN RUTA" filtered by zone.
+     */
     private fun loadInRouteRequests() {
         val zona = sessionManager.getZona() ?: return
 

@@ -23,6 +23,15 @@ class ManagerDashboardActivity : AppCompatActivity() {
     private lateinit var btnLogout: MaterialButton
     private lateinit var sessionManager: SessionManager
 
+    /**
+     * Initializes the manager dashboard UI and enforces session-based access control.
+     *
+     * If the current session is missing or the user's role is not `GESTOR` or `ANALISTA`,
+     * the method logs the user out and navigates to the login screen. Otherwise it binds
+     * views, configures the ViewPager/TabLayout, and sets up UI listeners.
+     *
+     * @param savedInstanceState The activity's previously saved state, or `null` if none.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_manager_dashboard)
@@ -39,6 +48,11 @@ class ManagerDashboardActivity : AppCompatActivity() {
         setupListeners()
     }
 
+    /**
+     * Binds UI components from the layout to the activity's properties.
+     *
+     * Initializes the `tabLayout`, `viewPager`, and `btnLogout` fields by finding their views.
+     */
     private fun initViews() {
         tabLayout = findViewById(R.id.tabLayout)
         viewPager = findViewById(R.id.viewPager)
@@ -46,6 +60,12 @@ class ManagerDashboardActivity : AppCompatActivity() {
         // Puedes personalizar tvWelcomeTitle si quieres usar el nombre del gestor
     }
 
+    /**
+     * Configures the ViewPager2 with a DashboardPagerAdapter and links it to the TabLayout using a TabLayoutMediator.
+     *
+     * Sets the adapter on the activity's ViewPager2 and attaches a TabLayoutMediator that provides tab titles:
+     * position 0 -> "Pendientes de Asignar", position 1 -> "Asignadas", any other position -> "Error".
+     */
     private fun setupViewPager() {
         val adapter = DashboardPagerAdapter(this)
         viewPager.adapter = adapter
@@ -60,12 +80,23 @@ class ManagerDashboardActivity : AppCompatActivity() {
         }.attach()
     }
 
+    /**
+     * Attaches UI listeners for the activity.
+     *
+     * Configures the logout button so that tapping it clears the current session and navigates to the login screen.
+     */
     private fun setupListeners() {
         btnLogout.setOnClickListener {
             logoutUser()
         }
     }
 
+    /**
+     * Logs out the current user, clears the session, and navigates to the login screen.
+     *
+     * Clears any stored session state, starts LoginActivity with flags that clear the task
+     * so the back stack cannot be returned to, and finishes the current activity.
+     */
     private fun logoutUser() {
         sessionManager.logoutUser()
         val intent = Intent(this, LoginActivity::class.java)

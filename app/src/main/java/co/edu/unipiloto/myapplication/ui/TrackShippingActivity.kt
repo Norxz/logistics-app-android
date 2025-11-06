@@ -20,6 +20,11 @@ class TrackShippingActivity : AppCompatActivity() {
     private lateinit var cvResults: CardView
     private lateinit var tvErrorMessage: TextView
 
+    /**
+     * Initializes the activity, inflates its layout, and binds UI elements and event listeners.
+     *
+     * @param savedInstanceState If non-null, contains the activity's previously saved state. 
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_track_shipping)
@@ -28,6 +33,13 @@ class TrackShippingActivity : AppCompatActivity() {
         setupListeners()
     }
 
+    /**
+     * Initializes view references used by the activity and sets the back button behavior.
+     *
+     * Binds UI widgets (guide code input, search button, results card, and error message text)
+     * to their corresponding properties and attaches a click listener to the back button that
+     * finishes the activity.
+     */
     private fun initViews() {
         etGuideCode = findViewById(R.id.etGuideCode)
         btnSearch = findViewById(R.id.btnSearch)
@@ -37,13 +49,26 @@ class TrackShippingActivity : AppCompatActivity() {
         findViewById<ImageButton>(R.id.btnBack).setOnClickListener { finish() }
     }
 
+    /**
+     * Sets up UI event handlers.
+     *
+     * Attaches a click listener to the search button that initiates a shipment lookup when tapped.
+     */
     private fun setupListeners() {
         btnSearch.setOnClickListener {
             searchShipping()
         }
     }
 
-    private fun searchShipping() {
+    /**
+             * Validates the entered guide code and updates the UI with the shipping status or an error message.
+             *
+             * If the input is empty, displays an error and hides the results card. Otherwise performs a lookup
+             * (currently simulated) and either reveals the results card and populates status fields
+             * (current status, guide number, delivery address, delivery date and time window) for a found
+             * guide, or displays an error message if not found.
+             */
+            private fun searchShipping() {
         val guideCode = etGuideCode.text.toString().trim()
 
         if (guideCode.isEmpty()) {

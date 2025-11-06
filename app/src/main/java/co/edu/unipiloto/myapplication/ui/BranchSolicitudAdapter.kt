@@ -19,13 +19,22 @@ class BranchSolicitudAdapter(
 ) : RecyclerView.Adapter<BranchSolicitudAdapter.ViewHolder>() {
 
     /**
-     * Actualiza la lista de datos y notifica al RecyclerView.
+     * Replace the adapter's items with the given list and refresh the RecyclerView display.
+     *
+     * @param newItems The new list of SolicitudRepository.SolicitudItem to use as the adapter's data set.
      */
     fun updateData(newItems: List<SolicitudRepository.SolicitudItem>) {
         items = newItems
         notifyDataSetChanged()
     }
 
+    /**
+     * Inflates the branch solicitud item layout and returns a ViewHolder for it.
+     *
+     * @param parent The parent ViewGroup used to inflate the item layout.
+     * @param viewType The view type of the new View (unused).
+     * @return A ViewHolder initialized with the inflated item_solicitud_branch view.
+     */
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         // Usamos el layout del ítem de sucursal
         val view = LayoutInflater.from(parent.context)
@@ -33,12 +42,23 @@ class BranchSolicitudAdapter(
         return ViewHolder(view)
     }
 
+    /**
+     * Binds the adapter item at the given position to the provided ViewHolder.
+     *
+     * @param holder The ViewHolder into which the item should be bound.
+     * @param position The index of the item in the adapter's data set.
+     */
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
         holder.bind(item)
     }
 
-    override fun getItemCount(): Int = items.size
+    /**
+ * Get the number of items in the adapter's data set.
+ *
+ * @return The number of items currently held by the adapter.
+ */
+override fun getItemCount(): Int = items.size
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         // Mapeo de vistas de item_solicitud_branch.xml
@@ -47,6 +67,14 @@ class BranchSolicitudAdapter(
         private val tvClientName: TextView = itemView.findViewById(R.id.tvBranchClientName)
         private val tvStatus: TextView = itemView.findViewById(R.id.tvBranchStatus)
 
+        /**
+         * Binds a SolicitudItem's data to the ViewHolder's views.
+         *
+         * Sets the displayed request ID, destination address, a client/date placeholder, and the status text.
+         * Applies a status-dependent text color mapped from the item's estado value.
+         *
+         * @param item The SolicitudItem whose data will populate the view fields.
+         */
         fun bind(item: SolicitudRepository.SolicitudItem) {
             val context = itemView.context
 
