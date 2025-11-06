@@ -64,7 +64,6 @@ class ClientDashboardActivity : AppCompatActivity() {
         }
 
         initViews()
-        // 🏆 CORRECCIÓN: Obtener el nombre directamente del SessionManager
         loadClientDataFromSession()
         setupListeners()
         // loadSolicitudes()
@@ -99,8 +98,7 @@ class ClientDashboardActivity : AppCompatActivity() {
     }
 
     /**
-     * 🏆 CORRECCIÓN: Obtiene el nombre del usuario directamente de SessionManager
-     * (donde fue guardado en LoginActivity) para evitar una consulta extra a la BD.
+     * Obtiene el nombre del usuario directamente de SessionManager.
      */
     private fun loadClientDataFromSession() {
         // Obtener el nombre guardado en LoginActivity
@@ -120,7 +118,12 @@ class ClientDashboardActivity : AppCompatActivity() {
 
         // 2. NUEVA SOLICITUD
         btnNuevaSolicitud.setOnClickListener {
-            startActivity(Intent(this, NewDeliveryActivity::class.java))
+            // 🎯 CORRECCIÓN CLAVE: Usamos el nombre correcto de la actividad de recogida
+            // que está declarado en tu AndroidManifest: PickUpLocationActivity.
+            val intent = Intent(this, PickUpLocationActivity::class.java).apply {
+                // Si PickUpLocationActivity necesita un extra, lo añadirías aquí.
+            }
+            startActivity(intent)
         }
 
         // 3. TOGGLE Solicitudes Activas
