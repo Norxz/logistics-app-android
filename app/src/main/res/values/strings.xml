@@ -135,6 +135,9 @@
     <string name="collection_time_format">Recolección: %1$s (%2$s)</string>
     <string name="created_at_format">Creado: %1$s</string>
     <string name="back_button_text">Regresar</string>
+    <string name="full_name">Nombre Completo\n</string>
+    <string name="phone_number">Número de Teléfono</string>
+    <string name="new_shipment_title">Nueva solicitud de envío\n</string>
 
     <string-array name="roles_array">
         <item>REMITENTE</item>

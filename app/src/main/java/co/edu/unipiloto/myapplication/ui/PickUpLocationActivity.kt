@@ -21,7 +21,7 @@ class PickUpLocationActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_recogida_ubicacion)
+        setContentView(R.layout.activity_recogida)
 
         initViews()
         setupListeners()

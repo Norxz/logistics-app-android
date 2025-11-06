@@ -29,16 +29,22 @@ class RegisterActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_IS_ADMIN_REGISTER = "IS_ADMIN_REGISTER"
         const val ROL_CLIENTE = "CLIENTE"
-        const val ROL_ADMIN = "ADMIN" // Aseguramos el rol de Admin
+        const val ROL_ADMIN = "ADMIN"
     }
 
     // --- VISTAS ---
+    private lateinit var etFullName: TextInputEditText      // NUEVO: Nombre
+    private lateinit var etPhoneNumber: TextInputEditText   // NUEVO: Teléfono
     private lateinit var etEmail: TextInputEditText
     private lateinit var etPassword: TextInputEditText
     private lateinit var etPassword2: TextInputEditText
+
+    private lateinit var tilFullName: TextInputLayout       // NUEVO: Nombre
+    private lateinit var tilPhoneNumber: TextInputLayout    // NUEVO: Teléfono
     private lateinit var tilEmail: TextInputLayout
     private lateinit var tilPassword: TextInputLayout
     private lateinit var tilPassword2: TextInputLayout
+
     private lateinit var spRol: Spinner
     private lateinit var spZona: Spinner
     private lateinit var tvRolLabel: TextView
@@ -52,10 +58,12 @@ class RegisterActivity : AppCompatActivity() {
 
     // Roles que requieren selección de Zona
     private val ROLES_LOGISTICOS = listOf("CONDUCTOR", "GESTOR", "FUNCIONARIO", "ANALISTA")
+
     // El admin puede registrar todos excepto él mismo (ya que los admins suelen ser estáticos)
     private val ADMIN_REGISTERABLE_ROLES = listOf(ROL_CLIENTE) + ROLES_LOGISTICOS.distinct()
     private val ZONAS_DISPONIBLES = listOf("Bogotá - Norte", "Bogotá - Sur", "Bogotá - Occidente")
-    private val PASSWORD_BLACKLIST = listOf("password", "123456", "qwerty", "admin", "unipiloto", "piloto")
+    private val PASSWORD_BLACKLIST =
+        listOf("password", "123456", "qwerty", "admin", "unipiloto", "piloto")
 
     // --- ESTADO ---
     private var isAdminRegister = false
@@ -78,23 +86,21 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun initViews() {
-        // Inicializar EditTexts y TextInputLayouts
+        // 🏆 INICIALIZACIÓN DE NUEVOS CAMPOS DE NOMBRE Y TELÉFONO
+        etFullName = findViewById(R.id.etFullName)
+        etPhoneNumber = findViewById(R.id.etPhoneNumber)
+        tilFullName = findViewById(R.id.tilFullName)
+        tilPhoneNumber = findViewById(R.id.tilPhoneNumber)
+
+        // Inicializar EditTexts existentes
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
         etPassword2 = findViewById(R.id.etPassword2)
 
-        // Usar los IDs del TextInputLayout si los tienes. Si no, tu lógica de parent es correcta:
-        // Asumo que tienes IDs directos para mayor robustez: tilEmail, tilPassword, tilPassword2
-        tilEmail = findViewById(R.id.tilEmail) // Si usas IDs en XML
-        tilPassword = findViewById(R.id.tilPassword) // Si usas IDs en XML
-        tilPassword2 = findViewById(R.id.tilPassword2) // Si usas IDs en XML
-
-        // Si no tienes IDs directos en el XML, usa tu lógica original (aunque es frágil):
-        /*
-        tilEmail = etEmail.parent.parent as? TextInputLayout ?: throw IllegalStateException("Missing TextInputLayout for etEmail or wrong parent structure.")
-        tilPassword = etPassword.parent.parent as? TextInputLayout ?: throw IllegalStateException("Missing TextInputLayout for etPassword or wrong parent structure.")
-        tilPassword2 = etPassword2.parent.parent as? TextInputLayout ?: throw IllegalStateException("Missing TextInputLayout for etPassword2 or wrong parent structure.")
-        */
+        // Inicializar TextInputLayouts existentes (asumiendo IDs directos como corregimos)
+        tilEmail = findViewById(R.id.tilEmail)
+        tilPassword = findViewById(R.id.tilPassword)
+        tilPassword2 = findViewById(R.id.tilPassword2)
 
         spRol = findViewById(R.id.spRol)
         spZona = findViewById(R.id.spZona)
@@ -112,7 +118,15 @@ class RegisterActivity : AppCompatActivity() {
             spRol.visibility = View.GONE
             tvZonaLabel.visibility = View.GONE
             spZona.visibility = View.GONE
-            // Cambiar texto del botón si es necesario (ej. "Registrar Cliente")
+
+            // Ocultar campos de Nombre/Teléfono si el rol NO es cliente (esto es una suposición)
+            // Si el registro público ES para clientes, ESTOS DEBEN ESTAR VISIBLES.
+            // Los mantendremos visibles por defecto para el registro público.
+
+        } else {
+            // Flujo Admin
+            // Ocultar Nombre/Teléfono si el rol NO es cliente (se actualizará en el listener del Spinner)
+            // Por defecto, se muestran todos los campos en el flujo Admin y se ocultan los de cliente/logística según el rol.
         }
     }
 
@@ -125,11 +139,12 @@ class RegisterActivity : AppCompatActivity() {
         spRol.adapter = rolAdapter
 
         // Configurar Spinner de Zonas
-        val zonaAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, ZONAS_DISPONIBLES)
+        val zonaAdapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_item, ZONAS_DISPONIBLES)
         zonaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spZona.adapter = zonaAdapter
 
-        // Listener para la lógica de visibilidad de la Zona
+        // Listener para la lógica de visibilidad de Rol, Zona, y campos de Cliente
         if (isAdminRegister) {
             spRol.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(
@@ -139,15 +154,32 @@ class RegisterActivity : AppCompatActivity() {
                     id: Long
                 ) {
                     val selectedRole = parent?.getItemAtPosition(position).toString().uppercase()
-                    // Muestra la Zona si el rol seleccionado es logístico
+
+                    // Lógica para Zona (para roles logísticos)
                     if (ROLES_LOGISTICOS.contains(selectedRole)) {
                         tvZonaLabel.visibility = View.VISIBLE
                         spZona.visibility = View.VISIBLE
-                    } else {
+
+                        // Ocultar campos de Cliente (Nombre/Teléfono)
+                        tilFullName.visibility = View.GONE
+                        tilPhoneNumber.visibility = View.GONE
+                    } else if (selectedRole == ROL_CLIENTE) {
+                        // Mostrar campos de Cliente
+                        tilFullName.visibility = View.VISIBLE
+                        tilPhoneNumber.visibility = View.VISIBLE
+
+                        // Ocultar campos de Zona
                         tvZonaLabel.visibility = View.GONE
                         spZona.visibility = View.GONE
+                    } else {
+                        // Caso por defecto (puede que no se necesite si ADMIN_REGISTERABLE_ROLES es estricto)
+                        tvZonaLabel.visibility = View.GONE
+                        spZona.visibility = View.GONE
+                        tilFullName.visibility = View.VISIBLE
+                        tilPhoneNumber.visibility = View.VISIBLE
                     }
                 }
+
                 override fun onNothingSelected(parent: AdapterView<*>?) {}
             }
         }
@@ -167,10 +199,16 @@ class RegisterActivity : AppCompatActivity() {
      * Realiza la validación de campos y el intento de registro.
      */
     private fun performRegistration() {
-        // Limpiar errores
+        // Limpiar errores (AÑADIDOS NUEVOS CAMPOS)
+        tilFullName.error = null
+        tilPhoneNumber.error = null
         tilEmail.error = null
         tilPassword.error = null
         tilPassword2.error = null
+
+        // OBTENER NUEVOS VALORES
+        val fullName = etFullName.text.toString().trim()
+        val phoneNumber = etPhoneNumber.text.toString().trim()
 
         val email = etEmail.text.toString().trim()
         val password = etPassword.text.toString()
@@ -179,10 +217,22 @@ class RegisterActivity : AppCompatActivity() {
         val role = if (isAdminRegister) spRol.selectedItem.toString().uppercase() else ROL_CLIENTE
         val zona = if (spZona.visibility == View.VISIBLE) spZona.selectedItem.toString() else null
 
-        // 1. VALIDACIÓN BÁSICA DE CAMPOS VACÍOS
+        // 1. VALIDACIÓN DE CAMPOS SEGÚN EL ROL
         if (email.isEmpty() || password.isEmpty() || password2.isEmpty()) {
             Toast.makeText(this, "Debe llenar todos los campos.", Toast.LENGTH_SHORT).show()
             return
+        }
+
+        // 🏆 Validación específica del CLIENTE
+        if (role == ROL_CLIENTE) {
+            if (fullName.isEmpty() || phoneNumber.isEmpty()) {
+                Toast.makeText(this, "Nombre y Teléfono son obligatorios para Clientes.", Toast.LENGTH_SHORT).show()
+                return
+            }
+            if (phoneNumber.length < 7) {
+                tilPhoneNumber.error = "Número de teléfono incompleto."
+                return
+            }
         }
 
         // 2. VALIDACIÓN DE FORMATO
@@ -221,22 +271,23 @@ class RegisterActivity : AppCompatActivity() {
 
         val newId: Long = when (role) {
             ROL_CLIENTE -> {
-                // Registrar Cliente: Usamos el email para el nombre si no hay campo de nombre
+                // Registrar Cliente: Usando Nombre y Teléfono reales
                 userRepository.registerClient(
                     email = email,
                     passwordHash = passwordHash,
-                    fullName = "Cliente ${email.split("@")[0].capitalize()}",
-                    phoneNumber = "0" // Placeholder
+                    fullName = fullName, // 🏆 USANDO CAMPO REAL
+                    phoneNumber = phoneNumber // 🏆 USANDO CAMPO REAL
                 )
             }
+
             else -> {
-                // 🏆 CORRECCIÓN CRÍTICA: Asegurar que el campo 'email' y el parámetro 'sucursal' estén presentes.
+                // Registrar Personal Logístico
                 userRepository.registerRecolector(
-                    username = email, // Usamos email como username
-                    email = email, // Agregamos el campo email
+                    username = email,
+                    email = email,
                     passwordHash = passwordHash,
                     role = role,
-                    sucursal = zona // Corregimos el nombre del parámetro a 'sucursal'
+                    sucursal = zona
                 )
             }
         }
@@ -244,7 +295,11 @@ class RegisterActivity : AppCompatActivity() {
         setLoadingState(false)
 
         if (newId != -1L) {
-            Toast.makeText(this, "Registro Exitoso como $role! Por favor, inicia sesión.", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this,
+                "Registro Exitoso como $role! Por favor, inicia sesión.",
+                Toast.LENGTH_LONG
+            ).show()
 
             // Redirección a Login (o al Dashboard si viene de Admin)
             val nextIntent = if (isAdminRegister) {
@@ -262,6 +317,8 @@ class RegisterActivity : AppCompatActivity() {
                 finish()
             } else {
                 // Limpiar campos después de registrar si es el flujo Admin
+                etFullName.text?.clear() // Limpiar nuevo campo
+                etPhoneNumber.text?.clear() // Limpiar nuevo campo
                 etEmail.text?.clear()
                 etPassword.text?.clear()
                 etPassword2.text?.clear()
@@ -280,6 +337,11 @@ class RegisterActivity : AppCompatActivity() {
         progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         btnGoRegister.isEnabled = !isLoading
         findViewById<MaterialButton>(R.id.btnGoLogin)?.isEnabled = !isLoading
+
+        // Deshabilitar/Habilitar los nuevos campos
+        etFullName.isEnabled = !isLoading
+        etPhoneNumber.isEnabled = !isLoading
+
         etEmail.isEnabled = !isLoading
         etPassword.isEnabled = !isLoading
         etPassword2.isEnabled = !isLoading
@@ -312,7 +374,7 @@ class RegisterActivity : AppCompatActivity() {
             bytes.joinToString("") { "%02x".format(it) }
         } catch (e: Exception) {
             Log.e("Security", "Error hashing password: ${e.message}")
-            password // En caso de error, retorna la contraseña sin hashear (fallará el login)
+            password
         }
     }
 }
