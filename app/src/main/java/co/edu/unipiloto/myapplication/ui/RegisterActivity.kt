@@ -2,6 +2,7 @@ package co.edu.unipiloto.myapplication.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -12,10 +13,11 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.db.UserRepository
-import co.edu.unipiloto.myapplication.storage.SessionManager // Asegúrate de que la ruta sea correcta
+import co.edu.unipiloto.myapplication.storage.SessionManager
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import java.security.MessageDigest
 
 /**
  * Activity para el registro de nuevos usuarios.
@@ -44,11 +46,16 @@ class RegisterActivity : AppCompatActivity() {
     private val ROLES_LOGISTICOS = listOf("CONDUCTOR", "GESTOR", "FUNCIONARIO")
     private val ZONAS_DISPONIBLES = listOf("Bogotá - Norte", "Bogotá - Sur", "Bogotá - Occidente")
 
+    // DICCIONARIO BÁSICO DE PALABRAS PROHIBIDAS (Lista Negra)
+    private val PASSWORD_BLACKLIST = listOf("password", "123456", "qwerty", "admin", "unipiloto", "piloto")
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Asumiendo que el layout se llama activity_register.xml
         setContentView(R.layout.activity_register)
+
+        // Ocultar la barra de acción para usar el diseño personalizado del layout
+        supportActionBar?.hide()
 
         userRepository = UserRepository(this)
         sessionManager = SessionManager(this)
@@ -63,9 +70,11 @@ class RegisterActivity : AppCompatActivity() {
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
         etPassword2 = findViewById(R.id.etPassword2)
-        tilEmail = etEmail.parent.parent as TextInputLayout // Obtener el TextInputLayout
-        tilPassword = etPassword.parent.parent as TextInputLayout
-        tilPassword2 = etPassword2.parent.parent as TextInputLayout
+
+        // Manejar el caso donde el parent.parent podría ser null o incorrecto
+        tilEmail = etEmail.parent.parent as? TextInputLayout ?: findViewById(R.id.tilEmail)
+        tilPassword = etPassword.parent.parent as? TextInputLayout ?: findViewById(R.id.tilPassword)
+        tilPassword2 = etPassword2.parent.parent as? TextInputLayout ?: findViewById(R.id.tilPassword2)
 
         // Inicializar Spinners y TextView de Zona
         spRol = findViewById(R.id.spRol)
@@ -79,7 +88,7 @@ class RegisterActivity : AppCompatActivity() {
 
     private fun setupSpinners() {
         // Configurar Spinner de Roles
-        val roles = listOf("CLIENTE", "CONDUCTOR", "GESTOR") // Simplificado, puedes añadir más
+        val roles = listOf("CLIENTE", "CONDUCTOR", "GESTOR", "FUNCIONARIO", "ANALISTA")
         val rolAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, roles)
         rolAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spRol.adapter = rolAdapter
@@ -139,15 +148,22 @@ class RegisterActivity : AppCompatActivity() {
         val role = spRol.selectedItem.toString().uppercase()
         val zona = if (spZona.visibility == View.VISIBLE) spZona.selectedItem.toString() else null
 
-        // 1. VALIDACIÓN BÁSICA
+        // 1. VALIDACIÓN BÁSICA DE CAMPOS VACÍOS
         if (email.isEmpty() || password.isEmpty() || password2.isEmpty()) {
-            // CORRECCIÓN: Usamos un mensaje directo en Toast para evitar el error de R.string
             Toast.makeText(this, "Debe llenar todos los campos.", Toast.LENGTH_SHORT).show()
             return
         }
 
+        // 2. VALIDACIÓN DE FORMATO
         if (!isValidEmail(email)) {
             tilEmail.error = "Formato de email inválido."
+            return
+        }
+
+        // 3. VALIDACIÓN DE CONTRASEÑA REFORZADA
+        val passwordValidationResult = isValidPassword(password)
+        if (passwordValidationResult != null) {
+            tilPassword.error = passwordValidationResult
             return
         }
 
@@ -156,6 +172,7 @@ class RegisterActivity : AppCompatActivity() {
             return
         }
 
+        // 4. VALIDACIÓN CONDICIONAL DE ROL/ZONA
         if (ROLES_LOGISTICOS.contains(role) && zona.isNullOrEmpty()) {
             Toast.makeText(
                 this,
@@ -165,10 +182,10 @@ class RegisterActivity : AppCompatActivity() {
             return
         }
 
-        // 2. HASH DE CONTRASEÑA (CRÍTICO EN PRODUCCIÓN)
-        val passwordHash = password
+        // 5. HASH DE CONTRASEÑA
+        val passwordHash = hashPassword(password)
 
-        // 3. INTENTO DE REGISTRO
+        // 6. INTENTO DE REGISTRO
         progressBar.visibility = View.VISIBLE
 
         val newId: Long = when (role) {
@@ -177,15 +194,13 @@ class RegisterActivity : AppCompatActivity() {
                 userRepository.registerClient(
                     email = email,
                     passwordHash = passwordHash,
-                    fullName = "Nuevo Cliente", // Placeholder
+                    fullName = "Cliente ${email.split("@")[0]}", // Nombre simple basado en email
                     phoneNumber = "0" // Placeholder
                 )
             }
 
             else -> {
                 // Registro de Personal Logístico (CONDUCTOR, GESTOR, etc.)
-                // ⚠️ ASUME QUE YA CREASTE EL MÉTODO registerRecolector en UserRepository
-                // Se usa el email como 'username' para este personal.
                 userRepository.registerRecolector(
                     username = email,
                     passwordHash = passwordHash,
@@ -198,11 +213,15 @@ class RegisterActivity : AppCompatActivity() {
         progressBar.visibility = View.GONE
 
         if (newId != -1L) {
-            Toast.makeText(this, "Registro Exitoso como $role!", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Registro Exitoso como $role! Por favor, inicia sesión.", Toast.LENGTH_LONG).show()
 
-            // 4. Iniciar sesión y navegar automáticamente
-            sessionManager.createLoginSession(newId, role, zona)
-            navigateToMainScreen(role)
+            // 7. 🏆 REDIRECCIÓN A LOGIN EN LUGAR DE INICIO DE SESIÓN AUTOMÁTICO
+            val intent = Intent(this, LoginActivity::class.java)
+            // Estas flags aseguran que no se pueda volver a RegisterActivity
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
+            finish()
+
         } else {
             Toast.makeText(
                 this,
@@ -212,35 +231,53 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
 
+    // --- FUNCIONES DE SEGURIDAD Y VALIDACIÓN ---
+
+    /**
+     * Aplica políticas de seguridad a la contraseña (mín 8, mayús, minús, número, lista negra).
+     * @return String con mensaje de error, o null si es válida.
+     */
+    private fun isValidPassword(password: String): String? {
+        if (password.length < 8) {
+            return "La contraseña debe tener al menos 8 caracteres."
+        }
+        // Requiere al menos una mayúscula, una minúscula y un dígito.
+        if (!password.matches(".*[A-Z].*".toRegex())) {
+            return "Debe contener al menos una letra mayúscula."
+        }
+        if (!password.matches(".*[a-z].*".toRegex())) {
+            return "Debe contener al menos una letra minúscula."
+        }
+        if (!password.matches(".*[0-9].*".toRegex())) {
+            return "Debe contener al menos un número."
+        }
+
+        // Validación con diccionario (Lista Negra)
+        val normalizedPassword = password.lowercase()
+        if (PASSWORD_BLACKLIST.any { normalizedPassword.contains(it) }) {
+            return "La contraseña es muy común. Por favor, usa una más compleja."
+        }
+
+        return null // Contraseña es válida
+    }
+
+    /**
+     * Valida el formato de correo electrónico.
+     */
     private fun isValidEmail(target: CharSequence): Boolean {
         return android.util.Patterns.EMAIL_ADDRESS.matcher(target).matches()
     }
 
     /**
-     * Redirige al usuario a la pantalla principal correspondiente a su rol.
-     *
-     * @param role El rol del usuario obtenido de la sesión (CLIENTE, CONDUCTOR, GESTOR, etc.).
+     * Genera un hash SHA-256 de la contraseña para almacenamiento seguro.
      */
-    private fun navigateToMainScreen(role: String) {
-        val intent = when (role.uppercase()) {
-            "CLIENTE" -> Intent(this, MainActivity::class.java)
-            "CONDUCTOR" -> Intent(this, DriverDashboardActivity::class.java)
-
-            // Roles específicos del personal logístico:
-            "GESTOR" -> Intent(this, ManagerDashboardActivity::class.java)
-            "FUNCIONARIO" -> Intent(this, BranchDashboardActivity::class.java)
-            "ANALISTA" -> Intent(this, ManagerDashboardActivity::class.java) // Asumimos que Analista usa el mismo dashboard que Manager
-
-            else -> {
-                // Rol no reconocido, lo enviamos de vuelta al Login después de cerrar sesión por seguridad
-                sessionManager.logoutUser()
-                Intent(this, LoginActivity::class.java)
-            }
+    private fun hashPassword(password: String): String {
+        return try {
+            val bytes = MessageDigest.getInstance("SHA-256").digest(password.toByteArray())
+            bytes.joinToString("") { "%02x".format(it) }
+        } catch (e: Exception) {
+            Log.e("Security", "Error hashing password: ${e.message}")
+            password // Retorno simple si el hashing falla (Peligroso)
         }
-
-        // Estas flags aseguran que la nueva Activity sea la raíz y borre el historial de navegación (login/registro)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-        finish()
     }
 }

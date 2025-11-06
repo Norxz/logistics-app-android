@@ -18,7 +18,7 @@
         android:theme="@style/Theme.MyApplication">
 
         <activity
-            android:name=".ui.WelcomeActivity"
+            android:name=".ui.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -32,10 +32,6 @@
 
         <activity
             android:name=".ui.RegisterActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ui.MainActivity"
             android:exported="false" />
 
         <activity
@@ -63,7 +59,7 @@
         <activity
             android:name=".ui.TrackShippingActivity"
             android:exported="false" />
-
+        <activity android:name=".ui.ClientDashboardActivity" />
     </application>
 
 </manifest>

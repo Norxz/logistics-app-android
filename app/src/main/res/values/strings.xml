@@ -57,6 +57,7 @@
     <string name="login_welcome_text">¡Bienvenido!</string>
     <string name="logo_description">Logo de la Aplicación de Envíos</string>
     <string name="logo_name">LogiApp</string>
+    <string name="login_title">Iniciar Sesión</string>
     <string name="logout">Cerrar Sesión</string>
 
     <string name="make_register">Registrarse</string>
@@ -122,6 +123,7 @@
     <string name="welcome_button_send">Solicitar un Envío</string>
     <string name="welcome_collector">Bienvenido Recolector</string>
     <string name="welcome_description">¡Bienvenido! Estamos aquí para conectar tus envíos de manera rápida, segura y eficiente.</string>
+    <string name="client_dashboard_title_welcome">Hola, %1$s</string>
 
     <string-array name="roles_array">
         <item>REMITENTE</item>

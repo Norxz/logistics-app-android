@@ -56,7 +56,7 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
+            android:id="@+id/tilPassword2"   android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/repeat_password"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
