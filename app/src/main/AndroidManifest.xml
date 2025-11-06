@@ -2,10 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.SEND_SMS" />
-
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
     <uses-permission android:name="android.permission.INTERNET" />
 
     <uses-feature
@@ -20,7 +18,7 @@
         android:theme="@style/Theme.MyApplication">
 
         <activity
-            android:name=".ui.WelcomeActivity"
+            android:name=".ui.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -28,21 +26,40 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ui.MainActivity" />
-        <activity android:name=".ui.SolicitudActivity" />
-        <activity android:name=".ui.GestorActivity" />
-        <activity android:name=".ui.LoginActivity" />
-        <activity android:name=".ui.RegisterActivity" />
-        <activity android:name=".ui.BranchDashboardActivity" />
-        <activity android:name=".ui.LoginDriverActivity" />
-        <activity android:name=".ui.LoginFunctionaryActivity" />
-        <activity android:name=".ui.AdminPanelActivity" />
-        <activity android:name=".ui.SolicitudDetailsActivity" />
-        <activity android:name=".ui.GuideActivity" />
-        <activity android:name=".ui.ManagerDashboardActivity" />
-        <activity android:name=".ui.TrackShippingActivity" />
-        <activity android:name=".ui.DriverDashboardActivity" />
+        <activity
+            android:name=".ui.LoginActivity"
+            android:exported="false" />
 
+        <activity
+            android:name=".ui.RegisterActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.DriverDashboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.BranchDashboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.ManagerDashboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.AdminPanelActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.PickUpLocationActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.SolicitudActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.GuideConfirmationActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.TrackShippingActivity"
+            android:exported="false" />
+        <activity android:name=".ui.ClientDashboardActivity" />
     </application>
 
 </manifest>
