@@ -13,11 +13,11 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.db.UserRepository
+import co.edu.unipiloto.myapplication.security.PasswordHasher // 🏆 IMPORTANTE: Usar la clase de seguridad
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import java.security.MessageDigest
 
 /**
  * Activity para el registro de nuevos usuarios.
@@ -33,14 +33,14 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     // --- VISTAS ---
-    private lateinit var etFullName: TextInputEditText      // NUEVO: Nombre
-    private lateinit var etPhoneNumber: TextInputEditText   // NUEVO: Teléfono
+    private lateinit var etFullName: TextInputEditText
+    private lateinit var etPhoneNumber: TextInputEditText
     private lateinit var etEmail: TextInputEditText
     private lateinit var etPassword: TextInputEditText
     private lateinit var etPassword2: TextInputEditText
 
-    private lateinit var tilFullName: TextInputLayout       // NUEVO: Nombre
-    private lateinit var tilPhoneNumber: TextInputLayout    // NUEVO: Teléfono
+    private lateinit var tilFullName: TextInputLayout
+    private lateinit var tilPhoneNumber: TextInputLayout
     private lateinit var tilEmail: TextInputLayout
     private lateinit var tilPassword: TextInputLayout
     private lateinit var tilPassword2: TextInputLayout
@@ -86,7 +86,7 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun initViews() {
-        // 🏆 INICIALIZACIÓN DE NUEVOS CAMPOS DE NOMBRE Y TELÉFONO
+        // Inicializar nuevos campos
         etFullName = findViewById(R.id.etFullName)
         etPhoneNumber = findViewById(R.id.etPhoneNumber)
         tilFullName = findViewById(R.id.tilFullName)
@@ -119,14 +119,18 @@ class RegisterActivity : AppCompatActivity() {
             tvZonaLabel.visibility = View.GONE
             spZona.visibility = View.GONE
 
-            // Ocultar campos de Nombre/Teléfono si el rol NO es cliente (esto es una suposición)
-            // Si el registro público ES para clientes, ESTOS DEBEN ESTAR VISIBLES.
-            // Los mantendremos visibles por defecto para el registro público.
-
         } else {
-            // Flujo Admin
-            // Ocultar Nombre/Teléfono si el rol NO es cliente (se actualizará en el listener del Spinner)
-            // Por defecto, se muestran todos los campos en el flujo Admin y se ocultan los de cliente/logística según el rol.
+            // Flujo Admin: Inicializar visibilidad de campos de cliente/zona
+            // Esto asegura que al iniciar la Activity en modo Admin, la UI refleje el rol por defecto (CLIENTE) o el primero de la lista.
+            val initialRole = ADMIN_REGISTERABLE_ROLES.firstOrNull() ?: ROL_CLIENTE
+
+            val isLogistic = ROLES_LOGISTICOS.contains(initialRole)
+
+            tvZonaLabel.visibility = if (isLogistic) View.VISIBLE else View.GONE
+            spZona.visibility = if (isLogistic) View.VISIBLE else View.GONE
+
+            tilFullName.visibility = if (isLogistic) View.GONE else View.VISIBLE
+            tilPhoneNumber.visibility = if (isLogistic) View.GONE else View.VISIBLE
         }
     }
 
@@ -160,19 +164,30 @@ class RegisterActivity : AppCompatActivity() {
                         tvZonaLabel.visibility = View.VISIBLE
                         spZona.visibility = View.VISIBLE
 
-                        // Ocultar campos de Cliente (Nombre/Teléfono)
-                        tilFullName.visibility = View.GONE
-                        tilPhoneNumber.visibility = View.GONE
+                        // Mostrar campos de Cliente (Nombre/Teléfono)
+                        // 🏆 Cambio: Mantenemos Nombre/Teléfono VISIBLES
+                        // Los datos se usan para ambos tipos de registro ahora.
+                        tilFullName.visibility = View.VISIBLE
+                        tilPhoneNumber.visibility = View.VISIBLE
+
+                        // Validamos que el administrador ingrese el Nombre completo del empleado
+                        tilFullName.hint = getString(R.string.full_name_logistic_hint)
+                        tilPhoneNumber.hint = getString(R.string.phone_number_logistic_hint)
+
                     } else if (selectedRole == ROL_CLIENTE) {
+                        // Ocultar campos de Zona
+                        tvZonaLabel.visibility = View.GONE
+                        spZona.visibility = View.GONE
+
                         // Mostrar campos de Cliente
                         tilFullName.visibility = View.VISIBLE
                         tilPhoneNumber.visibility = View.VISIBLE
 
-                        // Ocultar campos de Zona
-                        tvZonaLabel.visibility = View.GONE
-                        spZona.visibility = View.GONE
+                        // Restaurar hints
+                        tilFullName.hint = getString(R.string.full_name_client_hint)
+                        tilPhoneNumber.hint = getString(R.string.phone_number_client_hint)
                     } else {
-                        // Caso por defecto (puede que no se necesite si ADMIN_REGISTERABLE_ROLES es estricto)
+                        // Caso por defecto (Admin, si fuera seleccionable)
                         tvZonaLabel.visibility = View.GONE
                         spZona.visibility = View.GONE
                         tilFullName.visibility = View.VISIBLE
@@ -199,17 +214,16 @@ class RegisterActivity : AppCompatActivity() {
      * Realiza la validación de campos y el intento de registro.
      */
     private fun performRegistration() {
-        // Limpiar errores (AÑADIDOS NUEVOS CAMPOS)
+        // Limpiar errores
         tilFullName.error = null
         tilPhoneNumber.error = null
         tilEmail.error = null
         tilPassword.error = null
         tilPassword2.error = null
 
-        // OBTENER NUEVOS VALORES
+        // OBTENER VALORES
         val fullName = etFullName.text.toString().trim()
         val phoneNumber = etPhoneNumber.text.toString().trim()
-
         val email = etEmail.text.toString().trim()
         val password = etPassword.text.toString()
         val password2 = etPassword2.text.toString()
@@ -217,22 +231,20 @@ class RegisterActivity : AppCompatActivity() {
         val role = if (isAdminRegister) spRol.selectedItem.toString().uppercase() else ROL_CLIENTE
         val zona = if (spZona.visibility == View.VISIBLE) spZona.selectedItem.toString() else null
 
-        // 1. VALIDACIÓN DE CAMPOS SEGÚN EL ROL
+        // 1. VALIDACIÓN DE CAMPOS GENERALES
         if (email.isEmpty() || password.isEmpty() || password2.isEmpty()) {
-            Toast.makeText(this, "Debe llenar todos los campos.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Debe llenar los campos de Email y Contraseña.", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // 🏆 Validación específica del CLIENTE
-        if (role == ROL_CLIENTE) {
-            if (fullName.isEmpty() || phoneNumber.isEmpty()) {
-                Toast.makeText(this, "Nombre y Teléfono son obligatorios para Clientes.", Toast.LENGTH_SHORT).show()
-                return
-            }
-            if (phoneNumber.length < 7) {
-                tilPhoneNumber.error = "Número de teléfono incompleto."
-                return
-            }
+        // 🏆 Validación de Nombre/Teléfono para AMBOS roles (Cliente y Logístico)
+        if (fullName.isEmpty() || phoneNumber.isEmpty()) {
+            Toast.makeText(this, "Nombre y Teléfono son obligatorios para el registro.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (phoneNumber.length < 7) {
+            tilPhoneNumber.error = "Número de teléfono incompleto."
+            return
         }
 
         // 2. VALIDACIÓN DE FORMATO
@@ -264,26 +276,26 @@ class RegisterActivity : AppCompatActivity() {
         }
 
         // 5. HASH DE CONTRASEÑA
-        val passwordHash = hashPassword(password)
+        val passwordHash = PasswordHasher.hashPassword(password) // 🏆 Usando PasswordHasher
 
         // 6. INTENTO DE REGISTRO
         setLoadingState(true)
 
         val newId: Long = when (role) {
             ROL_CLIENTE -> {
-                // Registrar Cliente: Usando Nombre y Teléfono reales
+                // Registrar Cliente: Usa Nombre y Teléfono
                 userRepository.registerClient(
                     email = email,
                     passwordHash = passwordHash,
-                    fullName = fullName, // 🏆 USANDO CAMPO REAL
-                    phoneNumber = phoneNumber // 🏆 USANDO CAMPO REAL
+                    fullName = fullName,
+                    phoneNumber = phoneNumber
                 )
             }
 
             else -> {
-                // Registrar Personal Logístico
+                // Registrar Personal Logístico: Usa Nombre, Teléfono, Rol y Zona
                 userRepository.registerRecolector(
-                    username = email,
+                    name = fullName, // 🏆 CORRECCIÓN CLAVE: Usar fullName, no email
                     email = email,
                     passwordHash = passwordHash,
                     role = role,
@@ -301,7 +313,7 @@ class RegisterActivity : AppCompatActivity() {
                 Toast.LENGTH_LONG
             ).show()
 
-            // Redirección a Login (o al Dashboard si viene de Admin)
+            // Redirección
             val nextIntent = if (isAdminRegister) {
                 // Si el administrador registra, permanece en la pantalla actual para seguir registrando.
                 null
@@ -317,8 +329,8 @@ class RegisterActivity : AppCompatActivity() {
                 finish()
             } else {
                 // Limpiar campos después de registrar si es el flujo Admin
-                etFullName.text?.clear() // Limpiar nuevo campo
-                etPhoneNumber.text?.clear() // Limpiar nuevo campo
+                etFullName.text?.clear()
+                etPhoneNumber.text?.clear()
                 etEmail.text?.clear()
                 etPassword.text?.clear()
                 etPassword2.text?.clear()
@@ -338,10 +350,9 @@ class RegisterActivity : AppCompatActivity() {
         btnGoRegister.isEnabled = !isLoading
         findViewById<MaterialButton>(R.id.btnGoLogin)?.isEnabled = !isLoading
 
-        // Deshabilitar/Habilitar los nuevos campos
+        // Deshabilitar/Habilitar los campos de entrada
         etFullName.isEnabled = !isLoading
         etPhoneNumber.isEnabled = !isLoading
-
         etEmail.isEnabled = !isLoading
         etPassword.isEnabled = !isLoading
         etPassword2.isEnabled = !isLoading
@@ -368,13 +379,5 @@ class RegisterActivity : AppCompatActivity() {
         return android.util.Patterns.EMAIL_ADDRESS.matcher(target).matches()
     }
 
-    private fun hashPassword(password: String): String {
-        return try {
-            val bytes = MessageDigest.getInstance("SHA-256").digest(password.toByteArray())
-            bytes.joinToString("") { "%02x".format(it) }
-        } catch (e: Exception) {
-            Log.e("Security", "Error hashing password: ${e.message}")
-            password
-        }
-    }
+    // 🏆 Eliminada la función hashPassword local para usar co.edu.unipiloto.myapplication.security.PasswordHasher
 }
