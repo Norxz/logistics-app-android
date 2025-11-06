@@ -26,6 +26,9 @@
     <string name="delivery_package_text">2. Información del Paquete</string>
     <string name="delivery_package_weight">Peso (kg)</string>
     <string name="delivery_package_width">Ancho (cm)</string>
+    <string name="delivery_pickup_details">Detalles de Recolección</string>
+    <string name="delivery_pickup_zone_label">Zona de Recolección</string>
+    <string name="delivery_time_slot_label">Franja Horaria</string>
     <string name="delivery_phone">Teléfono</string>
     <string name="delivery_price">4. Precio del Envío</string>
     <string name="delivery_send_text">1. Datos del Remitente</string>
@@ -124,6 +127,14 @@
     <string name="welcome_collector">Bienvenido Recolector</string>
     <string name="welcome_description">¡Bienvenido! Estamos aquí para conectar tus envíos de manera rápida, segura y eficiente.</string>
     <string name="client_dashboard_title_welcome">Hola, %1$s</string>
+    <string name="agregar_nuevo_usuario_log_stico">Agregar nuevo usuario logístico</string>
+    <string name="error_no_zone">Error: La sesión no contiene una zona asignada. Por favor, contacte a soporte.</string>
+    <string name="no_completed_requests">Aún no hay solicitudes finalizadas (entregadas o canceladas) en el historial de tu zona.</string>
+    <string name="no_pending_requests">No hay solicitudes pendientes de asignación en tu zona. ¡Buen trabajo!</string>
+    <string name="full_address_format">%1$s, %2$s</string>
+    <string name="collection_time_format">Recolección: %1$s (%2$s)</string>
+    <string name="created_at_format">Creado: %1$s</string>
+    <string name="back_button_text">Regresar</string>
 
     <string-array name="roles_array">
         <item>REMITENTE</item>

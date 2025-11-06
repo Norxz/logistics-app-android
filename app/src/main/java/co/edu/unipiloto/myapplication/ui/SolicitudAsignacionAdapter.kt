@@ -1,4 +1,4 @@
-// Archivo: co.edu.unipiloto.myapplication.ui/SolicitudAsignacionAdapter.kt (COMPLETO)
+// Archivo: co.edu.unipiloto.myapplication.ui/SolicitudAsignacionAdapter.kt (COMPLETO Y CORREGIDO)
 
 package co.edu.unipiloto.myapplication.ui
 
@@ -13,13 +13,16 @@ import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.db.SolicitudRepository
+// 🏆 CORRECCIÓN CLAVE: Importar la clase de modelo Solicitud
+import co.edu.unipiloto.myapplication.models.Solicitud
 
 /**
  * Adaptador para mostrar solicitudes pendientes de asignación de conductor.
  * Muestra el layout item_solicitud_pendiente.xml
  */
 class SolicitudAsignacionAdapter(
-    private var items: List<SolicitudRepository.Solicitud>,
+    // 🏆 CORRECCIÓN: Usar la clase de modelo Solicitud importada
+    private var items: List<Solicitud>,
     // Datos del conductor
     private val conductores: List<Pair<Long, String>>, // Pair<ID_Conductor, Nombre>
     // Dependencia del repositorio para ejecutar la acción de asignación
@@ -28,10 +31,19 @@ class SolicitudAsignacionAdapter(
     private val onAssignmentSuccess: () -> Unit
 ) : RecyclerView.Adapter<SolicitudAsignacionAdapter.ViewHolder>() {
 
-    fun updateData(newItems: List<SolicitudRepository.Solicitud>) {
+    // -----------------------------------------------------
+    // MÉTODOS PÚBLICOS
+    // -----------------------------------------------------
+
+    // 🏆 CORRECCIÓN: El parámetro newItems debe usar la clase Solicitud importada
+    fun updateData(newItems: List<Solicitud>) {
         items = newItems
         notifyDataSetChanged()
     }
+
+    // -----------------------------------------------------
+    // MÉTODOS DEL RECYCLERVIEW
+    // -----------------------------------------------------
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -46,10 +58,9 @@ class SolicitudAsignacionAdapter(
         // 1. Asignación de datos a las vistas
         holder.tvSolicitudID.text = context.getString(R.string.guide_example, item.id.toString())
 
-        // El objeto Solicitud tiene direcciónId y zona, pero no la dirección completa.
-        // Asignamos la dirección para mantener el contexto visual.
-        holder.tvDestination.text = "Dir ID: ${item.direccionId} (Zona: ${item.zona})"
-        holder.tvSender.text = "Cliente ID: ${item.userId}" // Mostrar ID temporalmente
+        // El objeto Solicitud enriquecido SÍ tiene fullAddress y clientName
+        holder.tvDestination.text = item.fullAddress // Usar la dirección completa
+        holder.tvSender.text = "Cliente: ${item.clientName}" // Usar el nombre del cliente
 
 
         // 2. Configuración del Spinner de Conductores
@@ -79,7 +90,8 @@ class SolicitudAsignacionAdapter(
                 Toast.makeText(context, "Guía $solicitudId asignada exitosamente.", Toast.LENGTH_SHORT).show()
                 onAssignmentSuccess.invoke() // Llama al callback para recargar la lista en el fragmento
             } else {
-                Toast.makeText(context, "Fallo al asignar. La solicitud ya no está PENDIENTE.", Toast.LENGTH_LONG).show()
+                // Esto podría fallar si la solicitud ya no es PENDIENTE
+                Toast.makeText(context, "Fallo al asignar. La solicitud ya no está PENDIENTE o hubo un error.", Toast.LENGTH_LONG).show()
             }
         }
     }

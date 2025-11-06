@@ -29,6 +29,11 @@ class SolicitudActivity : AppCompatActivity() {
     private lateinit var etReceiverAddress: TextInputEditText
     private lateinit var btnSend: MaterialButton
 
+    // Vistas de recolección añadidas y esenciales para la BD
+    private lateinit var spCiudad: Spinner
+    private lateinit var spFranja: Spinner
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_new_delivery)
@@ -37,7 +42,8 @@ class SolicitudActivity : AppCompatActivity() {
         solicitudRepository = SolicitudRepository(this)
 
         if (!sessionManager.isLoggedIn() || sessionManager.getUserId() == -1L) {
-            Toast.makeText(this, "Debe iniciar sesión para crear una solicitud.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Debe iniciar sesión para crear una solicitud.", Toast.LENGTH_LONG)
+                .show()
             finish()
             return
         }
@@ -54,25 +60,32 @@ class SolicitudActivity : AppCompatActivity() {
         etReceiverAddress = findViewById(R.id.etReceiverAddress)
         btnSend = findViewById(R.id.btnSend)
 
-        // Asumiendo que etReceiverAddress es el campo de la dirección de recogida final.
-        // Si tienes una dirección previa de PickUpLocationActivity, puedes cargarla aquí.
-        // val pickupAddress = intent.getStringExtra("PICKUP_ADDRESS") ?: ""
-        // etReceiverAddress.setText(pickupAddress)
+        // Spinners de Recolección (Ahora aseguramos que existen en el XML)
+        spCiudad = findViewById(R.id.spCity)
+        spFranja = findViewById(R.id.spTimeSlot)
     }
 
     private fun setupSpinners() {
         // Spinner Tipo de ID
         val idTypes = listOf("Cédula", "Pasaporte", "RUT")
-        spIDType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, idTypes)
+        spIDType.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, idTypes)
 
         // Spinner Código de País (Remitente y Destinatario)
         val countryCodes = listOf("+57", "+1", "+52")
-        val codeAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, countryCodes)
+        val codeAdapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, countryCodes)
 
         findViewById<Spinner>(R.id.spSenderCountryCode).adapter = codeAdapter
         findViewById<Spinner>(R.id.spReceiverCountryCode).adapter = codeAdapter
 
-        // TODO: Configurar un spinner para seleccionar la Zona/Ciudad de recogida (necesaria para la BD)
+        // Configurar Spinner de Ciudad/Zona
+        val ZONAS_DISPONIBLES = listOf("Bogotá - Norte", "Bogotá - Sur", "Bogotá - Occidente")
+        spCiudad.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, ZONAS_DISPONIBLES)
+
+        // Configurar Spinner de Franja Horaria
+        val FRANJAS_HORARIAS = listOf("AM (8:00 - 12:00)", "PM (14:00 - 18:00)")
+        spFranja.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, FRANJAS_HORARIAS)
     }
 
     private fun setupListeners() {
@@ -81,6 +94,11 @@ class SolicitudActivity : AppCompatActivity() {
         }
         findViewById<MaterialButton>(R.id.btnLogout).setOnClickListener {
             sessionManager.logoutUser()
+            // Redirigir a Login y limpiar la pila de actividades
+            val intent = Intent(this, LoginActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            startActivity(intent)
             finish()
         }
     }
@@ -88,28 +106,42 @@ class SolicitudActivity : AppCompatActivity() {
     private fun submitSolicitud() {
         // 1. Recopilar y validar datos
         val address = etReceiverAddress.text.toString().trim()
-        val weight = findViewById<TextInputEditText>(R.id.etPackageWeight).text.toString().toDoubleOrNull()
+        val weight =
+            findViewById<TextInputEditText>(R.id.etPackageWeight).text.toString().toDoubleOrNull()
         val price = findViewById<TextInputEditText>(R.id.etPrice).text.toString().toDoubleOrNull()
         val content = findViewById<TextInputEditText>(R.id.etPackageContent).text.toString().trim()
 
-        if (address.isEmpty() || weight == null || price == null || content.isEmpty()) {
-            Toast.makeText(this, "Faltan campos obligatorios de envío.", Toast.LENGTH_LONG).show()
+        // Recolección de Spinners. Manejamos el caso de que no haya nada seleccionado (aunque el Adapter lo impide)
+        val zonaCompleta = spCiudad.selectedItem?.toString()?.trim() ?: ""
+        val franja = spFranja.selectedItem?.toString()?.trim() ?: ""
+
+        // Extraer la Ciudad (e.g., "Bogotá - Norte" -> "Bogotá")
+        val ciudad = zonaCompleta.split(" - ").firstOrNull() ?: ""
+
+        // Validar que todos los campos clave estén llenos
+        if (address.isEmpty() || weight == null || price == null || content.isEmpty() || zonaCompleta.isEmpty() || franja.isEmpty()) {
+            Toast.makeText(this, "Faltan campos obligatorios. Verifique datos de paquete, destino y recolección.", Toast.LENGTH_LONG).show()
             return
         }
 
-        // 2. Definir fecha, franja y zona (TEMPORAL: Debes obtenerlos de la UI)
-        val today = Calendar.getInstance().get(Calendar.YEAR).toString() + "-" + (Calendar.getInstance().get(Calendar.MONTH) + 1) + "-" + Calendar.getInstance().get(Calendar.DAY_OF_MONTH)
-        val franja = "AM" // Ejemplo, obtener de un spinner
-        val zona = "Bogotá - Norte" // Ejemplo, obtener de la UI
+        // 2. Definir fecha de recolección (Hoy en formato yyyy-mm-dd)
+        val calendar = Calendar.getInstance()
+        val year = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH) + 1
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+        val today = "$year-$month-$day"
 
         // 3. Crear solicitud
-        val newId = solicitudRepository.crear(
+        val newId = solicitudRepository.crearSolicitud(
             userId = sessionManager.getUserId(),
             direccionCompleta = address,
+            ciudad = ciudad, // OK: Usado para la referencia de ciudad
+            peso = weight, // OK: Parámetro double
+            precio = price, // OK: Parámetro double
             fechaRecoleccion = today,
             franjaHoraria = franja,
-            notas = content, // Usamos contenido como nota de ejemplo
-            zona = zona
+            notas = content,
+            zona = zonaCompleta // OK: Usado para la asignación por zona
         )
 
         if (newId != -1L) {
@@ -122,7 +154,11 @@ class SolicitudActivity : AppCompatActivity() {
             startActivity(intent)
             finish()
         } else {
-            Toast.makeText(this, "Error al crear la solicitud. Intente de nuevo.", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this,
+                "Error al crear la solicitud. Intente de nuevo.",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 }

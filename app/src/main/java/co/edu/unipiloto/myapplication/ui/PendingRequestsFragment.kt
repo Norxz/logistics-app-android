@@ -1,62 +1,65 @@
 package co.edu.unipiloto.myapplication.ui
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
+import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter // 🏆 Usamos el adaptador genérico
 import co.edu.unipiloto.myapplication.db.SolicitudRepository
-import co.edu.unipiloto.myapplication.storage.SessionManager
 import co.edu.unipiloto.myapplication.db.UserRepository
+import co.edu.unipiloto.myapplication.models.Solicitud // Usamos el modelo Solicitud
+import co.edu.unipiloto.myapplication.storage.SessionManager
 
 /**
- * Fragmento que lista las solicitudes pendientes de asignación para el Manager/Gestor.
- * Usa fragment_entregas_pendientes.xml.
+ * Fragmento que muestra las solicitudes en la sucursal pendientes de ser asignadas.
+ * (Pestaña 0 de BranchPagerAdapter)
  */
-class PendingRequestsFragment : Fragment() {
+class BranchPendingFragment : Fragment() { // Usamos el nombre que ya corregimos
 
     private lateinit var recyclerView: RecyclerView
-    private lateinit var tvNoRequests: TextView
+    private lateinit var tvEmpty: TextView // Cambiado de tvNoRequests a tvEmpty (usado en el layout de branch)
     private lateinit var solicitudRepository: SolicitudRepository
-    private lateinit var sessionManager: SessionManager
     private lateinit var userRepository: UserRepository
+    private lateinit var sessionManager: SessionManager
 
-    private lateinit var adapter: SolicitudAsignacionAdapter
+    private lateinit var adapter: SolicitudAdapter // 🏆 El adaptador genérico
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_entregas_pendientes, container, false)
+        // Asumo que estás usando el layout correcto para la lista de sucursal
+        return inflater.inflate(R.layout.fragment_branch_list, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         solicitudRepository = SolicitudRepository(requireContext())
-        sessionManager = SessionManager(requireContext())
         userRepository = UserRepository(requireContext())
+        sessionManager = SessionManager(requireContext())
 
-        recyclerView = view.findViewById(R.id.recyclerViewAssigned)
-        tvNoRequests = view.findViewById(R.id.tvNoPendingRequests)
+        recyclerView = view.findViewById(R.id.recyclerViewBranchList) // Usando ID del layout branch
+        tvEmpty = view.findViewById(R.id.tvBranchEmpty) // Usando ID del layout branch
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        // 1. Obtener la lista de conductores
-        val conductoresList = userRepository.getDriversForAssignment()
-
-        // 2. Crear el adaptador con el repositorio y el callback
-        adapter = SolicitudAsignacionAdapter(
-            items = emptyList(),
-            conductores = conductoresList,
-            solicitudRepository = solicitudRepository,
-            onAssignmentSuccess = {
-                // Callback: Si la asignación fue exitosa, recargamos la lista
-                loadPendingRequests()
+        // Inicializar el adaptador correctamente:
+        adapter = SolicitudAdapter(
+            items = emptyList<Solicitud>(),
+            role = sessionManager.getRole() ?: "GESTOR",
+            onActionClick = { solicitud, action ->
+                // La acción del GESTOR en PENDIENTES es siempre ASIGNAR
+                if (action == "ASIGNAR") {
+                    handleAssignmentAction(solicitud)
+                }
             }
         )
         recyclerView.adapter = adapter
@@ -64,19 +67,57 @@ class PendingRequestsFragment : Fragment() {
         loadPendingRequests()
     }
 
-    private fun loadPendingRequests() {
-        val zona = sessionManager.getZona() ?: return
+    override fun onResume() {
+        super.onResume()
+        loadPendingRequests()
+    }
 
-        // SolicitudRepository.pendientesPorZona devuelve List<Solicitud>, que es lo que necesita el adaptador.
-        val pendingItems = solicitudRepository.pendientesPorZona(zona)
+    /**
+     * Carga las solicitudes que están en estado 'PENDIENTE' para la zona del gestor.
+     */
+    private fun loadPendingRequests() {
+        val zona = sessionManager.getZona() ?: run {
+            tvEmpty.visibility = View.VISIBLE
+            tvEmpty.text = getString(R.string.error_no_zone)
+            recyclerView.visibility = View.GONE
+            return
+        }
+
+        // 🏆 CORRECCIÓN DE FUNCIÓN: Usamos el método enriquecido correcto
+        val pendingItems = solicitudRepository.getSolicitudesPendientesEnriquecidasPorZona(zona)
 
         if (pendingItems.isNotEmpty()) {
-            tvNoRequests.visibility = View.GONE
+            tvEmpty.visibility = View.GONE
             recyclerView.visibility = View.VISIBLE
             adapter.updateData(pendingItems)
         } else {
-            tvNoRequests.visibility = View.VISIBLE
+            tvEmpty.visibility = View.VISIBLE
             recyclerView.visibility = View.GONE
+            tvEmpty.text = getString(R.string.no_pending_requests)
+        }
+    }
+
+    /**
+     * Maneja la lógica de asignar un recolector a una solicitud (usando el primer conductor disponible).
+     */
+    private fun handleAssignmentAction(solicitud: Solicitud) {
+        val availableRecolector = userRepository.getFirstRecolectorByZone(solicitud.zona)
+
+        if (availableRecolector != null) {
+            val rowsAffected = solicitudRepository.asignarRecolector(
+                solicitudId = solicitud.id,
+                recolectorId = availableRecolector.id
+            )
+
+            if (rowsAffected > 0) {
+                Toast.makeText(requireContext(), "Solicitud #${solicitud.id} asignada a ${availableRecolector.name}.", Toast.LENGTH_LONG).show()
+                // Recargar la lista para que la solicitud desaparezca de Pendientes
+                loadPendingRequests()
+            } else {
+                Toast.makeText(requireContext(), "Error al asignar la solicitud.", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(requireContext(), "No hay recolectores disponibles en ${solicitud.zona}.", Toast.LENGTH_LONG).show()
         }
     }
 }

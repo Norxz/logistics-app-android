@@ -21,6 +21,7 @@
     <color name="status_pending">#FFCC00</color>
 
     <color name="status_in_route">#FFCC00</color>
+    <color name="status_in_transit">#FFA726</color>
 
     <color name="status_active">#007AFF</color>
     <color name="status_default">#9E9E9E</color>

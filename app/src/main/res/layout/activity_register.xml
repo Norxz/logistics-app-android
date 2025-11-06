@@ -21,6 +21,7 @@
             android:layout_marginBottom="40dp" />
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/email"
@@ -38,6 +39,7 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/password"
@@ -73,48 +75,55 @@
                 android:textColor="@color/on_surface" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <TextView
-            android:id="@+id/tvRolLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/choose_role"
-            android:textColor="@color/on_surface"
-            android:textSize="16sp"
-            android:layout_marginBottom="8dp" />
-
-        <Spinner
-            android:id="@+id/spRol"
+        <LinearLayout
+            android:id="@+id/llRoleAndZoneSelection"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:background="@drawable/spinner_border"
-            android:overlapAnchor="false"
-            android:dropDownVerticalOffset="56dp"
-            android:layout_marginBottom="24dp" />
-
-        <TextView
-            android:id="@+id/tvZonaLabel"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/choose_zone"
-            android:textColor="@color/on_surface"
-            android:textSize="16sp"
-            android:layout_marginBottom="8dp"
-            android:visibility="gone"/>
+            android:orientation="vertical">
 
-        <Spinner
-            android:id="@+id/spZona"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:background="@drawable/spinner_border"
-            android:overlapAnchor="false"
-            android:dropDownVerticalOffset="56dp"
-            android:layout_marginBottom="24dp"
-            android:visibility="gone" />
+            <TextView
+                android:id="@+id/tvRolLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/choose_role"
+                android:textColor="@color/on_surface"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp" />
 
+            <Spinner
+                android:id="@+id/spRol"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="@drawable/spinner_border"
+                android:overlapAnchor="false"
+                android:dropDownVerticalOffset="56dp"
+                android:layout_marginBottom="24dp" />
+
+            <TextView
+                android:id="@+id/tvZonaLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/choose_zone"
+                android:textColor="@color/on_surface"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone"/>
+
+            <Spinner
+                android:id="@+id/spZona"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="@drawable/spinner_border"
+                android:overlapAnchor="false"
+                android:dropDownVerticalOffset="56dp"
+                android:layout_marginBottom="24dp"
+                android:visibility="gone" />
+
+        </LinearLayout>
         <ProgressBar
             android:id="@+id/progress"
             style="?android:attr/progressBarStyle"

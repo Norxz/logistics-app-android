@@ -12,7 +12,7 @@ import co.edu.unipiloto.myapplication.storage.SessionManager
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.button.MaterialButton
-import java.security.MessageDigest // Para el Hashing
+import java.security.MessageDigest
 
 /**
  * Activity principal para el inicio de sesión.
@@ -21,12 +21,14 @@ import java.security.MessageDigest // Para el Hashing
 class LoginActivity : AppCompatActivity() {
 
     // Vistas
+    private lateinit var btnBack: MaterialButton // 🏆 VISTA AÑADIDA: Botón de regreso explícito
     private lateinit var tilEmail: TextInputLayout
     private lateinit var etEmail: TextInputEditText
     private lateinit var tilPassword: TextInputLayout
     private lateinit var etPassword: TextInputEditText
     private lateinit var btnLogin: MaterialButton
     private lateinit var btnGoRegister: MaterialButton
+    private lateinit var btnForgotPassword: MaterialButton // Si existe en el layout, es bueno tenerlo.
 
     // Repositorios y Gestores
     private lateinit var userRepository: UserRepository
@@ -40,10 +42,10 @@ class LoginActivity : AppCompatActivity() {
         userRepository = UserRepository(this)
         sessionManager = SessionManager(this)
 
-        // 2. Configurar el botón de regreso y el título en la Toolbar
-        setupToolbarBackNavigation()
+        initViews() // Inicializa todas las vistas incluyendo el nuevo btnBack
 
-        initViews()
+        // 2. 🏆 CORRECCIÓN: Configurar el listener del botón de regreso explícito
+        setupBackButtonNavigation()
 
         // 3. Verificar sesión activa (Si ya está logueado, ir al dashboard)
         if (sessionManager.isLoggedIn()) {
@@ -55,39 +57,28 @@ class LoginActivity : AppCompatActivity() {
         setupListeners()
     }
 
-    /**
-     * Configura la flecha de regreso y el título usando el ActionBar nativo.
-     */
-    private fun setupToolbarBackNavigation() {
-        supportActionBar?.apply {
-            setDisplayHomeAsUpEnabled(true)
-            // Ya asumimos que el recurso R.string.login_title existe
-            title = getString(R.string.login_title)
-        }
-    }
-
-    /**
-     * Define la acción al pulsar el botón de regreso (<) en la Toolbar.
-     */
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == android.R.id.home) {
-            // Regresa a MainActivity (el Hub de Bienvenida)
-            val intent = Intent(this, MainActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
-            startActivity(intent)
-            finish()
-            return true
-        }
-        return super.onOptionsItemSelected(item)
-    }
-
     private fun initViews() {
+        // Inicializar el botón de regreso explícito
+        btnBack = findViewById(R.id.btnBack)
+
         tilEmail = findViewById(R.id.tilEmail)
         etEmail = findViewById(R.id.etEmail)
         tilPassword = findViewById(R.id.tilPassword)
         etPassword = findViewById(R.id.etPassword)
         btnLogin = findViewById(R.id.btnLogin)
         btnGoRegister = findViewById(R.id.btnGoRegister)
+        btnForgotPassword = findViewById(R.id.btnForgotPassword) // Aseguramos que existe
+    }
+
+    /**
+     * 🏆 NUEVA IMPLEMENTACIÓN: Configura el listener para el botón explícito de regreso.
+     * La lógica de Toolbar (setupToolbarBackNavigation y onOptionsItemSelected) fue eliminada.
+     */
+    private fun setupBackButtonNavigation() {
+        btnBack.setOnClickListener {
+            // Regresa a la actividad anterior, que en este flujo suele ser MainActivity (Hub de Bienvenida)
+            onBackPressedDispatcher.onBackPressed()
+        }
     }
 
     private fun setupListeners() {
@@ -98,8 +89,20 @@ class LoginActivity : AppCompatActivity() {
         btnGoRegister.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
         }
+
+        btnForgotPassword.setOnClickListener {
+            Toast.makeText(
+                this,
+                "Funcionalidad de Recuperación de Contraseña no implementada.",
+                Toast.LENGTH_SHORT
+            ).show()
+            // Aquí iría el intent a ForgotPasswordActivity
+        }
     }
 
+    /**
+     * Realiza la validación de campos, hashea la contraseña y llama al repositorio para autenticar.
+     */
     private fun performLogin() {
         tilEmail.error = null
         tilPassword.error = null
@@ -116,37 +119,44 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
-        // 🏆 APLICAR HASHING (debe coincidir con RegisterActivity)
+        // 🏆 APLICAR HASHING
         val passwordHash = hashPassword(password)
 
         // 🏆 LLAMAR al método login() del repositorio que usa el hash
         val userData = userRepository.login(emailOrUsername, passwordHash)
 
         if (userData != null) {
-            // Autenticación exitosa. userData es UserSessionData.
+            // Autenticación exitosa.
             sessionManager.createLoginSession(
                 userId = userData.id,
                 role = userData.role,
-                zona = userData.zona
+                zona = userData.sucursal,
+                name = userData.name
             )
-            Toast.makeText(this, "Bienvenido, ${userData.role}!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Bienvenido, ${userData.name}!", Toast.LENGTH_SHORT).show()
             navigateToDashboard(userData.role)
         } else {
             // Autenticación fallida
-            Toast.makeText(this, "Credenciales incorrectas o usuario inactivo.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Credenciales incorrectas o usuario inactivo.", Toast.LENGTH_LONG)
+                .show()
             tilPassword.error = "Email/Contraseña incorrectos."
         }
     }
 
     /**
-     * Genera un hash SHA-256 de la contraseña. Idéntico a RegisterActivity.
+     * Genera un hash SHA-256 de la contraseña.
+     * Es idéntico al usado en RegisterActivity y debe coincidir con el hash de la DB.
      */
     private fun hashPassword(password: String): String {
         return try {
+            // Obtener la instancia del algoritmo de hashing
             val bytes = MessageDigest.getInstance("SHA-256").digest(password.toByteArray())
+
+            // Formatear el array de bytes a un String hexadecimal de 64 caracteres
             bytes.joinToString("") { "%02x".format(it) }
         } catch (e: Exception) {
-            Log.e("Security", "Error hashing password in Login: ${e.message}")
+            Log.e("Security", "Error hashing password: ${e.message}")
+            // En caso de error, retorna la contraseña sin hashear (fallará la autenticación)
             password
         }
     }
@@ -159,8 +169,8 @@ class LoginActivity : AppCompatActivity() {
             "CLIENTE" -> Intent(this, ClientDashboardActivity::class.java)
             "CONDUCTOR" -> Intent(this, DriverDashboardActivity::class.java)
             "GESTOR" -> Intent(this, ManagerDashboardActivity::class.java)
-            "FUNCIONARIO" -> Intent(this, BranchDashboardActivity::class.java)
-            "ANALISTA", "ADMIN" -> Intent(this, AdminDashboardActivity::class.java) // Asumimos un dashboard para roles administrativos
+            "FUNCIONARIO", "ANALISTA" -> Intent(this, BranchDashboardActivity::class.java)
+            "ADMIN" -> Intent(this, AdminPanelActivity::class.java)
             else -> {
                 sessionManager.logoutUser()
                 Intent(this, LoginActivity::class.java)

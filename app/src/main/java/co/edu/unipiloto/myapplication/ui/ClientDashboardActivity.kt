@@ -12,6 +12,7 @@ import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.db.UserRepository
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.imageview.ShapeableImageView
 
 /**
  * Activity que actúa como el panel principal para los usuarios con rol CLIENTE.
@@ -43,13 +44,12 @@ class ClientDashboardActivity : AppCompatActivity() {
 
     // Estado de la visibilidad
     private var isSolicitadosVisible = true
-    private var isFinalizadosVisible = false // Inicialmente oculto según el layout
+    private var isFinalizadosVisible = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_client_dashboard)
 
-        // Ocultar la barra de acción para usar el diseño personalizado del layout
         supportActionBar?.hide()
 
         sessionManager = SessionManager(this)
@@ -64,9 +64,10 @@ class ClientDashboardActivity : AppCompatActivity() {
         }
 
         initViews()
-        loadClientData()
+        // 🏆 CORRECCIÓN: Obtener el nombre directamente del SessionManager
+        loadClientDataFromSession()
         setupListeners()
-        // loadSolicitudes() // ⚠️ Implementar en el siguiente paso
+        // loadSolicitudes()
     }
 
     private fun initViews() {
@@ -88,14 +89,22 @@ class ClientDashboardActivity : AppCompatActivity() {
         rvSolicitados.layoutManager = LinearLayoutManager(this)
         rvFinalizados.layoutManager = LinearLayoutManager(this)
 
-        // Asegurar que la rotación inicial del historial coincida con su visibilidad inicial (oculta)
-        if (isFinalizadosVisible) btnToggleFinalizados.rotation = 0f else btnToggleFinalizados.rotation = 180f
+        // Configurar visibilidad inicial
+        rvSolicitados.visibility = if (isSolicitadosVisible) View.VISIBLE else View.GONE
+        rvFinalizados.visibility = if (isFinalizadosVisible) View.VISIBLE else View.GONE
+
+        // Configurar rotación inicial
+        btnToggleSolicitados.rotation = if (isSolicitadosVisible) 0f else 180f
+        btnToggleFinalizados.rotation = if (isFinalizadosVisible) 0f else 180f
     }
 
-    private fun loadClientData() {
-        val userId = sessionManager.getUserId()
-        // Obtener el nombre para el saludo
-        val clientName = userRepository.getFullNameById(userId) ?: "Cliente"
+    /**
+     * 🏆 CORRECCIÓN: Obtiene el nombre del usuario directamente de SessionManager
+     * (donde fue guardado en LoginActivity) para evitar una consulta extra a la BD.
+     */
+    private fun loadClientDataFromSession() {
+        // Obtener el nombre guardado en LoginActivity
+        val clientName = sessionManager.getName().split(" ").firstOrNull() ?: "Cliente"
 
         // Personalizar el saludo con el nombre del usuario
         tvWelcomeTitle.text = getString(R.string.client_dashboard_title_welcome, clientName)
@@ -116,37 +125,28 @@ class ClientDashboardActivity : AppCompatActivity() {
 
         // 3. TOGGLE Solicitudes Activas
         btnToggleSolicitados.setOnClickListener {
-            // 1. Alternar el estado
             isSolicitadosVisible = !isSolicitadosVisible
-            // 2. 🏆 Llamada corregida
             toggleSection(rvSolicitados, btnToggleSolicitados, isSolicitadosVisible)
         }
 
         // 4. TOGGLE Historial Finalizado
         btnToggleFinalizados.setOnClickListener {
-            // 1. Alternar el estado
             isFinalizadosVisible = !isFinalizadosVisible
-            // 2. 🏆 Llamada corregida
             toggleSection(rvFinalizados, btnToggleFinalizados, isFinalizadosVisible)
         }
     }
 
     /**
-     * Alterna la visibilidad de un RecyclerView y cambia el ícono del botón.
-     * 🏆 FUNCIÓN CORREGIDA: Ya no acepta el lambda 'setVisible'.
-     *
-     * @param recyclerView El RecyclerView a mostrar/ocultar.
-     * @param button El ImageButton que muestra la flecha (para rotar).
-     * @param newState El nuevo estado deseado (true para visible, false para oculto).
+     * Alterna la visibilidad de un RecyclerView y anima la rotación del botón.
      */
     private fun toggleSection(recyclerView: RecyclerView, button: View, newState: Boolean) {
         if (newState) {
             recyclerView.visibility = View.VISIBLE
-            // Flecha hacia arriba (0 grados)
+            // Flecha hacia arriba (ícono abierto)
             button.animate().rotation(0f).setDuration(200).start()
         } else {
             recyclerView.visibility = View.GONE
-            // Flecha hacia abajo (180 grados)
+            // Flecha hacia abajo (ícono cerrado)
             button.animate().rotation(180f).setDuration(200).start()
         }
     }
@@ -156,11 +156,8 @@ class ClientDashboardActivity : AppCompatActivity() {
      */
     private fun navigateToLoginHub() {
         val intent = Intent(this, MainActivity::class.java)
-        // Estas flags borran todo el stack y ponen a MainActivity como la raíz.
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()
     }
-
-    // ⚠️ La función loadSolicitudes() se implementará en los siguientes pasos
 }

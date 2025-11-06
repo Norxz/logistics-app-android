@@ -118,7 +118,7 @@ class MainActivity : AppCompatActivity() {
             "CONDUCTOR" -> Intent(this, DriverDashboardActivity::class.java)
             "GESTOR" -> Intent(this, ManagerDashboardActivity::class.java)
             "FUNCIONARIO" -> Intent(this, BranchDashboardActivity::class.java)
-            "ADMIN" -> Intent(this, AdminDashboardActivity::class.java) // 🚨 Asumimos la existencia
+            "ADMIN" -> Intent(this, AdminPanelActivity::class.java) // 🚨 Asumimos la existencia
             else -> {
                 Toast.makeText(this, "Rol no reconocido. Cerrando sesión.", Toast.LENGTH_LONG)
                     .show()
