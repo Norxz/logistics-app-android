@@ -5,44 +5,26 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_surface"
-    android:paddingStart="32dp"
-    android:paddingEnd="32dp"
     tools:context=".ui.AdminPanelActivity">
 
-    <TextView
-        android:id="@+id/adminTitle"
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbarAdmin"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="64dp"
-        android:fontFamily="sans-serif-medium"
-        android:gravity="center"
-        android:text="@string/admin_panel"
-        android:textColor="@color/on_surface"
-        android:textSize="24sp"
+        android:background="@color/primary_color"
+        app:title="@string/admin_panel"
+        app:titleTextColor="@color/md_white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnRegisterPersonnel"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
-        android:backgroundTint="@color/primary_color"
-        android:paddingVertical="18dp"
-        android:text="Registrar Nuevo Usuario Logístico"
-        android:textColor="@color/md_white"
-        android:textSize="18sp"
-        app:cornerRadius="12dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/adminTitle" />
-
-    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnManageUsers"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="48dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
         android:backgroundTint="@color/accent_orange"
         android:paddingVertical="18dp"
         android:text="Gestionar Usuarios Existentes"
@@ -51,22 +33,22 @@
         app:cornerRadius="12dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btnRegisterPersonnel" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnViewAllRequests"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:backgroundTint="@color/status_success"
-        android:paddingVertical="18dp"
-        android:text="Ver Todas las Solicitudes"
-        android:textColor="@color/md_white"
-        android:textSize="18sp"
-        app:cornerRadius="12dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btnManageUsers" />
+        app:layout_constraintTop_toBottomOf="@id/toolbarAdmin" /> <com.google.android.material.button.MaterialButton
+    android:id="@+id/btnViewAllRequests"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="16dp"
+    android:layout_marginStart="32dp"
+    android:layout_marginEnd="32dp"
+    android:backgroundTint="@color/status_success"
+    android:paddingVertical="18dp"
+    android:text="Ver Todas las Solicitudes"
+    android:textColor="@color/md_white"
+    android:textSize="18sp"
+    app:cornerRadius="12dp"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@id/btnManageUsers" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnLogoutAdmin"

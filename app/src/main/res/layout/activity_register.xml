@@ -190,7 +190,7 @@
             android:id="@+id/btnGoLogin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/back_login"
+            android:text="@string/back"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:textColor="@color/primary_color"
             android:paddingVertical="14dp" />
