@@ -5,7 +5,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
-import co.edu.unipiloto.myapplication.ui.*;
+import co.edu.unipiloto.myapplication.ui.*; // Asegúrate de que este import abarque BranchPendingFragment
 
 public class DashboardPagerAdapter extends FragmentStateAdapter {
 
@@ -20,13 +20,15 @@ public class DashboardPagerAdapter extends FragmentStateAdapter {
     public Fragment createFragment(int position) {
         switch (position) {
             case 0:
+                // 🏆 CORRECCIÓN: Usar la clase que ya existe (BranchPendingFragment)
                 // Carga la lista de solicitudes sin asignar
-                return new PendingRequestsFragment();
+                return new BranchPendingFragment();
             case 1:
                 // Carga la lista de solicitudes ya asignadas
+                // Asumimos que esta clase sí existe o la crearemos después.
                 return new AssignedRequestsFragment();
             default:
-                return new PendingRequestsFragment();
+                return new BranchPendingFragment();
         }
     }
 

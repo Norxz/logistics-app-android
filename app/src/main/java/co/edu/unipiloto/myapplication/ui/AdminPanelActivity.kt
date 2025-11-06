@@ -2,78 +2,91 @@ package co.edu.unipiloto.myapplication.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.storage.SessionManager
+import co.edu.unipiloto.myapplication.storage.SessionManager // Asegúrate de que esta clase exista
 import com.google.android.material.button.MaterialButton
 
 /**
- * Represents the main dashboard for an administrator user.
- *
- * This activity serves as the central navigation point for administrative tasks.
- * It provides UI elements (buttons) to access different management screens, such as:
- * - Managing officials (e.g., creating, updating, deleting official accounts).
- * - Managing drivers (e.g., assigning vehicles, viewing driver status).
- * - Viewing all transportation requests.
- *
- * It also handles user session management, ensuring that only authenticated users with
- * the appropriate role (e.g., 'ANALISTA') can access this panel. If the session is
- * invalid or the role is incorrect, the user is automatically logged out and redirected
- * to the login screen.
- *
- * @see AppCompatActivity
- * @see SessionManager
+ * Activity para el Panel de Administración.
+ * Permite al administrador acceder a las funciones de gestión de usuarios logísticos y solicitudes.
  */
 class AdminPanelActivity : AppCompatActivity() {
 
     private lateinit var sessionManager: SessionManager
 
+    // Vistas
+    private lateinit var btnRegisterPersonnel: MaterialButton
+    private lateinit var btnManageUsers: MaterialButton
+    private lateinit var btnViewAllRequests: MaterialButton
+    private lateinit var btnLogoutAdmin: MaterialButton
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_admin_panel)
 
+        // Ocultar la barra de acción por consistencia
+        supportActionBar?.hide()
+
         sessionManager = SessionManager(this)
 
-        // Asumiendo que esta pantalla es solo accesible por un rol 'ADMIN' o 'ANALISTA'
-        if (!sessionManager.isLoggedIn() || sessionManager.getRole() != "ANALISTA") {
+        // Verificación de seguridad: solo el rol de Administrador debe acceder
+        // Asumo que el rol 'ADMIN' está almacenado correctamente tras el login.
+        if (!sessionManager.isLoggedIn() || sessionManager.getRole() != "ADMIN") {
+            // Si no es el rol correcto o no está logeado, forzar el logout
             logoutUser()
             return
         }
 
         initViews()
+        setupListeners()
     }
 
     private fun initViews() {
-        // Mapeo de botones de tu XML activity_admin_panel
-        val btnManageOfficials: MaterialButton = findViewById(R.id.btnManageOfficials)
-        val btnManageDrivers: MaterialButton = findViewById(R.id.btnManageDrivers)
-        val btnViewAllRequests: MaterialButton = findViewById(R.id.btnViewAllRequests)
-        val btnLogoutAdmin: MaterialButton = findViewById(R.id.btnLogoutAdmin)
+        btnRegisterPersonnel = findViewById(R.id.btnRegisterPersonnel)
+        btnManageUsers = findViewById(R.id.btnManageUsers)
+        btnViewAllRequests = findViewById(R.id.btnViewAllRequests)
+        btnLogoutAdmin = findViewById(R.id.btnLogoutAdmin)
+    }
 
-        // Configuración de Listeners
-        btnManageOfficials.setOnClickListener {
-            // TODO: Implementar la Activity de Gestión de Funcionarios/Personal
-            // startActivity(Intent(this, ManageOfficialsActivity::class.java))
+    private fun setupListeners() {
+
+        // 1. Botón: Registrar Nuevo Usuario Logístico (Lanza RegisterActivity en modo Admin)
+        btnRegisterPersonnel.setOnClickListener {
+            val intent = Intent(this, RegisterActivity::class.java)
+            // Usa la constante definida en RegisterActivity para activar el modo de registro de personal
+            intent.putExtra(RegisterActivity.EXTRA_IS_ADMIN_REGISTER, true)
+            startActivity(intent)
         }
 
-        btnManageDrivers.setOnClickListener {
-            // TODO: Implementar la Activity de Gestión de Conductores
-            // startActivity(Intent(this, ManageDriversActivity::class.java))
+        // 2. Botón: Gestionar Usuarios Existentes (Redirige a la Activity de gestión logística)
+        btnManageUsers.setOnClickListener {
+            val intent = Intent(this, LogisticUserManagementActivity::class.java)
+            startActivity(intent)
         }
 
+        // 3. Botón: Ver Todas las Solicitudes
         btnViewAllRequests.setOnClickListener {
-            // TODO: Implementar la Activity para Ver Todas las Solicitudes
-            // startActivity(Intent(this, ViewAllRequestsActivity::class.java))
+            // TODO: Crear e implementar la Activity para ver las solicitudes
+            Toast.makeText(this, "Navegando a Ver Todas las Solicitudes (Pendiente)", Toast.LENGTH_SHORT).show()
         }
 
+        // 4. Cierre de Sesión
         btnLogoutAdmin.setOnClickListener {
             logoutUser()
         }
     }
 
+    /**
+     * Limpia la sesión y redirige al usuario a la pantalla de Login.
+     */
     private fun logoutUser() {
         sessionManager.logoutUser()
         val intent = Intent(this, LoginActivity::class.java)
+        // Estas flags aseguran que el historial de actividades se borre
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()

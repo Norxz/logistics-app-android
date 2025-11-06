@@ -25,6 +25,13 @@ import java.security.MessageDigest
  */
 class RegisterActivity : AppCompatActivity() {
 
+    // --- CONSTANTES ---
+    companion object {
+        const val EXTRA_IS_ADMIN_REGISTER = "IS_ADMIN_REGISTER"
+        const val ROL_CLIENTE = "CLIENTE"
+        const val ROL_ADMIN = "ADMIN" // Aseguramos el rol de Admin
+    }
+
     // --- VISTAS ---
     private lateinit var etEmail: TextInputEditText
     private lateinit var etPassword: TextInputEditText
@@ -34,6 +41,7 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var tilPassword2: TextInputLayout
     private lateinit var spRol: Spinner
     private lateinit var spZona: Spinner
+    private lateinit var tvRolLabel: TextView
     private lateinit var tvZonaLabel: TextView
     private lateinit var btnGoRegister: MaterialButton
     private lateinit var progressBar: ProgressBar
@@ -43,25 +51,29 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var sessionManager: SessionManager
 
     // Roles que requieren selección de Zona
-    private val ROLES_LOGISTICOS = listOf("CONDUCTOR", "GESTOR", "FUNCIONARIO")
+    private val ROLES_LOGISTICOS = listOf("CONDUCTOR", "GESTOR", "FUNCIONARIO", "ANALISTA")
+    // El admin puede registrar todos excepto él mismo (ya que los admins suelen ser estáticos)
+    private val ADMIN_REGISTERABLE_ROLES = listOf(ROL_CLIENTE) + ROLES_LOGISTICOS.distinct()
     private val ZONAS_DISPONIBLES = listOf("Bogotá - Norte", "Bogotá - Sur", "Bogotá - Occidente")
-
-    // DICCIONARIO BÁSICO DE PALABRAS PROHIBIDAS (Lista Negra)
     private val PASSWORD_BLACKLIST = listOf("password", "123456", "qwerty", "admin", "unipiloto", "piloto")
 
+    // --- ESTADO ---
+    private var isAdminRegister = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
 
-        // Ocultar la barra de acción para usar el diseño personalizado del layout
         supportActionBar?.hide()
 
         userRepository = UserRepository(this)
         sessionManager = SessionManager(this)
 
+        isAdminRegister = intent.getBooleanExtra(EXTRA_IS_ADMIN_REGISTER, false)
+
         initViews()
         setupSpinners()
+        setupRegistrationFlowUI()
         setupListeners()
     }
 
@@ -71,54 +83,73 @@ class RegisterActivity : AppCompatActivity() {
         etPassword = findViewById(R.id.etPassword)
         etPassword2 = findViewById(R.id.etPassword2)
 
-        // Manejar el caso donde el parent.parent podría ser null o incorrecto
-        tilEmail = etEmail.parent.parent as? TextInputLayout ?: findViewById(R.id.tilEmail)
-        tilPassword = etPassword.parent.parent as? TextInputLayout ?: findViewById(R.id.tilPassword)
-        tilPassword2 = etPassword2.parent.parent as? TextInputLayout ?: findViewById(R.id.tilPassword2)
+        // Usar los IDs del TextInputLayout si los tienes. Si no, tu lógica de parent es correcta:
+        // Asumo que tienes IDs directos para mayor robustez: tilEmail, tilPassword, tilPassword2
+        tilEmail = findViewById(R.id.tilEmail) // Si usas IDs en XML
+        tilPassword = findViewById(R.id.tilPassword) // Si usas IDs en XML
+        tilPassword2 = findViewById(R.id.tilPassword2) // Si usas IDs en XML
 
-        // Inicializar Spinners y TextView de Zona
+        // Si no tienes IDs directos en el XML, usa tu lógica original (aunque es frágil):
+        /*
+        tilEmail = etEmail.parent.parent as? TextInputLayout ?: throw IllegalStateException("Missing TextInputLayout for etEmail or wrong parent structure.")
+        tilPassword = etPassword.parent.parent as? TextInputLayout ?: throw IllegalStateException("Missing TextInputLayout for etPassword or wrong parent structure.")
+        tilPassword2 = etPassword2.parent.parent as? TextInputLayout ?: throw IllegalStateException("Missing TextInputLayout for etPassword2 or wrong parent structure.")
+        */
+
         spRol = findViewById(R.id.spRol)
         spZona = findViewById(R.id.spZona)
+        tvRolLabel = findViewById(R.id.tvRolLabel)
         tvZonaLabel = findViewById(R.id.tvZonaLabel)
 
-        // Botones y ProgressBar
         btnGoRegister = findViewById(R.id.btnGoRegister)
         progressBar = findViewById(R.id.progress)
     }
 
+    private fun setupRegistrationFlowUI() {
+        if (!isAdminRegister) {
+            // Flujo Público (solo cliente)
+            tvRolLabel.visibility = View.GONE
+            spRol.visibility = View.GONE
+            tvZonaLabel.visibility = View.GONE
+            spZona.visibility = View.GONE
+            // Cambiar texto del botón si es necesario (ej. "Registrar Cliente")
+        }
+    }
+
     private fun setupSpinners() {
         // Configurar Spinner de Roles
-        val roles = listOf("CLIENTE", "CONDUCTOR", "GESTOR", "FUNCIONARIO", "ANALISTA")
-        val rolAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, roles)
+        val rolesToShow = if (isAdminRegister) ADMIN_REGISTERABLE_ROLES else listOf(ROL_CLIENTE)
+
+        val rolAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, rolesToShow)
         rolAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spRol.adapter = rolAdapter
 
         // Configurar Spinner de Zonas
-        val zonaAdapter =
-            ArrayAdapter(this, android.R.layout.simple_spinner_item, ZONAS_DISPONIBLES)
+        val zonaAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, ZONAS_DISPONIBLES)
         zonaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spZona.adapter = zonaAdapter
 
         // Listener para la lógica de visibilidad de la Zona
-        spRol.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parent: AdapterView<*>?,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                val selectedRole = parent?.getItemAtPosition(position).toString().uppercase()
-                // Muestra la Zona si el rol seleccionado es logístico
-                if (ROLES_LOGISTICOS.contains(selectedRole)) {
-                    tvZonaLabel.visibility = View.VISIBLE
-                    spZona.visibility = View.VISIBLE
-                } else {
-                    tvZonaLabel.visibility = View.GONE
-                    spZona.visibility = View.GONE
+        if (isAdminRegister) {
+            spRol.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    val selectedRole = parent?.getItemAtPosition(position).toString().uppercase()
+                    // Muestra la Zona si el rol seleccionado es logístico
+                    if (ROLES_LOGISTICOS.contains(selectedRole)) {
+                        tvZonaLabel.visibility = View.VISIBLE
+                        spZona.visibility = View.VISIBLE
+                    } else {
+                        tvZonaLabel.visibility = View.GONE
+                        spZona.visibility = View.GONE
+                    }
                 }
+                override fun onNothingSelected(parent: AdapterView<*>?) {}
             }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
     }
 
@@ -127,9 +158,8 @@ class RegisterActivity : AppCompatActivity() {
             performRegistration()
         }
 
-        // Botón para volver al Login
         findViewById<MaterialButton>(R.id.btnGoLogin).setOnClickListener {
-            finish() // Simplemente cierra esta actividad y vuelve a LoginActivity
+            finish()
         }
     }
 
@@ -145,7 +175,8 @@ class RegisterActivity : AppCompatActivity() {
         val email = etEmail.text.toString().trim()
         val password = etPassword.text.toString()
         val password2 = etPassword2.text.toString()
-        val role = spRol.selectedItem.toString().uppercase()
+
+        val role = if (isAdminRegister) spRol.selectedItem.toString().uppercase() else ROL_CLIENTE
         val zona = if (spZona.visibility == View.VISIBLE) spZona.selectedItem.toString() else null
 
         // 1. VALIDACIÓN BÁSICA DE CAMPOS VACÍOS
@@ -186,41 +217,55 @@ class RegisterActivity : AppCompatActivity() {
         val passwordHash = hashPassword(password)
 
         // 6. INTENTO DE REGISTRO
-        progressBar.visibility = View.VISIBLE
+        setLoadingState(true)
 
         val newId: Long = when (role) {
-            "CLIENTE" -> {
-                // Registro de CLIENTE
+            ROL_CLIENTE -> {
+                // Registrar Cliente: Usamos el email para el nombre si no hay campo de nombre
                 userRepository.registerClient(
                     email = email,
                     passwordHash = passwordHash,
-                    fullName = "Cliente ${email.split("@")[0]}", // Nombre simple basado en email
+                    fullName = "Cliente ${email.split("@")[0].capitalize()}",
                     phoneNumber = "0" // Placeholder
                 )
             }
-
             else -> {
-                // Registro de Personal Logístico (CONDUCTOR, GESTOR, etc.)
+                // 🏆 CORRECCIÓN CRÍTICA: Asegurar que el campo 'email' y el parámetro 'sucursal' estén presentes.
                 userRepository.registerRecolector(
-                    username = email,
+                    username = email, // Usamos email como username
+                    email = email, // Agregamos el campo email
                     passwordHash = passwordHash,
                     role = role,
-                    zona = zona
+                    sucursal = zona // Corregimos el nombre del parámetro a 'sucursal'
                 )
             }
         }
 
-        progressBar.visibility = View.GONE
+        setLoadingState(false)
 
         if (newId != -1L) {
             Toast.makeText(this, "Registro Exitoso como $role! Por favor, inicia sesión.", Toast.LENGTH_LONG).show()
 
-            // 7. 🏆 REDIRECCIÓN A LOGIN EN LUGAR DE INICIO DE SESIÓN AUTOMÁTICO
-            val intent = Intent(this, LoginActivity::class.java)
-            // Estas flags aseguran que no se pueda volver a RegisterActivity
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            startActivity(intent)
-            finish()
+            // Redirección a Login (o al Dashboard si viene de Admin)
+            val nextIntent = if (isAdminRegister) {
+                // Si el administrador registra, permanece en la pantalla actual para seguir registrando.
+                null
+            } else {
+                // Si es registro público, va a Login
+                Intent(this, LoginActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                }
+            }
+
+            if (nextIntent != null) {
+                startActivity(nextIntent)
+                finish()
+            } else {
+                // Limpiar campos después de registrar si es el flujo Admin
+                etEmail.text?.clear()
+                etPassword.text?.clear()
+                etPassword2.text?.clear()
+            }
 
         } else {
             Toast.makeText(
@@ -231,53 +276,43 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
 
+    private fun setLoadingState(isLoading: Boolean) {
+        progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        btnGoRegister.isEnabled = !isLoading
+        findViewById<MaterialButton>(R.id.btnGoLogin)?.isEnabled = !isLoading
+        etEmail.isEnabled = !isLoading
+        etPassword.isEnabled = !isLoading
+        etPassword2.isEnabled = !isLoading
+        spRol.isEnabled = !isLoading
+        spZona.isEnabled = !isLoading
+    }
+
     // --- FUNCIONES DE SEGURIDAD Y VALIDACIÓN ---
 
-    /**
-     * Aplica políticas de seguridad a la contraseña (mín 8, mayús, minús, número, lista negra).
-     * @return String con mensaje de error, o null si es válida.
-     */
     private fun isValidPassword(password: String): String? {
-        if (password.length < 8) {
-            return "La contraseña debe tener al menos 8 caracteres."
-        }
-        // Requiere al menos una mayúscula, una minúscula y un dígito.
-        if (!password.matches(".*[A-Z].*".toRegex())) {
-            return "Debe contener al menos una letra mayúscula."
-        }
-        if (!password.matches(".*[a-z].*".toRegex())) {
-            return "Debe contener al menos una letra minúscula."
-        }
-        if (!password.matches(".*[0-9].*".toRegex())) {
-            return "Debe contener al menos un número."
-        }
+        if (password.length < 8) return "La contraseña debe tener al menos 8 caracteres."
+        if (!password.matches(".*[A-Z].*".toRegex())) return "Debe contener al menos una letra mayúscula."
+        if (!password.matches(".*[a-z].*".toRegex())) return "Debe contener al menos una letra minúscula."
+        if (!password.matches(".*[0-9].*".toRegex())) return "Debe contener al menos un número."
 
-        // Validación con diccionario (Lista Negra)
         val normalizedPassword = password.lowercase()
         if (PASSWORD_BLACKLIST.any { normalizedPassword.contains(it) }) {
             return "La contraseña es muy común. Por favor, usa una más compleja."
         }
-
-        return null // Contraseña es válida
+        return null
     }
 
-    /**
-     * Valida el formato de correo electrónico.
-     */
     private fun isValidEmail(target: CharSequence): Boolean {
         return android.util.Patterns.EMAIL_ADDRESS.matcher(target).matches()
     }
 
-    /**
-     * Genera un hash SHA-256 de la contraseña para almacenamiento seguro.
-     */
     private fun hashPassword(password: String): String {
         return try {
             val bytes = MessageDigest.getInstance("SHA-256").digest(password.toByteArray())
             bytes.joinToString("") { "%02x".format(it) }
         } catch (e: Exception) {
             Log.e("Security", "Error hashing password: ${e.message}")
-            password // Retorno simple si el hashing falla (Peligroso)
+            password // En caso de error, retorna la contraseña sin hashear (fallará el login)
         }
     }
 }
