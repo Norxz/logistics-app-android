@@ -118,10 +118,7 @@ class ClientDashboardActivity : AppCompatActivity() {
 
         // 2. NUEVA SOLICITUD
         btnNuevaSolicitud.setOnClickListener {
-            // 🎯 CORRECCIÓN CLAVE: Usamos el nombre correcto de la actividad de recogida
-            // que está declarado en tu AndroidManifest: PickUpLocationActivity.
-            val intent = Intent(this, PickUpLocationActivity::class.java).apply {
-                // Si PickUpLocationActivity necesita un extra, lo añadirías aquí.
+            val intent = Intent(this, RecogidaActivity::class.java).apply {
             }
             startActivity(intent)
         }
