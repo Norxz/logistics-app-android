@@ -2,6 +2,7 @@ package co.edu.unipiloto.myapplication.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.TextView // Importamos TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import co.edu.unipiloto.myapplication.R
@@ -11,14 +12,13 @@ import com.google.android.material.button.MaterialButton
 /**
  * Activity para el Panel de Administración.
  * Permite al administrador acceder a las funciones de gestión y visualización.
- * Nota: Todas las funciones de registro de personal se consolidaron en LogisticUserManagementActivity.
  */
 class AdminPanelActivity : AppCompatActivity() {
 
     private lateinit var sessionManager: SessionManager
 
     // Vistas
-    // btnRegisterPersonnel fue eliminado
+    private lateinit var tvAdminTitle: TextView // Declaramos el TextView del título
     private lateinit var btnManageUsers: MaterialButton
     private lateinit var btnViewAllRequests: MaterialButton
     private lateinit var btnLogoutAdmin: MaterialButton
@@ -29,7 +29,7 @@ class AdminPanelActivity : AppCompatActivity() {
         setContentView(R.layout.activity_admin_panel)
 
         // Ocultar la barra de acción por defecto si el tema la muestra
-        supportActionBar?.hide()
+        supportActionBar?.hide() // Mantenemos esta línea ya que quitamos el Toolbar
 
         sessionManager = SessionManager(this)
 
@@ -45,10 +45,9 @@ class AdminPanelActivity : AppCompatActivity() {
     }
 
     private fun initViews() {
-        // Inicialización de la vista del título (aunque no se usa aquí, valida el ID)
-        findViewById<android.widget.TextView>(R.id.adminTitle)
+        // CORREGIDO: Inicializamos el TextView usando el ID del layout nuevo
+        tvAdminTitle = findViewById(R.id.tvAdminTitle)
 
-        // El botón de registro fue eliminado del layout y, por lo tanto, de aquí.
         btnManageUsers = findViewById(R.id.btnManageUsers)
         btnViewAllRequests = findViewById(R.id.btnViewAllRequests)
         btnLogoutAdmin = findViewById(R.id.btnLogoutAdmin)
@@ -57,18 +56,21 @@ class AdminPanelActivity : AppCompatActivity() {
     private fun setupListeners() {
 
         // 1. Botón: Gestionar Usuarios Existentes (Redirige a la Activity de gestión CRUD)
-        // Esta actividad ahora maneja tanto la lectura/edición/eliminación como la creación (vía FAB).
         btnManageUsers.setOnClickListener {
             val intent = Intent(this, LogisticUserManagementActivity::class.java)
             startActivity(intent)
         }
 
-        // 2. Botón: Ver Todas las Solicitudes
+        // 2. Botón: Ver Todas las Solicitudes (Próximo paso de implementación)
         btnViewAllRequests.setOnClickListener {
-            // TODO: Crear e implementar la Activity para ver las solicitudes
+            // ¡IMPLEMENTACIÓN PENDIENTE!
+            // Navegaremos a la nueva actividad que crearemos: ViewAllRequestsActivity
+            val intent = Intent(this, ViewAllRequestsActivity::class.java)
+            startActivity(intent)
+
             Toast.makeText(
                 this,
-                "Navegando a Ver Todas las Solicitudes (Pendiente)",
+                "Navegando a Gestión de Solicitudes",
                 Toast.LENGTH_SHORT
             ).show()
         }

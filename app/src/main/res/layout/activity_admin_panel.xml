@@ -1,66 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-app"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_surface"
     tools:context=".ui.AdminPanelActivity">
 
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbarAdmin"
+    <TextView
+        android:id="@+id/tvAdminTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@color/primary_color"
-        app:title="@string/admin_panel"
-        app:titleTextColor="@color/md_white"
+        android:gravity="center_horizontal"
+        android:text="PANEL DE ADMINISTRACIÓN"
+        android:textColor="@color/primary_dark_color"
+        android:textSize="24sp"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:layout_editor_absoluteX="48dp"
+        tools:layout_editor_absoluteY="106dp" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnManageUsers"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"
         android:backgroundTint="@color/accent_orange"
         android:paddingVertical="18dp"
-        android:text="Gestionar Usuarios Existentes"
+        android:text="Gestionar Usuarios Logísticos"
         android:textColor="@color/md_white"
         android:textSize="18sp"
         app:cornerRadius="12dp"
+        app:layout_constraintBottom_toTopOf="@id/btnViewAllRequests"
         app:layout_constraintEnd_toEndOf="parent"
+
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbarAdmin" /> <com.google.android.material.button.MaterialButton
-    android:id="@+id/btnViewAllRequests"
-    android:layout_width="0dp"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="16dp"
-    android:layout_marginStart="32dp"
-    android:layout_marginEnd="32dp"
-    android:backgroundTint="@color/status_success"
-    android:paddingVertical="18dp"
-    android:text="Ver Todas las Solicitudes"
-    android:textColor="@color/md_white"
-    android:textSize="18sp"
-    app:cornerRadius="12dp"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/btnManageUsers" />
+        app:layout_constraintTop_toBottomOf="@id/tvAdminTitle"
+        app:layout_constraintVertical_chainStyle="packed"
+        tools:layout_editor_absoluteX="59dp"
+        tools:layout_editor_absoluteY="273dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnViewAllRequests"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/status_success"
+        android:paddingVertical="18dp"
+        android:text="Ver Todas las Solicitudes"
+        android:textColor="@color/md_white"
+        android:textSize="18sp"
+        app:cornerRadius="12dp"
+        app:layout_constraintBottom_toTopOf="@id/btnLogoutAdmin"
+        app:layout_constraintEnd_toEndOf="parent"
+
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnManageUsers"
+        tools:layout_editor_absoluteX="79dp"
+        tools:layout_editor_absoluteY="364dp" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnLogoutAdmin"
         style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
         android:text="@string/logout"
         android:textColor="@color/on_surface_secondary"
         android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_editor_absoluteX="137dp"
+        tools:layout_editor_absoluteY="648dp" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/tvAdminTitle"
+        app:layout_constraintBottom_toTopOf="@id/btnLogoutAdmin"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

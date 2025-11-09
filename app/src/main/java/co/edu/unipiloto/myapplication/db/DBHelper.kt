@@ -25,6 +25,9 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_V
         // Nombres de Tablas
         const val TABLE_USERS = "users"
         const val TABLE_RECOLECTORES = "recolectores"
+        const val TABLE_DIRECCIONES = "direcciones" // 👈 Asegura que exista
+        const val TABLE_GUIA = "guia" // 👈 Asegura que exista
+        const val TABLE_SOLICITUDES = "solicitudes" // 👈 Asegura que exista
     }
 
     // ... (El método createTables sigue siendo exactamente el mismo que la versión anterior)
@@ -66,14 +69,14 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_V
         // ==========================================================
         db.execSQL(
             """
-            CREATE TABLE direcciones (
+            CREATE TABLE ${DBHelper.TABLE_DIRECCIONES} (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER,
                 ciudad TEXT NOT NULL,
                 full_address TEXT NOT NULL,
                 latitude REAL,
                 longitude REAL,
-                created_at INTEGER NOT NULL,
+                created_at TEXT NOT NULL, -- Usar TEXT para guardar fecha/hora en formato ISO8601
                 FOREIGN KEY(user_id) REFERENCES $TABLE_USERS(id)
             )
         """
@@ -101,7 +104,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_V
             """
             CREATE TABLE solicitudes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL, 
+                user_id INTEGER NOT NULL,
                 recolector_id INTEGER, 
                 direccion_id INTEGER NOT NULL,
                 fecha TEXT NOT NULL,
@@ -113,7 +116,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_V
                 confirmation_code TEXT,
                 created_at INTEGER NOT NULL,
                 FOREIGN KEY(user_id) REFERENCES $TABLE_USERS(id),
-                FOREIGN KEY(recolector_id) REFERENCES $TABLE_USERS(id),
+                FOREIGN KEY(recolector_id) REFERENCES $TABLE_RECOLECTORES(id), -- ¡CORRECCIÓN AQUÍ!
                 FOREIGN KEY(direccion_id) REFERENCES direcciones(id),
                 FOREIGN KEY(guia_id) REFERENCES guia(id)
             )

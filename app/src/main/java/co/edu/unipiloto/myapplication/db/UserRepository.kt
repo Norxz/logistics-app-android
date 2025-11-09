@@ -5,10 +5,10 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
-import co.edu.unipiloto.myapplication.models.LogisticUser // Asegúrate de que este modelo tenga el 'userId'
+import co.edu.unipiloto.myapplication.models.LogisticUser
+import co.edu.unipiloto.myapplication.models.Request // Importación necesaria para la nueva función
 
 // NOTA: La clase UserSessionData debe estar en su propio archivo o solo en este.
-// Asumo que está bien aquí ya que el error de redeclaración anterior fue resuelto.
 data class UserSessionData(
     val id: Long,
     val role: String,
@@ -17,7 +17,8 @@ data class UserSessionData(
 )
 
 /**
- * Repositorio de datos para la gestión de usuarios, centralizando todas las interacciones con la BD.
+ * Repositorio de datos para la gestión de usuarios y solicitudes,
+ * centralizando todas las interacciones con la BD.
  */
 class UserRepository(context: Context) {
 
@@ -36,7 +37,8 @@ class UserRepository(context: Context) {
         try {
             db = helper.readableDatabase
             val selectCols = arrayOf("id", "name", "role", "sucursal")
-            val query = "SELECT ${selectCols.joinToString(",")} FROM $tableName WHERE email = ? AND password_hash = ?"
+            val query =
+                "SELECT ${selectCols.joinToString(",")} FROM $tableName WHERE email = ? AND password_hash = ?"
             cursor = db.rawQuery(query, arrayOf(email, passwordHash))
 
             if (cursor.moveToFirst()) {
@@ -44,7 +46,8 @@ class UserRepository(context: Context) {
                 val userName = cursor.getString(1)
                 val role = cursor.getString(2)
                 val sucursalIndex = cursor.getColumnIndexOrThrow("sucursal")
-                val sucursal = if (!cursor.isNull(sucursalIndex)) cursor.getString(sucursalIndex) else null
+                val sucursal =
+                    if (!cursor.isNull(sucursalIndex)) cursor.getString(sucursalIndex) else null
                 session = UserSessionData(userId, role, sucursal, userName)
             }
         } catch (e: Exception) {
@@ -131,9 +134,6 @@ class UserRepository(context: Context) {
     // 4. GESTIÓN DE PERSONAL LOGÍSTICO (CRUD ADMINISTRATIVO)
     // ==========================================================
 
-    /**
-     * Obtiene todos los usuarios logísticos. (Ahora incluye T1.id como user_id)
-     */
     fun getAllLogisticUsers(): List<LogisticUser> {
         val userList = mutableListOf<LogisticUser>()
         var db: SQLiteDatabase? = null
@@ -142,7 +142,7 @@ class UserRepository(context: Context) {
         try {
             db = helper.readableDatabase
             val query = """
-                SELECT 
+                SELECT
                     T2.id, T1.email, T1.name, T1.role, T1.sucursal, T1.phone_number, T2.is_active, T1.id AS user_id
                 FROM ${DBHelper.TABLE_USERS} T1
                 INNER JOIN ${DBHelper.TABLE_RECOLECTORES} T2 ON T1.id = T2.user_id
@@ -160,7 +160,8 @@ class UserRepository(context: Context) {
                 val isActive = cursor.getInt(6) == 1
                 val userId = cursor.getLong(7) // T1.id (User FK)
 
-                val user = LogisticUser(id, email, name, role, sucursal, phoneNumber, isActive, userId)
+                val user =
+                    LogisticUser(id, email, name, role, sucursal, phoneNumber, isActive, userId)
                 userList.add(user)
             }
         } catch (e: Exception) {
@@ -172,9 +173,6 @@ class UserRepository(context: Context) {
         return userList
     }
 
-    /**
-     * **[NUEVO]** Obtiene un usuario logístico completo por su ID (de la tabla RECOLECTORES).
-     */
     fun getLogisticUserById(recolectorId: Long): LogisticUser? {
         var db: SQLiteDatabase? = null
         var cursor: Cursor? = null
@@ -183,11 +181,11 @@ class UserRepository(context: Context) {
         try {
             db = helper.readableDatabase
             val query = """
-                SELECT 
+                SELECT
                     T2.id, T1.email, T1.name, T1.role, T1.sucursal, T1.phone_number, T2.is_active, T1.id AS user_id
                 FROM ${DBHelper.TABLE_USERS} T1
                 INNER JOIN ${DBHelper.TABLE_RECOLECTORES} T2 ON T1.id = T2.user_id
-                WHERE T2.id = ? 
+                WHERE T2.id = ?
             """.trimIndent()
 
             cursor = db.rawQuery(query, arrayOf(recolectorId.toString()))
@@ -213,9 +211,6 @@ class UserRepository(context: Context) {
         return user
     }
 
-    /**
-     * **[NUEVO]** Realiza una actualización completa de los datos de un usuario logístico.
-     */
     fun updateLogisticUser(user: LogisticUser): Boolean {
         val db = helper.writableDatabase
         db.beginTransaction()
@@ -235,13 +230,19 @@ class UserRepository(context: Context) {
                 put("sucursal", user.sucursal)
                 put("phone_number", user.phoneNumber)
             }
-            val userRows = db.update(DBHelper.TABLE_USERS, userCV, "id = ?", arrayOf(userId.toString()))
+            val userRows =
+                db.update(DBHelper.TABLE_USERS, userCV, "id = ?", arrayOf(userId.toString()))
 
             // 2. Actualizar la tabla RECOLECTORES (Estado is_active)
             val recolectorCV = ContentValues().apply {
                 put("is_active", if (user.isActive) 1 else 0)
             }
-            val recolectorRows = db.update(DBHelper.TABLE_RECOLECTORES, recolectorCV, "id = ?", arrayOf(user.id.toString()))
+            val recolectorRows = db.update(
+                DBHelper.TABLE_RECOLECTORES,
+                recolectorCV,
+                "id = ?",
+                arrayOf(user.id.toString())
+            )
 
             if (userRows > 0 && recolectorRows > 0) {
                 db.setTransactionSuccessful()
@@ -257,9 +258,6 @@ class UserRepository(context: Context) {
         return success
     }
 
-    /**
-     * Actualiza el estado (activo/inactivo) de un usuario logístico.
-     */
     fun updateLogisticUserStatus(recolectorId: Long, isActive: Boolean): Boolean {
         val db = helper.writableDatabase
         var rowsUpdated = 0
@@ -281,15 +279,15 @@ class UserRepository(context: Context) {
         return rowsUpdated > 0
     }
 
-    /**
-     * Elimina un usuario logístico por ID.
-     */
     fun deleteLogisticUser(recolectorId: Long): Boolean {
         val db = helper.writableDatabase
         db.beginTransaction()
         var success = false
         try {
-            val cursor = db.rawQuery("SELECT user_id FROM ${DBHelper.TABLE_RECOLECTORES} WHERE id = ?", arrayOf(recolectorId.toString()))
+            val cursor = db.rawQuery(
+                "SELECT user_id FROM ${DBHelper.TABLE_RECOLECTORES} WHERE id = ?",
+                arrayOf(recolectorId.toString())
+            )
             var userId: Long? = null
             if (cursor.moveToFirst()) {
                 userId = cursor.getLong(0)
@@ -303,7 +301,10 @@ class UserRepository(context: Context) {
                 db.setTransactionSuccessful()
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error al eliminar usuario logístico (transacción) $recolectorId: ${e.message}")
+            Log.e(
+                TAG,
+                "Error al eliminar usuario logístico (transacción) $recolectorId: ${e.message}"
+            )
         } finally {
             db.endTransaction()
             db.close()
@@ -341,10 +342,10 @@ class UserRepository(context: Context) {
         val db = helper.readableDatabase
         var cursor: Cursor? = null
         val query = """
-            SELECT T2.id, T1.name 
-            FROM ${DBHelper.TABLE_USERS} T1 
-            INNER JOIN ${DBHelper.TABLE_RECOLECTORES} T2 ON T1.id = T2.user_id 
-            WHERE T1.role = 'CONDUCTOR' AND T2.is_active = 1 
+            SELECT T2.id, T1.name
+            FROM ${DBHelper.TABLE_USERS} T1
+            INNER JOIN ${DBHelper.TABLE_RECOLECTORES} T2 ON T1.id = T2.user_id
+            WHERE T1.role = 'CONDUCTOR' AND T2.is_active = 1
             ORDER BY T1.name ASC
         """.trimIndent()
         try {
@@ -371,8 +372,8 @@ class UserRepository(context: Context) {
         try {
             db = helper.readableDatabase
             val query = """
-                SELECT 
-                    T2.id, T1.email, T1.name, T1.role, T1.sucursal, T1.phone_number, T2.is_active, T1.id 
+                SELECT
+                    T2.id, T1.email, T1.name, T1.role, T1.sucursal, T1.phone_number, T2.is_active, T1.id
                 FROM ${DBHelper.TABLE_USERS} T1
                 INNER JOIN ${DBHelper.TABLE_RECOLECTORES} T2 ON T1.id = T2.user_id
                 WHERE T1.sucursal = ? AND T2.is_active = 1 LIMIT 1
@@ -399,5 +400,117 @@ class UserRepository(context: Context) {
             db?.close()
         }
         return user
+    }
+
+    // ==========================================================
+    // 6. GESTIÓN DE SOLICITUDES (CRUD ADMINISTRATIVO)
+    // ==========================================================
+
+    /**
+     * Obtiene todas las solicitudes del sistema, incluyendo el nombre del conductor asignado (si lo hay).
+     * Hace un LEFT JOIN entre SOLICITUDES, RECOLECTORES y USERS.
+     */
+    fun getAllRequests(): List<Request> {
+        val requestList = mutableListOf<Request>()
+        var db: SQLiteDatabase? = null
+        var cursor: Cursor? = null
+
+        try {
+            db = helper.readableDatabase
+
+            // T1.recolector_id es la clave foránea a RECOLECTORES.id
+            val query = """
+                SELECT
+                    T1.id, T1.guia_id, T1.fecha, T1.estado, T1.created_at, 
+                    T1.recolector_id, T3.name AS assigned_name,
+                    T4.full_address, T3.name AS client_name_user, T5.tracking_number
+                FROM ${DBHelper.TABLE_SOLICITUDES} T1
+                
+                -- JOIN para obtener la dirección completa
+                INNER JOIN ${DBHelper.TABLE_DIRECCIONES} T4 ON T1.direccion_id = T4.id
+                
+                -- JOIN para obtener el número de tracking
+                LEFT JOIN ${DBHelper.TABLE_GUIA} T5 ON T1.guia_id = T5.id
+                
+                -- JOIN para obtener el nombre del cliente (user_id en solicitudes apunta a USERS.id)
+                INNER JOIN ${DBHelper.TABLE_USERS} T3 ON T1.user_id = T3.id 
+                
+                ORDER BY T1.created_at DESC
+            """.trimIndent()
+
+            cursor = db.rawQuery(query, null)
+
+            // Nota: Aquí se asume que tu tabla SOLICITUDES tiene campos 'guia_id', 'fecha', 'estado', etc.
+            // Si el modelo Request.kt tiene campos diferentes (como clientName, address, type),
+            // la consulta debe adaptarse. La consulta anterior está muy simplificada.
+
+            // VUELVO A USAR LA CONSULTA ORIGINAL DE LA RESPUESTA ANTERIOR (MÁS COMPLETA)
+            // PERO CORRIGIENDO LOS NOMBRES DE COLUMNA DEL DBHelper
+
+            val fullQuery = """
+                SELECT 
+                    T1.id, T5.tracking_number, T1.fecha, T1.estado, T4.full_address, 
+                    T3.name AS client_name, T3.phone_number AS client_phone, T1.created_at,
+                    T1.recolector_id, T6.name AS assigned_name
+                FROM ${DBHelper.TABLE_SOLICITUDES} T1
+                -- Cliente
+                INNER JOIN ${DBHelper.TABLE_USERS} T3 ON T1.user_id = T3.id
+                -- Dirección
+                INNER JOIN ${DBHelper.TABLE_DIRECCIONES} T4 ON T1.direccion_id = T4.id
+                -- Guía (tracking)
+                LEFT JOIN ${DBHelper.TABLE_GUIA} T5 ON T1.guia_id = T5.id
+                -- Recolector Asignado (JOIN a USERS a través de RECOLECTORES)
+                LEFT JOIN ${DBHelper.TABLE_RECOLECTORES} T2 ON T1.recolector_id = T2.id
+                LEFT JOIN ${DBHelper.TABLE_USERS} T6 ON T2.user_id = T6.id
+                ORDER BY T1.created_at DESC
+            """.trimIndent()
+
+            cursor = db.rawQuery(fullQuery, null)
+
+            // ... Mapeo del cursor a Request ...
+
+            while (cursor.moveToNext()) {
+                val id = cursor.getLong(0)
+                val guiaId = cursor.getString(1) ?: "N/A" // T5.tracking_number
+                val type = "RECOLECCIÓN/ENVÍO" // No está en la BD, se asume
+                val status = cursor.getString(3) // T1.estado
+                val address = cursor.getString(4) // T4.full_address
+                val clientName = cursor.getString(5) // T3.name
+
+                val clientPhoneIndex = cursor.getColumnIndexOrThrow("client_phone")
+                val clientPhone =
+                    if (!cursor.isNull(clientPhoneIndex)) cursor.getString(clientPhoneIndex) else null
+
+                val creationTimestamp = cursor.getString(7) // T1.created_at
+
+                val recolectorIdIndex = cursor.getColumnIndexOrThrow("recolector_id")
+                val assignedRecolectorId =
+                    if (!cursor.isNull(recolectorIdIndex)) cursor.getLong(recolectorIdIndex) else null
+
+                val recolectorNameIndex = cursor.getColumnIndexOrThrow("assigned_name")
+                val assignedRecolectorName =
+                    if (!cursor.isNull(recolectorNameIndex)) cursor.getString(recolectorNameIndex) else null
+
+                val request = Request(
+                    id = id,
+                    guiaId = guiaId,
+                    type = type, // Tienes que decidir dónde obtienes esto.
+                    status = status,
+                    address = address,
+                    clientName = clientName,
+                    clientPhone = clientPhone,
+                    creationTimestamp = creationTimestamp,
+                    assignedRecolectorId = assignedRecolectorId,
+                    assignedRecolectorName = assignedRecolectorName
+                )
+                requestList.add(request)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al obtener todas las solicitudes (Corregido): ${e.message}")
+        } finally {
+            cursor?.close()
+            db?.close()
+        }
+        return requestList
     }
 }
