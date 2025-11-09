@@ -100,7 +100,7 @@
                 android:layout_height="wrap_content"
                 android:minHeight="48dp"
                 android:entries="@array/logistic_roles"
-                android:background="@drawable/spinner_border"
+                android:background="@drawable/bg_spinner_border"
                 android:padding="8dp"/>
 
             <TextView
@@ -117,7 +117,7 @@
                 android:layout_height="wrap_content"
                 android:minHeight="48dp"
                 android:entries="@array/logistic_sucursales"
-                android:background="@drawable/spinner_border"
+                android:background="@drawable/bg_spinner_border"
                 android:padding="8dp"/>
 
             <com.google.android.material.switchmaterial.SwitchMaterial

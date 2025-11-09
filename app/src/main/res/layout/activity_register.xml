@@ -134,7 +134,7 @@
                 android:layout_height="56dp"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
-                android:background="@drawable/spinner_border"
+                android:background="@drawable/bg_spinner_border"
                 android:overlapAnchor="false"
                 android:dropDownVerticalOffset="56dp"
                 android:layout_marginBottom="24dp" />
@@ -155,7 +155,7 @@
                 android:layout_height="56dp"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
-                android:background="@drawable/spinner_border"
+                android:background="@drawable/bg_spinner_border"
                 android:overlapAnchor="false"
                 android:dropDownVerticalOffset="56dp"
                 android:layout_marginBottom="24dp"

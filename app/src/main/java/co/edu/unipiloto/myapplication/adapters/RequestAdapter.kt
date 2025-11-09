@@ -14,6 +14,10 @@ import java.util.Locale
 
 /**
  * Adaptador para mostrar la lista de solicitudes en el RecyclerView.
+ *
+ * @param requests La lista mutable de objetos Request.
+ * @param onItemClick Una función lambda que se ejecuta cuando se hace clic en el botón GESTIONAR.
+ */
 class RequestAdapter(
     private val requests: MutableList<Request>,
     private val onItemClick: (Request) -> Unit

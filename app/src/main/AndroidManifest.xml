@@ -29,11 +29,12 @@
         <activity
             android:name=".ui.LoginActivity"
             android:exported="false" />
-
         <activity
             android:name=".ui.RegisterActivity"
             android:exported="false" />
-
+        <activity
+            android:name=".ui.ClientDashboardActivity"
+            android:exported="false" />
         <activity
             android:name=".ui.DriverDashboardActivity"
             android:exported="false" />
@@ -59,7 +60,12 @@
         <activity
             android:name=".ui.TrackShippingActivity"
             android:exported="false" />
-        <activity android:name=".ui.ClientDashboardActivity" />
+
+        <activity
+            android:name=".ui.ViewAllRequestsActivity"
+            android:exported="false" />
+
+
     </application>
 
 </manifest>

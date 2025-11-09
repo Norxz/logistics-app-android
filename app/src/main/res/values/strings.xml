@@ -142,6 +142,10 @@
     <string name="phone_number_logistic_hint">Teléfono del empleado (para contacto)</string>
     <string name="full_name_client_hint">Tu Nombre Completo</string>
     <string name="phone_number_client_hint">Tu Teléfono de contacto</string>
+    <string name="btn_back">Botón de regreso</string>
+    <string name="all_solicitude">Todas las Solicitudes</string>
+    <string name="personal_access">Acceso de Personal</string>
+    <string name="admin_managing">Gestión Admin</string>
 
     <string-array name="logistic_roles">
         <item>CONDUCTOR</item>
