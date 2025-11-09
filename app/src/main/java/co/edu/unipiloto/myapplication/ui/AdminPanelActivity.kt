@@ -2,23 +2,23 @@ package co.edu.unipiloto.myapplication.ui
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
+import android.widget.TextView // Importamos TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.storage.SessionManager // Asegúrate de que esta clase exista
+import co.edu.unipiloto.myapplication.storage.SessionManager
 import com.google.android.material.button.MaterialButton
 
 /**
  * Activity para el Panel de Administración.
- * Permite al administrador acceder a las funciones de gestión de usuarios logísticos y solicitudes.
+ * Permite al administrador acceder a las funciones de gestión y visualización.
  */
 class AdminPanelActivity : AppCompatActivity() {
 
     private lateinit var sessionManager: SessionManager
 
     // Vistas
-    private lateinit var btnRegisterPersonnel: MaterialButton
+    private lateinit var tvAdminTitle: TextView // Declaramos el TextView del título
     private lateinit var btnManageUsers: MaterialButton
     private lateinit var btnViewAllRequests: MaterialButton
     private lateinit var btnLogoutAdmin: MaterialButton
@@ -28,13 +28,12 @@ class AdminPanelActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_admin_panel)
 
-        // Ocultar la barra de acción por consistencia
-        supportActionBar?.hide()
+        // Ocultar la barra de acción por defecto si el tema la muestra
+        supportActionBar?.hide() // Mantenemos esta línea ya que quitamos el Toolbar
 
         sessionManager = SessionManager(this)
 
         // Verificación de seguridad: solo el rol de Administrador debe acceder
-        // Asumo que el rol 'ADMIN' está almacenado correctamente tras el login.
         if (!sessionManager.isLoggedIn() || sessionManager.getRole() != "ADMIN") {
             // Si no es el rol correcto o no está logeado, forzar el logout
             logoutUser()
@@ -46,7 +45,9 @@ class AdminPanelActivity : AppCompatActivity() {
     }
 
     private fun initViews() {
-        btnRegisterPersonnel = findViewById(R.id.btnRegisterPersonnel)
+        // CORREGIDO: Inicializamos el TextView usando el ID del layout nuevo
+        tvAdminTitle = findViewById(R.id.tvAdminTitle)
+
         btnManageUsers = findViewById(R.id.btnManageUsers)
         btnViewAllRequests = findViewById(R.id.btnViewAllRequests)
         btnLogoutAdmin = findViewById(R.id.btnLogoutAdmin)
@@ -54,27 +55,27 @@ class AdminPanelActivity : AppCompatActivity() {
 
     private fun setupListeners() {
 
-        // 1. Botón: Registrar Nuevo Usuario Logístico (Lanza RegisterActivity en modo Admin)
-        btnRegisterPersonnel.setOnClickListener {
-            val intent = Intent(this, RegisterActivity::class.java)
-            // Usa la constante definida en RegisterActivity para activar el modo de registro de personal
-            intent.putExtra(RegisterActivity.EXTRA_IS_ADMIN_REGISTER, true)
-            startActivity(intent)
-        }
-
-        // 2. Botón: Gestionar Usuarios Existentes (Redirige a la Activity de gestión logística)
+        // 1. Botón: Gestionar Usuarios Existentes (Redirige a la Activity de gestión CRUD)
         btnManageUsers.setOnClickListener {
             val intent = Intent(this, LogisticUserManagementActivity::class.java)
             startActivity(intent)
         }
 
-        // 3. Botón: Ver Todas las Solicitudes
+        // 2. Botón: Ver Todas las Solicitudes (Próximo paso de implementación)
         btnViewAllRequests.setOnClickListener {
-            // TODO: Crear e implementar la Activity para ver las solicitudes
-            Toast.makeText(this, "Navegando a Ver Todas las Solicitudes (Pendiente)", Toast.LENGTH_SHORT).show()
+            // ¡IMPLEMENTACIÓN PENDIENTE!
+            // Navegaremos a la nueva actividad que crearemos: ViewAllRequestsActivity
+            val intent = Intent(this, ViewAllRequestsActivity::class.java)
+            startActivity(intent)
+
+            Toast.makeText(
+                this,
+                "Navegando a Gestión de Solicitudes",
+                Toast.LENGTH_SHORT
+            ).show()
         }
 
-        // 4. Cierre de Sesión
+        // 3. Cierre de Sesión
         btnLogoutAdmin.setOnClickListener {
             logoutUser()
         }

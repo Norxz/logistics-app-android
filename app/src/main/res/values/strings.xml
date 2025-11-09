@@ -142,18 +142,25 @@
     <string name="phone_number_logistic_hint">Teléfono del empleado (para contacto)</string>
     <string name="full_name_client_hint">Tu Nombre Completo</string>
     <string name="phone_number_client_hint">Tu Teléfono de contacto</string>
+    <string name="btn_back">Botón de regreso</string>
+    <string name="all_solicitude">Todas las Solicitudes</string>
+    <string name="personal_access">Acceso de Personal</string>
+    <string name="admin_managing">Gestión Admin</string>
 
-    <string-array name="roles_array">
-        <item>REMITENTE</item>
-        <item>RECOLECTOR</item>
-        <item>ADMIN</item>
+    <string-array name="logistic_roles">
+        <item>CONDUCTOR</item>
+        <item>GESTOR</item>
+        <item>ANALISTA</item>
+        <item>FUNCIONARIO</item>
     </string-array>
-    <string-array name="zonas_bogota">
-        <item>Bogotá - Chapinero</item>
-        <item>Bogotá - Fontibón</item>
-        <item>Bogotá - Suba</item>
-        <item>Bogotá - Usaquén</item>
-        <item>Bogotá - Kennedy</item>
-        <item>Bogotá - Engativá</item>
+
+    <string-array name="logistic_sucursales">
+        <item>Bogotá - Norte</item>
+        <item>Bogotá - Sur</item>
+        <item>Medellín</item>
+        <item>Cali</item>
+        <item>Barranquilla</item>
+        <item>N/A</item>
     </string-array>
+
 </resources>
