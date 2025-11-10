@@ -40,6 +40,8 @@ class SolicitudRepository(context: Context) {
         userId: Long,
         direccionCompleta: String,
         ciudad: String,
+        latitudRecoleccion: Double,
+        longitudRecoleccion: Double,
         peso: Double,
         precio: Double,
         fechaRecoleccion: String,
@@ -60,8 +62,8 @@ class SolicitudRepository(context: Context) {
                 put("ciudad", ciudad)
                 put("full_address", direccionCompleta)
                 put("created_at", System.currentTimeMillis())
-                put("latitude", 0.0)
-                put("longitude", 0.0)
+                put("latitude", latitudRecoleccion) // <-- INSERTAR LATITUD
+                put("longitude", longitudRecoleccion)
             }
             newDireccionId = db.insert(TABLE_DIRECCIONES, null, cvDireccion)
 

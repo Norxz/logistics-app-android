@@ -49,7 +49,7 @@
             android:exported="false" />
 
         <activity
-            android:name=".ui.PickUpLocationActivity"
+            android:name=".ui.RecogidaActivity"
             android:exported="false" />
         <activity
             android:name=".ui.SolicitudActivity"
