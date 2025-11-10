@@ -78,6 +78,13 @@ class ClientDashboardActivity : AppCompatActivity() {
         loadSolicitudes()
     }
 
+
+    override fun onResume() {
+        super.onResume()
+        // Carga y refresca las solicitudes cada vez que se vuelve a la actividad.
+        loadSolicitudes()
+    }
+
     private fun initViews() {
         tvWelcomeTitle = findViewById(R.id.tvWelcomeTitle)
         btnLogout = findViewById(R.id.btnLogout)
@@ -236,9 +243,7 @@ class ClientDashboardActivity : AppCompatActivity() {
         // Las acciones de los clientes generalmente son CANCELAR y CONFIRMAR_ENTREGA.
         when (action) {
             "CANCELAR_CLIENTE" -> {
-                // Lógica para CANCELAR la solicitud
-                // Aquí deberías mostrar un cuadro de diálogo de confirmación
-                // y luego llamar al repositorio para actualizar el estado a "CANCELADA".
+                showCancelConfirmationDialog(solicitud)
             }
             "CONFIRMAR_ENTREGA" -> {
                 // Lógica para CONFIRMAR la entrega (cambia el estado a "FINALIZADA" o similar)
@@ -248,6 +253,57 @@ class ClientDashboardActivity : AppCompatActivity() {
         // Después de una acción exitosa, se debe volver a llamar a loadSolicitudes()
         // para refrescar las listas.
         // loadSolicitudes()
+    }
+
+    private fun showCancelConfirmationDialog(solicitud: Solicitud) {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Cancelar Solicitud")
+            .setMessage("¿Estás seguro de que deseas cancelar la solicitud #${solicitud.id}? Esta acción no se puede deshacer.")
+            .setPositiveButton("Sí, Cancelar") { dialog, _ ->
+                updateSolicitudState(solicitud.id, "CANCELADA")
+                dialog.dismiss()
+            }
+            .setNegativeButton("No, Mantener") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    /**
+     * Actualiza el estado de la solicitud en la DB y refresca las listas.
+     */
+    private fun updateSolicitudState(solicitudId: Long, newState: String) {
+        Thread {
+            try {
+                // Asegúrate de que SolicitudRepository tenga el método actualizarEstado.
+                // Si el método pide recolectorId, pasamos null ya que el cliente lo está haciendo.
+                val rowsAffected = solicitudRepository.actualizarEstado(solicitudId, newState)
+
+                runOnUiThread {
+                    if (rowsAffected > 0) {
+                        // Si la actualización fue exitosa, recargamos la data para que se muevan las listas
+                        loadSolicitudes()
+                        showToast("Solicitud #${solicitudId} ha sido marcada como $newState.")
+                    } else {
+                        showToast("Error: No se pudo actualizar el estado de la solicitud.")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("Dashboard", "Error al actualizar estado: ${e.message}")
+                runOnUiThread {
+                    showToast("Error de base de datos al cancelar.")
+                }
+            }
+        }.start()
+    }
+
+    /**
+     * Función helper para mostrar mensajes.
+     */
+    private fun showToast(message: String) {
+        runOnUiThread {
+            android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_SHORT).show()
+        }
     }
 
 }
