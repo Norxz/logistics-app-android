@@ -106,6 +106,11 @@ class SolicitudAdapter(
             if (secondaryAction != null) {
                 btnSecondaryAction.visibility = View.VISIBLE
                 btnSecondaryAction.text = secondaryText
+
+                if (secondaryAction == "CANCELAR_CLIENTE") {
+                    btnSecondaryAction.setTextColor(ContextCompat.getColor(itemView.context, R.color.status_error))
+                }
+
                 btnSecondaryAction.setOnClickListener { onActionClick?.invoke(solicitud, secondaryAction) }
             }
         }
@@ -117,7 +122,7 @@ class SolicitudAdapter(
         private fun getActionDetails(estado: String, role: String): Quad<String, String?, String, String?> {
             return when (role.uppercase()) {
                 "CLIENTE" -> when (estado) {
-                    "PENDIENTE" -> Quad("CANCELAR", "CANCELAR_CLIENTE", "", null)
+                    "PENDIENTE" -> Quad("", null, "CANCELAR", "CANCELAR_CLIENTE")
                     "ENTREGADA" -> Quad("CONFIRMAR RECEPCIÓN", "CONFIRMAR_ENTREGA", "", null)
                     else -> Quad("", null, "", null)
                 }
