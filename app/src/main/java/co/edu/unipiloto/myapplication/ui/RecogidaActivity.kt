@@ -143,7 +143,7 @@ class RecogidaActivity : AppCompatActivity() { // Ya no implementa OnMapReadyCal
         }
 
         btnContinue.setOnClickListener {
-            returnSelectedAddress()
+            navigateToSolicitud()
         }
 
         etAddress.setOnFocusChangeListener { _, hasFocus ->
@@ -248,7 +248,7 @@ class RecogidaActivity : AppCompatActivity() { // Ya no implementa OnMapReadyCal
     // Devolver Resultado
     // ---------------------------------------------------------------------
 
-    private fun returnSelectedAddress() {
+    private fun navigateToSolicitud() {
         val address = etAddress.text.toString().trim()
         val finalGeoPoint = lastKnownLocation ?: DEFAULT_LOCATION
 
@@ -256,17 +256,21 @@ class RecogidaActivity : AppCompatActivity() { // Ya no implementa OnMapReadyCal
             tilAddress.error = "Por favor, ingrese una dirección válida."
             return
         }
+        tilAddress.error = null // Limpiar error si todo está bien
 
-        // Crear el Intent para devolver el resultado
-        val resultIntent = Intent().apply {
-            putExtra(EXTRA_ADDRESS, address)
-            // Devolvemos la latitud y longitud como Double
-            putExtra("latitude", finalGeoPoint.latitude)
-            putExtra("longitude", finalGeoPoint.longitude)
-            putExtra("isRecolection", isRecolectionAddress)
+        // 1. Crear el Intent para ir a SolicitudActivity
+        val intent = Intent(this, SolicitudActivity::class.java).apply {
+            // 2. Adjuntar los datos de la dirección de Recolección como extras
+            putExtra("RECOLECTION_ADDRESS", address)
+            putExtra("RECOLECTION_LATITUDE", finalGeoPoint.latitude)
+            putExtra("RECOLECTION_LONGITUDE", finalGeoPoint.longitude)
+
+            // Puedes añadir más lógica aquí si RecogidaActivity se usa para múltiples propósitos
         }
 
-        setResult(Activity.RESULT_OK, resultIntent)
+        // 3. Iniciar la actividad
+        startActivity(intent)
+
         finish()
     }
 }

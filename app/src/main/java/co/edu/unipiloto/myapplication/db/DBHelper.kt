@@ -92,7 +92,8 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_V
                 tracking_number TEXT UNIQUE NOT NULL,
                 descripcion TEXT,
                 valor REAL DEFAULT 0.0,
-                peso REAL DEFAULT 0.0
+                peso REAL DEFAULT 0.0,
+                created_at INTEGER NOT NULL
             )
         """
         )

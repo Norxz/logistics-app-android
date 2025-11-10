@@ -57,6 +57,10 @@ class SolicitudActivity : AppCompatActivity() {
     private val ZONAS_DISPONIBLES = listOf("Bogotá - Norte", "Bogotá - Sur", "Bogotá - Occidente")
     private val FRANJAS_HORARIAS = listOf("AM (8:00 - 12:00)", "PM (14:00 - 18:00)")
 
+    private var recolectionAddress: String? = null
+    private var recolectionLatitude: Double? = null
+    private var recolectionLongitude: Double? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,7 +81,30 @@ class SolicitudActivity : AppCompatActivity() {
 
         initViews()
         setupSpinners()
+        handleIntentData()
         setupListeners()
+    }
+
+    /**
+     * Obtiene los datos de la dirección de Recolección enviados por RecogidaActivity.
+     */
+    /**
+     * Obtiene los datos de la dirección de Recolección enviados por RecogidaActivity.
+     */
+    private fun handleIntentData() {
+        // Asegurarse de que los nombres de las claves coincidan con los de RecogidaActivity
+        recolectionAddress = intent.getStringExtra("RECOLECTION_ADDRESS")
+        // Usamos Double.NaN (Not a Number) como valor por defecto para saber si NO se recibió
+        recolectionLatitude = intent.getDoubleExtra("RECOLECTION_LATITUDE", Double.NaN).let {
+            if (it.isNaN()) null else it
+        }
+        recolectionLongitude = intent.getDoubleExtra("RECOLECTION_LONGITUDE", Double.NaN).let {
+            if (it.isNaN()) null else it
+        }
+
+        if (!recolectionAddress.isNullOrEmpty()) {
+            Toast.makeText(this, "Dirección de recolección recibida: $recolectionAddress", Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -175,6 +202,11 @@ class SolicitudActivity : AppCompatActivity() {
         val zonaCompleta = spCiudad.selectedItem?.toString()?.trim() ?: ""
         val franja = spFranja.selectedItem?.toString()?.trim() ?: ""
 
+        // 1.5 Dirección de Recolección (Recibida por Intent)
+        val recolectionDir = recolectionAddress ?: "" // Usar la dirección que se seleccionó
+        val recolectionLat = recolectionLatitude
+        val recolectionLon = recolectionLongitude
+
         // Extraer la Ciudad (e.g., "Bogotá - Norte" -> "Bogotá")
         val ciudad = zonaCompleta.split(" - ").firstOrNull() ?: ""
 
@@ -189,6 +221,15 @@ class SolicitudActivity : AppCompatActivity() {
             return // La validación muestra el Toast o error
         }
 
+        if (recolectionDir.isEmpty() || recolectionLat == null || recolectionLon == null) {
+            Toast.makeText(
+                this,
+                "Faltan los datos de la dirección de Recolección.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
         // 3. Definir fecha de recolección (Hoy en formato yyyy-mm-dd)
         val calendar = Calendar.getInstance()
         val year = calendar.get(Calendar.YEAR)
@@ -199,8 +240,12 @@ class SolicitudActivity : AppCompatActivity() {
         // 4. Crear solicitud en la BD
         val newId = solicitudRepository.crearSolicitud(
             userId = sessionManager.getUserId(),
-            direccionCompleta = receiverAddress,
+            direccionCompleta = recolectionDir, // Usar la dirección de recolección
             ciudad = ciudad,
+            // PASAMOS LATITUD Y LONGITUD
+            latitudRecoleccion = recolectionLat,
+            longitudRecoleccion = recolectionLon,
+            // FIN DE NUEVOS ARGUMENTOS
             peso = weight!!,
             precio = price!!,
             fechaRecoleccion = today,
