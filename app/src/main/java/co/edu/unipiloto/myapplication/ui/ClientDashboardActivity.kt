@@ -12,8 +12,9 @@ import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.db.UserRepository
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.imageview.ShapeableImageView
-
+import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter
+import co.edu.unipiloto.myapplication.db.SolicitudRepository
+import co.edu.unipiloto.myapplication.models.Solicitud
 /**
  * Activity que actúa como el panel principal para los usuarios con rol CLIENTE.
  * Muestra las solicitudes activas e historial.
@@ -35,12 +36,18 @@ class ClientDashboardActivity : AppCompatActivity() {
     private lateinit var btnToggleFinalizados: View // ImageButton
     private lateinit var rvFinalizados: RecyclerView
 
+    private lateinit var solicitadosAdapter: SolicitudAdapter
+
+    private lateinit var finalizadosAdapter: SolicitudAdapter
+
     // Mensaje de vacío
     private lateinit var tvEmpty: TextView
 
     // --- UTILIDADES ---
     private lateinit var sessionManager: SessionManager
     private lateinit var userRepository: UserRepository
+
+    private lateinit var solicitudRepository: SolicitudRepository
 
     // Estado de la visibilidad
     private var isSolicitadosVisible = true
@@ -54,6 +61,7 @@ class ClientDashboardActivity : AppCompatActivity() {
 
         sessionManager = SessionManager(this)
         userRepository = UserRepository(this)
+        solicitudRepository = SolicitudRepository(this)
 
         // 1. Verificar sesión crítica
         if (!sessionManager.isLoggedIn() || sessionManager.getRole() != "CLIENTE") {
@@ -66,7 +74,8 @@ class ClientDashboardActivity : AppCompatActivity() {
         initViews()
         loadClientDataFromSession()
         setupListeners()
-        // loadSolicitudes()
+        setupAdapters()
+        loadSolicitudes()
     }
 
     private fun initViews() {
@@ -160,4 +169,85 @@ class ClientDashboardActivity : AppCompatActivity() {
         startActivity(intent)
         finish()
     }
+
+    private fun setupAdapters() {
+        // 1. Adaptador para Solicitudes Activas
+        solicitadosAdapter = SolicitudAdapter(
+            items = emptyList(),
+            role = sessionManager.getRole(),
+            onActionClick = { solicitud, action -> handleSolicitudAction(solicitud, action) }
+        )
+        rvSolicitados.adapter = solicitadosAdapter
+
+        // 2. Adaptador para Historial Finalizado
+        finalizadosAdapter = SolicitudAdapter(
+            items = emptyList(),
+            role = sessionManager.getRole(),
+            onActionClick = { solicitud, action -> handleSolicitudAction(solicitud, action) }
+        )
+        rvFinalizados.adapter = finalizadosAdapter
+    }
+
+    /**
+     * Carga las solicitudes del cliente logueado y las separa en Activas y Finalizadas.
+     */
+    private fun loadSolicitudes() {
+        val userId = sessionManager.getUserId()
+        if (userId == -1L) return
+
+        // Usar un hilo diferente (o Coroutines en un proyecto real) para operaciones de base de datos
+        Thread {
+            try {
+                // Obtener todas las solicitudes enriquecidas del usuario
+                val allSolicitudes = solicitudRepository.getSolicitudesEnrichedByUserId(userId)
+
+                // 1. Separar listas
+                val activas = allSolicitudes.filter { isSolicitudActiva(it.estado) }
+                val finalizadas = allSolicitudes.filter { !isSolicitudActiva(it.estado) }
+
+                // 2. Actualizar la UI en el hilo principal
+                runOnUiThread {
+                    solicitadosAdapter.updateData(activas)
+                    finalizadosAdapter.updateData(finalizadas)
+
+                    // 3. Mostrar/ocultar mensaje de vacío
+                    tvEmpty.visibility = if (allSolicitudes.isEmpty()) View.VISIBLE else View.GONE
+                }
+            } catch (e: Exception) {
+                Log.e("Dashboard", "Error al cargar solicitudes: ${e.message}")
+            }
+        }.start()
+    }
+
+    /**
+     * Lógica para determinar si una solicitud está activa (no finalizada ni cancelada).
+     */
+    private fun isSolicitudActiva(estado: String): Boolean {
+        val estadoUpper = estado.uppercase()
+        return estadoUpper !in listOf("ENTREGADA", "FINALIZADA", "CANCELADA")
+    }
+
+    /**
+     * Maneja el clic en los botones del item_solicitud (e.g., Cancelar, Confirmar Entrega).
+     */
+    private fun handleSolicitudAction(solicitud: Solicitud, action: String) {
+        Log.d("Dashboard", "Acción: $action en Solicitud ID: ${solicitud.id}")
+
+        // Las acciones de los clientes generalmente son CANCELAR y CONFIRMAR_ENTREGA.
+        when (action) {
+            "CANCELAR_CLIENTE" -> {
+                // Lógica para CANCELAR la solicitud
+                // Aquí deberías mostrar un cuadro de diálogo de confirmación
+                // y luego llamar al repositorio para actualizar el estado a "CANCELADA".
+            }
+            "CONFIRMAR_ENTREGA" -> {
+                // Lógica para CONFIRMAR la entrega (cambia el estado a "FINALIZADA" o similar)
+                // Llama al repositorio para actualizar el estado.
+            }
+        }
+        // Después de una acción exitosa, se debe volver a llamar a loadSolicitudes()
+        // para refrescar las listas.
+        // loadSolicitudes()
+    }
+
 }
