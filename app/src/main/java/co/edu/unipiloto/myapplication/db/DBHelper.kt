@@ -5,6 +5,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
+import co.edu.unipiloto.myapplication.security.PasswordHasher // 🏆 Importación de la nueva clase
 
 /**
  * Clase auxiliar para la gestión de la base de datos SQLite de la aplicación.
@@ -17,24 +18,23 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_V
         const val DB_NAME = "logistica.db"
 
         /**
-         * Versión de la base de datos. Incrementada a 9 para incluir la tabla de administradores
-         * y las correcciones de esquema.
+         * Versión de la base de datos. Incrementada a 10 para forzar la actualización del esquema.
          */
-        const val DB_VERSION = 9
+        const val DB_VERSION = 10
 
         // Nombres de Tablas
         const val TABLE_USERS = "users"
         const val TABLE_RECOLECTORES = "recolectores"
-        const val TABLE_ADMINS = "administrators"
+        const val TABLE_DIRECCIONES = "direcciones" // 👈 Asegura que exista
+        const val TABLE_GUIA = "guia" // 👈 Asegura que exista
+        const val TABLE_SOLICITUDES = "solicitudes" // 👈 Asegura que exista
     }
 
-    /**
-     * Crea las tablas iniciales de la base de datos.
-     */
+    // ... (El método createTables sigue siendo exactamente el mismo que la versión anterior)
     private fun createTables(db: SQLiteDatabase) {
 
         // ==========================================================
-        // 1. Tabla de Usuarios (Clientes) - (CORREGIDA: Añadido 'name')
+        // 1. Tabla de Usuarios (Autenticación Global) - CORREGIDA
         // ==========================================================
         db.execSQL(
             """
@@ -43,40 +43,23 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_V
                 name TEXT,
                 email TEXT UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
-                phone_number TEXT
+                phone_number TEXT,
+                role TEXT NOT NULL CHECK(role IN ('CLIENTE', 'ADMIN', 'CONDUCTOR', 'GESTOR', 'FUNCIONARIO', 'ANALISTA')),
+                sucursal TEXT DEFAULT 'N/A' 
             )
         """
         )
 
         // ==========================================================
-        // 1.5. Tabla de Administradores (NUEVA)
-        // Almacena información sobre los administradores del sistema.
-        // ==========================================================
-        db.execSQL(
-            """
-            CREATE TABLE $TABLE_ADMINS (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                email TEXT UNIQUE NOT NULL,
-                password_hash TEXT NOT NULL,
-                name TEXT,
-                is_super_admin INTEGER DEFAULT 0
-            )
-        """
-        )
-
-        // ==========================================================
-        // 2. Tabla de Recolectores (Personal de Logística) - (CORREGIDA: email UNIQUE y 'sucursal')
+        // 2. Tabla de Recolectores (Información detallada)
         // ==========================================================
         db.execSQL(
             """
             CREATE TABLE $TABLE_RECOLECTORES (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT NOT NULL,
-                email TEXT UNIQUE NOT NULL, 
-                password_hash TEXT NOT NULL,
-                role TEXT NOT NULL CHECK(role IN ('CONDUCTOR', 'GESTOR', 'FUNCIONARIO', 'ANALISTA')),
-                sucursal TEXT,
-                is_active INTEGER DEFAULT 1
+                user_id INTEGER UNIQUE NOT NULL, 
+                is_active INTEGER DEFAULT 1,
+                FOREIGN KEY(user_id) REFERENCES $TABLE_USERS(id)
             )
         """
         )
@@ -86,14 +69,14 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_V
         // ==========================================================
         db.execSQL(
             """
-            CREATE TABLE direcciones (
+            CREATE TABLE ${DBHelper.TABLE_DIRECCIONES} (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER,
                 ciudad TEXT NOT NULL,
                 full_address TEXT NOT NULL,
                 latitude REAL,
                 longitude REAL,
-                created_at INTEGER NOT NULL,
+                created_at TEXT NOT NULL, -- Usar TEXT para guardar fecha/hora en formato ISO8601
                 FOREIGN KEY(user_id) REFERENCES $TABLE_USERS(id)
             )
         """
@@ -122,7 +105,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_V
             CREATE TABLE solicitudes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
-                recolector_id INTEGER,
+                recolector_id INTEGER, 
                 direccion_id INTEGER NOT NULL,
                 fecha TEXT NOT NULL,
                 franja TEXT NOT NULL,
@@ -133,7 +116,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_V
                 confirmation_code TEXT,
                 created_at INTEGER NOT NULL,
                 FOREIGN KEY(user_id) REFERENCES $TABLE_USERS(id),
-                FOREIGN KEY(recolector_id) REFERENCES $TABLE_RECOLECTORES(id),
+                FOREIGN KEY(recolector_id) REFERENCES $TABLE_RECOLECTORES(id), -- ¡CORRECCIÓN AQUÍ!
                 FOREIGN KEY(direccion_id) REFERENCES direcciones(id),
                 FOREIGN KEY(guia_id) REFERENCES guia(id)
             )
@@ -145,47 +128,40 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_V
         db.execSQL("CREATE INDEX idx_guia_tracking ON guia(tracking_number)")
     }
 
+
     /**
-     * Inserta un usuario administrador de prueba en la tabla principal de usuarios (Users).
-     * Esto asegura que el login funcione al buscar en la misma tabla que Clientes/Gestores.
-     * * @param db Instancia de la base de datos abierta.
+     * Inserta un usuario administrador de prueba en la tabla principal de usuarios ($TABLE_USERS).
+     * @param db Instancia de la base de datos abierta.
      */
     private fun insertDefaultAdmin(db: SQLiteDatabase) {
-        // 🏆 ¡Importante! Aquí asumimos que tu tabla principal se llama "Users"
-        // y que tiene las columnas necesarias para el rol y la zona.
-        val TABLE_USERS = "Users"
+        val adminPassword = "Admin123"
+
+        // 🏆 USO DE LA NUEVA CLASE PasswordHasher
+        val hashedPassword = PasswordHasher.hashPassword(adminPassword)
+
+        if (hashedPassword.isEmpty()) {
+            Log.e("DBHelper", "FATAL: No se pudo generar el hash del password de administrador.")
+            return
+        }
 
         val cv = ContentValues().apply {
             put("name", "Administrador Principal")
             put("email", "admin@logistica.com")
-
-            // El hash de "admin123" que obtuviste de tu función hashPassword()
-            // Si tu función de hashing es SHA-256 (como la de LoginActivity),
-            // este es el valor que estás utilizando:
-            put("password_hash", "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918")
-
-            // Columnas requeridas por la lógica de roles de tu aplicación:
+            put("password_hash", hashedPassword)
+            put("phone_number", "3223691238")
             put("role", "ADMIN")
             put("sucursal", "CENTRAL")
-            put("status", "ACTIVO")
-            put("is_super_admin", 1)
-
-            // Asegúrate de incluir aquí cualquier otra columna requerida por tu tabla Users (ej: phone_number).
         }
         try {
-            // 🏆 CORRECCIÓN CRÍTICA: Cambiamos TABLE_ADMINS por TABLE_USERS
             db.insert(TABLE_USERS, null, cv)
             Log.d("DBHelper", "Admin insertado correctamente en la tabla $TABLE_USERS.")
         } catch (e: Exception) {
-            Log.e("DBHelper", "Error al insertar admin en la tabla $TABLE_USERS: ${e.message}")
+            Log.e("DBHelper", "Error al insertar admin: ${e.message}")
         }
     }
 
     override fun onCreate(db: SQLiteDatabase) {
-        // Llama al método para crear todas las tablas
         createTables(db)
-
-        // Inserta un administrador por defecto
         insertDefaultAdmin(db)
     }
 
@@ -203,7 +179,6 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_V
             db.execSQL("DROP TABLE IF EXISTS direcciones")
             db.execSQL("DROP TABLE IF EXISTS guia")
             db.execSQL("DROP TABLE IF EXISTS $TABLE_RECOLECTORES")
-            db.execSQL("DROP TABLE IF EXISTS $TABLE_ADMINS")
             db.execSQL("DROP TABLE IF EXISTS $TABLE_USERS")
 
             onCreate(db)
