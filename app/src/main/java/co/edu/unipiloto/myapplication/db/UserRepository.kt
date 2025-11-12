@@ -6,7 +6,8 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import co.edu.unipiloto.myapplication.models.LogisticUser
-import co.edu.unipiloto.myapplication.models.Request // Importación necesaria para la nueva función
+import co.edu.unipiloto.myapplication.models.Request
+import java.io.Serializable // Necesario si Request es Serializable
 
 // NOTA: La clase UserSessionData debe estar en su propio archivo o solo en este.
 data class UserSessionData(
@@ -27,6 +28,7 @@ class UserRepository(context: Context) {
 
     // ==========================================================
     // 1. AUTENTICACIÓN (LOGIN)
+    // ... (CÓDIGO ANTERIOR)
     // ==========================================================
     fun login(email: String, passwordHash: String): UserSessionData? {
         var db: SQLiteDatabase? = null
@@ -61,6 +63,7 @@ class UserRepository(context: Context) {
 
     // ==========================================================
     // 2. REGISTRO (CLIENTES)
+    // ... (CÓDIGO ANTERIOR)
     // ==========================================================
     fun registerClient(
         email: String,
@@ -90,6 +93,7 @@ class UserRepository(context: Context) {
 
     // ==========================================================
     // 3. REGISTRO (PERSONAL LOGÍSTICO / RECOLECTORES)
+    // ... (CÓDIGO ANTERIOR)
     // ==========================================================
     fun registerRecolector(
         name: String,
@@ -132,6 +136,7 @@ class UserRepository(context: Context) {
 
     // ==========================================================
     // 4. GESTIÓN DE PERSONAL LOGÍSTICO (CRUD ADMINISTRATIVO)
+    // ... (CÓDIGO ANTERIOR)
     // ==========================================================
 
     fun getAllLogisticUsers(): List<LogisticUser> {
@@ -314,6 +319,7 @@ class UserRepository(context: Context) {
 
     // ==========================================================
     // 5. OTRAS UTILIDADES
+    // ... (CÓDIGO ANTERIOR)
     // ==========================================================
 
     fun getFullNameById(id: Long): String? {
@@ -408,7 +414,6 @@ class UserRepository(context: Context) {
 
     /**
      * Obtiene todas las solicitudes del sistema, incluyendo el nombre del conductor asignado (si lo hay).
-     * Hace un LEFT JOIN entre SOLICITUDES, RECOLECTORES y USERS.
      */
     fun getAllRequests(): List<Request> {
         val requestList = mutableListOf<Request>()
@@ -417,35 +422,6 @@ class UserRepository(context: Context) {
 
         try {
             db = helper.readableDatabase
-
-            // T1.recolector_id es la clave foránea a RECOLECTORES.id
-            val query = """
-                SELECT
-                    T1.id, T1.guia_id, T1.fecha, T1.estado, T1.created_at, 
-                    T1.recolector_id, T3.name AS assigned_name,
-                    T4.full_address, T3.name AS client_name_user, T5.tracking_number
-                FROM ${DBHelper.TABLE_SOLICITUDES} T1
-                
-                -- JOIN para obtener la dirección completa
-                INNER JOIN ${DBHelper.TABLE_DIRECCIONES} T4 ON T1.direccion_id = T4.id
-                
-                -- JOIN para obtener el número de tracking
-                LEFT JOIN ${DBHelper.TABLE_GUIA} T5 ON T1.guia_id = T5.id
-                
-                -- JOIN para obtener el nombre del cliente (user_id en solicitudes apunta a USERS.id)
-                INNER JOIN ${DBHelper.TABLE_USERS} T3 ON T1.user_id = T3.id 
-                
-                ORDER BY T1.created_at DESC
-            """.trimIndent()
-
-            cursor = db.rawQuery(query, null)
-
-            // Nota: Aquí se asume que tu tabla SOLICITUDES tiene campos 'guia_id', 'fecha', 'estado', etc.
-            // Si el modelo Request.kt tiene campos diferentes (como clientName, address, type),
-            // la consulta debe adaptarse. La consulta anterior está muy simplificada.
-
-            // VUELVO A USAR LA CONSULTA ORIGINAL DE LA RESPUESTA ANTERIOR (MÁS COMPLETA)
-            // PERO CORRIGIENDO LOS NOMBRES DE COLUMNA DEL DBHelper
 
             val fullQuery = """
                 SELECT 
@@ -467,12 +443,10 @@ class UserRepository(context: Context) {
 
             cursor = db.rawQuery(fullQuery, null)
 
-            // ... Mapeo del cursor a Request ...
-
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(0)
                 val guiaId = cursor.getString(1) ?: "N/A" // T5.tracking_number
-                val type = "RECOLECCIÓN/ENVÍO" // No está en la BD, se asume
+                val type = "RECOLECCIÓN/ENVÍO" // Tipo: Asumido
                 val status = cursor.getString(3) // T1.estado
                 val address = cursor.getString(4) // T4.full_address
                 val clientName = cursor.getString(5) // T3.name
@@ -494,7 +468,7 @@ class UserRepository(context: Context) {
                 val request = Request(
                     id = id,
                     guiaId = guiaId,
-                    type = type, // Tienes que decidir dónde obtienes esto.
+                    type = type,
                     status = status,
                     address = address,
                     clientName = clientName,
@@ -512,5 +486,55 @@ class UserRepository(context: Context) {
             db?.close()
         }
         return requestList
+    }
+
+    /**
+     * Actualiza el conductor (recolector) asignado a una solicitud.
+     */
+    fun updateRequestAssignment(requestId: Long, recolectorId: Long): Boolean {
+        val db = helper.writableDatabase
+        var rowsUpdated = 0
+        try {
+            val cv = ContentValues().apply {
+                put("recolector_id", recolectorId)
+                // Opcionalmente, cambiar el estado a 'ASIGNADO' si estaba 'PENDIENTE'
+                // put("estado", "ASIGNADO")
+            }
+            rowsUpdated = db.update(
+                DBHelper.TABLE_SOLICITUDES,
+                cv,
+                "id = ?",
+                arrayOf(requestId.toString())
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al asignar conductor a solicitud $requestId: ${e.message}")
+        } finally {
+            db.close()
+        }
+        return rowsUpdated > 0
+    }
+
+    /**
+     * Actualiza el estado de la solicitud.
+     */
+    fun updateRequestStatus(requestId: Long, status: String): Boolean {
+        val db = helper.writableDatabase
+        var rowsUpdated = 0
+        try {
+            val cv = ContentValues().apply {
+                put("estado", status)
+            }
+            rowsUpdated = db.update(
+                DBHelper.TABLE_SOLICITUDES,
+                cv,
+                "id = ?",
+                arrayOf(requestId.toString())
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al actualizar estado de solicitud $requestId: ${e.message}")
+        } finally {
+            db.close()
+        }
+        return rowsUpdated > 0
     }
 }

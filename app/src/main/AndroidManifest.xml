@@ -64,8 +64,15 @@
         <activity
             android:name=".ui.ViewAllRequestsActivity"
             android:exported="false" />
-
-
+        <activity
+            android:name=".ui.ViewLogisticUsersActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.RequestDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.EditLogisticUserActivity"
+            android:exported="false" />
     </application>
 
 </manifest>
