@@ -19,31 +19,35 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import java.util.Locale
 
-import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.Marker
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.MapsInitializer
 
 
 /**
  * Activity dedicada a la selección de una dirección (Recolección o Entrega).
  * IMPLEMENTA: Lógica de Mapa con OSMDroid.
  */
-class RecogidaActivity : AppCompatActivity() { // Ya no implementa OnMapReadyCallback
+class RecogidaActivity : AppCompatActivity(), OnMapReadyCallback { // Ya no implementa OnMapReadyCallback
 
     // --- CONSTANTES Y GEOLOCALIZACIÓN ---
     companion object {
         const val EXTRA_ADDRESS = "EXTRA_ADDRESS"
         const val EXTRA_IS_RECOLECTION = "EXTRA_IS_RECOLECTION"
-        private const val DEFAULT_ZOOM = 15.0
-        private val DEFAULT_LOCATION = GeoPoint(4.7110, -74.0721) // Bogotá, como referencia
+        private const val DEFAULT_ZOOM = 15.0f
+        private val DEFAULT_LOCATION = LatLng(4.7110, -74.0721) // Bogotá, como referencia
     }
 
     // Propiedades de Mapa y Geolocalización
     private lateinit var mapView: MapView // 🟢 Vista de mapa OSMDroid
+
+    private lateinit var googleMap: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private var lastKnownLocation: GeoPoint? = null // 🟢 Usaremos GeoPoint
+    private var lastKnownLocation: LatLng? = null // 🟢 Usaremos GeoPoint
 
     // Lanzador de permisos (el mismo)
     private val locationPermissionRequest = registerForActivityResult(
@@ -72,9 +76,6 @@ class RecogidaActivity : AppCompatActivity() { // Ya no implementa OnMapReadyCal
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 🟢 Carga la configuración de OSMDroid (CRÍTICO para que el mapa funcione)
-        Configuration.getInstance().load(applicationContext, getSharedPreferences("osmdroid", MODE_PRIVATE))
-
         // Usamos el layout del XML que tiene el MapView
         setContentView(R.layout.activity_recogida)
 
@@ -84,18 +85,22 @@ class RecogidaActivity : AppCompatActivity() { // Ya no implementa OnMapReadyCal
         isRecolectionAddress = intent.getBooleanExtra(EXTRA_IS_RECOLECTION, false)
 
         initViews()
-        setupMap() // Llama a la configuración de OSMDroid
+        setupMap(savedInstanceState) // Llama a la configuración de OSMDroid
         setupListeners()
     }
 
+    override fun onStart() {
+        super.onStart()
+        mapView.onStart()
+    }
     override fun onResume() {
         super.onResume()
-        mapView.onResume() // CRÍTICO para OSMDroid
+        mapView.onResume()
     }
 
     override fun onPause() {
         super.onPause()
-        mapView.onPause() // CRÍTICO para OSMDroid
+        mapView.onPause()
     }
 
     // ---------------------------------------------------------------------
@@ -110,26 +115,55 @@ class RecogidaActivity : AppCompatActivity() { // Ya no implementa OnMapReadyCal
         btnContinue = findViewById(R.id.btnContinue)
     }
 
-    private fun setupMap() {
-        mapView = findViewById(R.id.mapPlaceholder) // Mapear la vista MapView
-        mapView.setTileSource(TileSourceFactory.MAPNIK) // Proveedor de mapas
-        mapView.setMultiTouchControls(true)
+    private fun setupMap(savedInstanceState: Bundle?) {
+        mapView = findViewById(R.id.mapPlaceholder)
+        MapsInitializer.initialize(applicationContext) // Inicializar Google Maps
+        mapView.onCreate(savedInstanceState)
+        mapView.getMapAsync(this) // Llamar a onMapReady cuando el mapa esté listo
+    }
 
-        val mapController = mapView.controller
-        mapController.setZoom(DEFAULT_ZOOM)
-        mapController.setCenter(DEFAULT_LOCATION)
+    override fun onMapReady(map: GoogleMap) {
+        googleMap = map
+        googleMap.uiSettings.isZoomControlsEnabled = true
+        googleMap.uiSettings.isCompassEnabled = true
+
+        // Mover la cámara a la ubicación por defecto
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(DEFAULT_LOCATION, DEFAULT_ZOOM))
 
         updateMarker(DEFAULT_LOCATION, "Punto de Interés")
 
-        mapView.setOnLongClickListener {
-            // Obtener las coordenadas del centro de la pantalla
-            val centerPoint = mapView.projection.fromPixels(mapView.width / 2, mapView.height / 2)
-
-            reverseGeocode(centerPoint as GeoPoint) // Determina la dirección
-            updateMarker(centerPoint as GeoPoint, "Ubicación Seleccionada") // Mueve el marcador
-
-            true // Indica que el evento fue consumido
+        // 🟢 Manejar Long Click (Clic largo) para seleccionar ubicación
+        googleMap.setOnMapLongClickListener { latLng ->
+            reverseGeocode(latLng) // Determina la dirección
+            updateMarker(latLng, "Ubicación Seleccionada") // Mueve el marcador
         }
+
+        // 🟢 Manejar el clic en el mapa (opcional, si quieres que al tocar se mueva el marcador)
+        googleMap.setOnMapClickListener { latLng ->
+            reverseGeocode(latLng)
+            updateMarker(latLng, "Ubicación Seleccionada")
+        }
+    }
+
+
+    override fun onStop() {
+        super.onStop()
+        mapView.onStop()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mapView.onDestroy()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        mapView.onSaveInstanceState(outState)
+    }
+
+    override fun onLowMemory() {
+        super.onLowMemory()
+        mapView.onLowMemory()
     }
 
     private fun setupListeners() {
@@ -172,10 +206,11 @@ class RecogidaActivity : AppCompatActivity() { // Ya no implementa OnMapReadyCal
             fusedLocationClient.lastLocation.addOnCompleteListener(this) { task ->
                 if (task.isSuccessful && task.result != null) {
                     val location = task.result
-                    val currentGeoPoint = GeoPoint(location.latitude, location.longitude)
 
-                    reverseGeocode(currentGeoPoint)
-                    updateMarker(currentGeoPoint, "Mi Ubicación Actual") // Mueve el mapa y marca
+                    val currentLatLng = LatLng(location.latitude, location.longitude)
+
+                    reverseGeocode(currentLatLng) // 👈 Usar LatLng
+                    updateMarker(currentLatLng, "Mi Ubicación Actual") // 👈 Usar LatLng
 
                 } else {
                     Toast.makeText(this, "No se encontró ubicación. Usando ubicación por defecto.", Toast.LENGTH_SHORT).show()
@@ -190,29 +225,30 @@ class RecogidaActivity : AppCompatActivity() { // Ya no implementa OnMapReadyCal
     /**
      * Mueve el mapa y actualiza el marcador central.
      */
-    private fun updateMarker(geoPoint: GeoPoint, title: String) {
-        mapView.overlays.clear()
+    private fun updateMarker(latLng: LatLng, title: String) {
+        googleMap.clear() // Limpia todos los marcadores
 
-        val marker = Marker(mapView).apply {
-            position = geoPoint
-            this.title = title
-            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-        }
-        mapView.overlays.add(marker)
-        mapView.controller.animateTo(geoPoint)
-        mapView.invalidate()
-        lastKnownLocation = geoPoint // Guardar la ubicación final
+        val markerOptions = MarkerOptions()
+            .position(latLng)
+            .title(title)
+
+        googleMap.addMarker(markerOptions)
+
+        // 🟢 Mueve la cámara
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM))
+
+        lastKnownLocation = latLng // Guardar la ubicación final
     }
 
     /**
      * Convierte coordenadas (GeoPoint) a una dirección legible (String) y actualiza etAddress.
      */
-    private fun reverseGeocode(geoPoint: GeoPoint) {
-        lastKnownLocation = geoPoint
+    private fun reverseGeocode(latLng: LatLng) {
+        lastKnownLocation = latLng
         try {
             val geocoder = Geocoder(this, Locale.getDefault())
-            // El Geocoder nativo de Android aún funciona con las coordenadas
-            val addresses = geocoder.getFromLocation(geoPoint.latitude, geoPoint.longitude, 1)
+            // El Geocoder nativo de Android funciona con LatLng
+            val addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
 
             if (!addresses.isNullOrEmpty()) {
                 val address = addresses[0].getAddressLine(0)
@@ -234,8 +270,9 @@ class RecogidaActivity : AppCompatActivity() { // Ya no implementa OnMapReadyCal
 
             if (!addresses.isNullOrEmpty()) {
                 val p = addresses[0]
-                val newGeoPoint = GeoPoint(p.latitude, p.longitude)
-                updateMarker(newGeoPoint, address) // Mueve y marca
+                // 🟢 Usar LatLng
+                val newLatLng = LatLng(p.latitude, p.longitude)
+                updateMarker(newLatLng, address) // Mueve y marca
             } else {
                 Toast.makeText(this, "Dirección no encontrada.", Toast.LENGTH_SHORT).show()
             }
@@ -250,27 +287,22 @@ class RecogidaActivity : AppCompatActivity() { // Ya no implementa OnMapReadyCal
 
     private fun navigateToSolicitud() {
         val address = etAddress.text.toString().trim()
-        val finalGeoPoint = lastKnownLocation ?: DEFAULT_LOCATION
+        val finalLatLng = lastKnownLocation ?: DEFAULT_LOCATION // 🟢 Usar LatLng
 
         if (address.isEmpty() || address.length < 5) {
             tilAddress.error = "Por favor, ingrese una dirección válida."
             return
         }
-        tilAddress.error = null // Limpiar error si todo está bien
+        tilAddress.error = null
 
-        // 1. Crear el Intent para ir a SolicitudActivity
         val intent = Intent(this, SolicitudActivity::class.java).apply {
-            // 2. Adjuntar los datos de la dirección de Recolección como extras
             putExtra("RECOLECTION_ADDRESS", address)
-            putExtra("RECOLECTION_LATITUDE", finalGeoPoint.latitude)
-            putExtra("RECOLECTION_LONGITUDE", finalGeoPoint.longitude)
-
-            // Puedes añadir más lógica aquí si RecogidaActivity se usa para múltiples propósitos
+            // 🟢 Usar LatLng
+            putExtra("RECOLECTION_LATITUDE", finalLatLng.latitude)
+            putExtra("RECOLECTION_LONGITUDE", finalLatLng.longitude)
         }
 
-        // 3. Iniciar la actividad
         startActivity(intent)
-
         finish()
     }
 }
