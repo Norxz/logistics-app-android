@@ -217,8 +217,37 @@ class ClientDashboardActivity : AppCompatActivity() {
                     solicitadosAdapter.updateData(activas)
                     finalizadosAdapter.updateData(finalizadas)
 
-                    // 3. Mostrar/ocultar mensaje de vacío
-                    tvEmpty.visibility = if (allSolicitudes.isEmpty()) View.VISIBLE else View.GONE
+                    val totalSolicitudes = activas.size + finalizadas.size
+
+                    if (totalSolicitudes == 0) {
+                        // Si no hay ninguna solicitud, muestra el mensaje de vacío y oculta las listas.
+                        tvEmpty.visibility = View.VISIBLE
+                        rvSolicitados.visibility = View.GONE
+                        rvFinalizados.visibility = View.GONE
+                        // También puedes ocultar los headers si quieres un dashboard más limpio.
+                        tvHeaderSolicitados.visibility = View.GONE
+                        tvHeaderFinalizados.visibility = View.GONE
+                    } else {
+                        // Si hay solicitudes, oculta el mensaje de vacío y restablece la visibilidad de las listas según el estado de toggle
+                        tvEmpty.visibility = View.GONE
+
+                        // Restablece la visibilidad de los encabezados (si se ocultaron)
+                        tvHeaderSolicitados.visibility = View.VISIBLE
+                        tvHeaderFinalizados.visibility = View.VISIBLE
+
+                        // Solo muestra las RecyclerViews si tienen datos Y si su toggle está activo.
+                        rvSolicitados.visibility = if (activas.isNotEmpty() && isSolicitadosVisible) View.VISIBLE else View.GONE
+                        rvFinalizados.visibility = if (finalizadas.isNotEmpty() && isFinalizadosVisible) View.VISIBLE else View.GONE
+
+                        // Manejar el caso donde una lista está vacía pero la otra no
+                        if (activas.isEmpty()) {
+                            // Puedes agregar un TextView "Sin solicitudes activas" aquí si fuera necesario.
+                            Log.d("Dashboard", "No hay solicitudes activas, ocultando rvSolicitados.")
+                        }
+                        if (finalizadas.isEmpty()) {
+                            Log.d("Dashboard", "No hay historial, ocultando rvFinalizados.")
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("Dashboard", "Error al cargar solicitudes: ${e.message}")
