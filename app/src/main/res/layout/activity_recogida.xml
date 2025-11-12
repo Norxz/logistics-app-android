@@ -89,7 +89,7 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <org.osmdroid.views.MapView
+    <com.google.android.gms.maps.MapView
         android:id="@+id/mapPlaceholder"
         android:layout_width="0dp"
         android:layout_height="200dp"
