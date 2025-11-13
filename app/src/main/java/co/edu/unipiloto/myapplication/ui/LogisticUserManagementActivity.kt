@@ -101,6 +101,7 @@ class LogisticUserManagementActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 filterUsers(s.toString())
             }
+
             override fun afterTextChanged(s: Editable?) {}
         })
     }
