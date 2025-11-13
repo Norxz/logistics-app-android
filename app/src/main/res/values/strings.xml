@@ -20,6 +20,7 @@
     <string name="delivery_destination_name">Nombre completo del receptor</string>
     <string name="delivery_destination_title">3. Datos del Destino</string>
     <string name="delivery_id_text">Identificación</string>
+    <string name="delivery_map_location_title">Ubicación en el Mapa</string>
     <string name="delivery_package_content">Contenido (ej. Ropa)</string>
     <string name="delivery_package_height">Alto (cm)</string>
     <string name="delivery_package_large">Largo (cm)</string>

@@ -61,7 +61,7 @@ class RegisterActivity : AppCompatActivity() {
     // Roles que requieren selección de Zona
     private val ROLES_LOGISTICOS = listOf("CONDUCTOR", "GESTOR", "FUNCIONARIO", "ANALISTA")
     private val ADMIN_REGISTERABLE_ROLES = listOf(ROL_CLIENTE) + ROLES_LOGISTICOS.distinct()
-    private val ZONAS_DISPONIBLES = listOf("Bogotá - Norte", "Bogotá - Sur", "Bogotá - Occidente")
+    private val SUCURSALES_DISPONIBLES = listOf("Bogotá - Norte", "Bogotá - Sur", "Bogotá - Occidente")
     private val PASSWORD_BLACKLIST =
         listOf("password", "123456", "qwerty", "admin", "unipiloto", "piloto")
 
@@ -126,7 +126,7 @@ class RegisterActivity : AppCompatActivity() {
         spRol.adapter = rolAdapter
 
         val zonaAdapter =
-            ArrayAdapter(this, android.R.layout.simple_spinner_item, ZONAS_DISPONIBLES)
+            ArrayAdapter(this, android.R.layout.simple_spinner_item, SUCURSALES_DISPONIBLES)
         zonaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spZona.adapter = zonaAdapter
 
