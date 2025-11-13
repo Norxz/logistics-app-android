@@ -77,6 +77,9 @@
         <activity
             android:name=".ui.EditLogisticUserActivity"
             android:exported="false" />
+        <activity
+            android:name=".ui.LogisticUserManagementActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

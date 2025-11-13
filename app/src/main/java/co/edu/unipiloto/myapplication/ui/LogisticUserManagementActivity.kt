@@ -59,15 +59,7 @@ class LogisticUserManagementActivity : AppCompatActivity() {
 
     // Simula la carga de datos de la base de datos
     private fun loadUsers() {
-        // TODO: Reemplazar con la llamada real a UserRepository
-        // allUsers = userRepository.getAllLogisticUsers()
-
-        // Simulación:
-        allUsers = listOf(
-            LogisticUser(1, "func@logistica.com", "Juan Pérez", "FUNCIONARIO", "Bogotá - Norte", "3001234567", true),
-            LogisticUser(2, "driver@logistica.com", "Maria López", "CONDUCTOR", "Bogotá - Sur", "3109876543", true),
-            LogisticUser(3, "analyst@logistica.com", "Carlos Soto", "ANALISTA", "N/A", "3205551111", false)
-        )
+        allUsers = userRepository.getAllLogisticUsers()
 
         userAdapter.submitList(allUsers)
     }
@@ -86,6 +78,7 @@ class LogisticUserManagementActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 filterUsers(s.toString())
             }
+
             override fun afterTextChanged(s: Editable?) {}
         })
     }
@@ -116,7 +109,11 @@ class LogisticUserManagementActivity : AppCompatActivity() {
         // val success = userRepository.deleteUser(user.id)
         // if (success) { loadUsers() }
 
-        Toast.makeText(this, "Eliminar usuario (Confirmar diálogo): ${user.name}", Toast.LENGTH_LONG).show()
+        Toast.makeText(
+            this,
+            "Eliminar usuario (Confirmar diálogo): ${user.name}",
+            Toast.LENGTH_LONG
+        ).show()
         // Recargar lista para reflejar el cambio (simulado)
         loadUsers()
     }
