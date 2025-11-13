@@ -15,7 +15,7 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import co.edu.unipiloto.myapplication.rest.RetrofitClient
 import co.edu.unipiloto.myapplication.rest.SolicitudRequest
-import co.edu.unipiloto.myapplication.models.Solicitud // Modelo de Respuesta REST
+import co.edu.unipiloto.myapplication.models.Solicitud
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -28,7 +28,6 @@ class SolicitudActivity : AppCompatActivity() {
 
     // --- UTILIDADES ---
     private lateinit var sessionManager: SessionManager
-    // ❌ ELIMINADA: private lateinit var solicitudRepository: SolicitudRepository
 
     // --- VISTAS REMITENTE ---
     private lateinit var etSenderName: TextInputEditText
@@ -44,11 +43,18 @@ class SolicitudActivity : AppCompatActivity() {
     private lateinit var etPackageWeight: TextInputEditText
     private lateinit var etPackageContent: TextInputEditText
 
-    // --- VISTAS DESTINATARIO ---
+    // --- VISTAS DESTINATARIO (ACTUALIZADAS PARA ICONOS) ---
     private lateinit var etReceiverName: TextInputEditText
     private lateinit var etReceiverPhone: TextInputEditText
-    private lateinit var etReceiverAddress: TextInputEditText
     private lateinit var spReceiverCountryCode: Spinner
+
+    // Referencias a los EditTexts envueltos:
+    private lateinit var etReceiverID: TextInputEditText
+    private lateinit var etReceiverAddress: TextInputEditText
+
+    // Referencias a los Contenedores (TextInputLayout) para los End Icons:
+    private lateinit var tilReceiverID: TextInputLayout
+    private lateinit var tilReceiverAddress: TextInputLayout
 
     // --- VISTAS RECOLECCIÓN Y PRECIO ---
     private lateinit var spCiudad: Spinner // ID: spCity
@@ -76,7 +82,6 @@ class SolicitudActivity : AppCompatActivity() {
         supportActionBar?.title = getString(R.string.new_shipment_title)
 
         sessionManager = SessionManager(this)
-        // ❌ ELIMINADA: solicitudRepository = SolicitudRepository(this)
 
         if (!sessionManager.isLoggedIn() || sessionManager.getUserId() == -1L) {
             Toast.makeText(this, "Debe iniciar sesión para crear una solicitud.", Toast.LENGTH_LONG)
@@ -111,27 +116,40 @@ class SolicitudActivity : AppCompatActivity() {
     }
 
     private fun initViews() {
+        // --- VISTAS REMITENTE ---
         etSenderName = findViewById(R.id.etSenderName)
         etSenderID = findViewById(R.id.etSenderID)
         etSenderPhone = findViewById(R.id.etSenderPhone)
         spIDType = findViewById(R.id.spIDType)
         spSenderCountryCode = findViewById(R.id.spSenderCountryCode)
 
+        // --- VISTAS PAQUETE ---
         etPackageHeight = findViewById(R.id.etPackageHeight)
         etPackageWidth = findViewById(R.id.etPackageWidth)
         etPackageLength = findViewById(R.id.etPackageLength)
         etPackageWeight = findViewById(R.id.etPackageWeight)
         etPackageContent = findViewById(R.id.etPackageContent)
 
+        // --- VISTAS DESTINATARIO ---
         etReceiverName = findViewById(R.id.etReceiverName)
         etReceiverPhone = findViewById(R.id.etReceiverPhone)
         spReceiverCountryCode = findViewById(R.id.spReceiverCountryCode)
-        etReceiverAddress = findViewById(R.id.etReceiverAddress)
 
+        // Buscar EditTexts
+        etReceiverAddress = findViewById(R.id.etReceiverAddress)
+        etReceiverID = findViewById(R.id.etReceiverID)
+
+        // Obtener las referencias de TextInputLayout (el padre directo del EditText)
+        // Esto es necesario para configurar los click listeners en los iconos (endIconMode)
+        tilReceiverID = etReceiverID.parent as TextInputLayout
+        tilReceiverAddress = etReceiverAddress.parent as TextInputLayout
+
+        // --- VISTAS RECOLECCIÓN Y PRECIO ---
         spCiudad = findViewById(R.id.spCity)
         spFranja = findViewById(R.id.spTimeSlot)
         etPrice = findViewById(R.id.etPrice)
 
+        // --- ACCIÓN ---
         btnSend = findViewById(R.id.btnSend)
     }
 
@@ -165,6 +183,24 @@ class SolicitudActivity : AppCompatActivity() {
             }
             startActivity(intent)
             finish()
+        }
+
+        // --- Listener para el ícono de Ubicación (etReceiverAddress) ---
+        tilReceiverAddress.setEndIconOnClickListener {
+            Toast.makeText(this, "Abriendo mapa para seleccionar la dirección de entrega...", Toast.LENGTH_SHORT).show()
+            // Aquí iría la lógica para iniciar una actividad de selección de mapa.
+            // Por ejemplo: startActivity(Intent(this, MapSelectionActivity::class.java).apply { putExtra("MODE", "DESTINATION") })
+        }
+
+        // --- Listener para el ícono de Lupa (etReceiverID) ---
+        tilReceiverID.setEndIconOnClickListener {
+            val receiverID = etReceiverID.text.toString().trim()
+            if (receiverID.isNotEmpty()) {
+                Toast.makeText(this, "Simulando búsqueda de destinatario con ID: $receiverID", Toast.LENGTH_SHORT).show()
+                // Aquí iría la lógica REST de búsqueda de cliente/destinatario.
+            } else {
+                Toast.makeText(this, "Ingrese una identificación para buscar.", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -267,11 +303,12 @@ class SolicitudActivity : AppCompatActivity() {
         var isValid = true
 
         fun clearError(editText: TextInputEditText) {
-            (editText.parent.parent as? TextInputLayout)?.error = null
+            // El padre directo del EditText es el TextInputLayout
+            (editText.parent as? TextInputLayout)?.error = null
         }
 
         fun setError(editText: TextInputEditText, message: String) {
-            (editText.parent.parent as? TextInputLayout)?.error = message
+            (editText.parent as? TextInputLayout)?.error = message
             isValid = false
         }
 
