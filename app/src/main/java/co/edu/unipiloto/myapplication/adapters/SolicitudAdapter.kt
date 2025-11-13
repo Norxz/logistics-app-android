@@ -69,10 +69,13 @@ class SolicitudAdapter(
             // --- 1. SETEAR DATOS ---
             tvSolicitudID.text = itemView.context.getString(R.string.guide_example, solicitud.id.toString())
             tvEstado.text = solicitud.estado.replace("_", " ").uppercase()
+            val direccionCompleta = solicitud.direccion?.direccionCompleta ?: "Dirección No Registrada"
+            val ciudad = solicitud.direccion?.ciudad ?: "N/D"
+
             tvDireccion.text = itemView.context.getString(
                 R.string.full_address_format,
-                solicitud.direccion.direccionCompleta,
-                solicitud.direccion.ciudad
+                direccionCompleta, // 👈 Usa la variable segura
+                ciudad              // 👈 Usa la variable segura
             )
             tvFecha.text = itemView.context.getString(
                 R.string.collection_time_format,

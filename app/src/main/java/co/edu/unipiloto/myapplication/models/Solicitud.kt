@@ -28,6 +28,6 @@ data class Solicitud(
     val createdAt: String,
 
     // --- Estructuras Anidadas (Mapean a las Entidades relacionadas del backend) ---
-    val direccion: DireccionResponse,
-    val guia: GuiaResponse
+    val direccion: DireccionResponse?,
+    val guia: GuiaResponse?
 )

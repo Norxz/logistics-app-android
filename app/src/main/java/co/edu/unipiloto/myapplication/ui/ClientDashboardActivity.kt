@@ -247,20 +247,24 @@ class ClientDashboardActivity : AppCompatActivity() {
      * Actualiza el estado de la solicitud en el Backend (PUT /api/v1/solicitudes/{id}/estado).
      */
     private fun updateSolicitudState(solicitudId: Long, newState: String) {
-        val requestBody = mapOf("estado" to newState) // Cuerpo JSON para el backend
+        // 1. Prepara el cuerpo del Request que el backend espera: {"estado": "NUEVO_ESTADO"}
+        val requestBody = mapOf("estado" to newState)
 
-        // 🏆 LLAMADA A RETROFIT PARA ACTUALIZAR ESTADO
+        // 2. LLAMADA A RETROFIT PARA ACTUALIZAR ESTADO
         RetrofitClient.apiService.actualizarEstado(solicitudId, requestBody).enqueue(object : Callback<Void> {
             override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                // Un código 204 No Content (o 200 OK) indica éxito
                 if (response.isSuccessful) {
-                    loadSolicitudes() // Refresca las listas (la solicitud se moverá a "Finalizados")
+                    // Si la actualización fue exitosa, recargamos la lista para que la solicitud se mueva.
+                    loadSolicitudes()
                     showToast("Solicitud #${solicitudId} ha sido marcada como $newState.")
                 } else {
                     Log.e("Dashboard", "Error ${response.code()} al actualizar estado: ${response.message()}")
-                    showToast("Error: No se pudo actualizar el estado de la solicitud.")
+                    showToast("Error: No se pudo actualizar el estado de la solicitud (${response.code()}).")
                 }
             }
             override fun onFailure(call: Call<Void>, t: Throwable) {
+                Log.e("Dashboard", "Error de red al actualizar estado.")
                 showToast("Error de red al actualizar estado.")
             }
         })
