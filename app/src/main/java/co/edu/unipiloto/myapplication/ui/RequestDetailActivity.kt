@@ -11,16 +11,20 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.db.UserRepository
 import co.edu.unipiloto.myapplication.models.Request
 import com.google.android.material.button.MaterialButton
+import co.edu.unipiloto.myapplication.models.LogisticUser
+import co.edu.unipiloto.myapplication.models.Solicitud
+import co.edu.unipiloto.myapplication.rest.RetrofitClient
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.io.Serializable
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 class RequestDetailActivity : AppCompatActivity() {
 
-    private lateinit var userRepository: UserRepository
     private lateinit var currentRequest: Request
 
     // Vistas
@@ -37,7 +41,7 @@ class RequestDetailActivity : AppCompatActivity() {
     private lateinit var btnSaveStatus: MaterialButton
 
     // Datos
-    private var driverOptions = mutableListOf<Pair<Long, String>>()
+    private lateinit var driverOptionsList: List<LogisticUser>
     private var selectedDriverId: Long? = null
     private var selectedStatus: String? = null
     private val statusOptions = arrayOf("PENDIENTE", "ASIGNADO", "EN RUTA", "COMPLETADO", "CANCELADO")
@@ -46,8 +50,6 @@ class RequestDetailActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_request_detail)
         supportActionBar?.hide()
-
-        userRepository = UserRepository(this)
 
         // 1. Cargar el objeto Request
         val requestData = intent.getSerializableExtra("REQUEST_DATA")
@@ -105,37 +107,62 @@ class RequestDetailActivity : AppCompatActivity() {
     // ==========================================================
 
     private fun loadDrivers() {
-        // Cargar conductores activos desde la base de datos
-        driverOptions.clear()
-        driverOptions.add(Pair(-1L, "--- Seleccionar Conductor ---")) // Opción por defecto
+        val defaultOption = "--- Seleccionar Conductor ---"
+        val driverNames = mutableListOf(defaultOption)
 
-        val drivers = userRepository.getDriversForAssignment()
-        driverOptions.addAll(drivers.map { Pair(it.first, it.second) })
+        // 🏆 LLAMADA A RETROFIT (GET Drivers)
+        RetrofitClient.apiService.getDriversForAssignment().enqueue(object : Callback<List<LogisticUser>> {
+            override fun onResponse(call: Call<List<LogisticUser>>, response: Response<List<LogisticUser>>) {
+                if (response.isSuccessful && response.body() != null) {
+                    // 🚨 CORRECCIÓN: Inicializar la lista global de opciones
+                    driverOptionsList = response.body()!!
 
-        val adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_dropdown_item,
-            driverOptions.map { it.second } // Mostrar solo los nombres
-        )
-        spinnerDrivers.adapter = adapter
+                    // 1. Llenar la lista de nombres para el Spinner
+                    driverOptionsList.forEach { driverNames.add(it.name) }
 
-        // Seleccionar conductor asignado actualmente, si existe
+                    val adapter = ArrayAdapter(
+                        this@RequestDetailActivity,
+                        android.R.layout.simple_spinner_dropdown_item,
+                        driverNames
+                    )
+                    spinnerDrivers.adapter = adapter
+
+                    // 2. Sincronizar selección
+                    selectCurrentDriver(adapter)
+
+                } else {
+                    Toast.makeText(this@RequestDetailActivity, "Error al cargar conductores.", Toast.LENGTH_SHORT).show()
+                }
+            }
+            override fun onFailure(call: Call<List<LogisticUser>>, t: Throwable) {
+                Toast.makeText(this@RequestDetailActivity, "Fallo de red al cargar conductores.", Toast.LENGTH_LONG).show()
+            }
+        })
+    }
+
+    private fun selectCurrentDriver(adapter: ArrayAdapter<String>) {
         val currentDriverId = currentRequest.assignedRecolectorId
         if (currentDriverId != null) {
-            val index = driverOptions.indexOfFirst { it.first == currentDriverId }
+            // 🚨 CORRECCIÓN: Buscar en la lista REST cargada (driverOptionsList)
+            val index = driverOptionsList.indexOfFirst { it.id == currentDriverId }
             if (index != -1) {
-                spinnerDrivers.setSelection(index)
+                // El índice en el Spinner es 1 + el índice de la lista real (por la opción por defecto)
+                spinnerDrivers.setSelection(index + 1)
                 selectedDriverId = currentDriverId
             }
         }
-
         setupDriverSpinnerListener()
     }
 
     private fun setupDriverSpinnerListener() {
         spinnerDrivers.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                selectedDriverId = driverOptions[position].first
+                if (position > 0) {
+                    // 🚨 CORRECCIÓN: Mapear la posición a la lista REST cargada
+                    selectedDriverId = driverOptionsList[position - 1].id
+                } else {
+                    selectedDriverId = null // Opción por defecto
+                }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>) {
@@ -150,15 +177,8 @@ class RequestDetailActivity : AppCompatActivity() {
                 Toast.makeText(this, "Seleccione un conductor válido.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            // TODO: Implementar el método updateRequestAssignment en UserRepository
-            val success = updateRequestAssignment(currentRequest.id, selectedDriverId!!)
-            if (success) {
-                Toast.makeText(this, "Conductor asignado con éxito.", Toast.LENGTH_SHORT).show()
-                // Recargar o actualizar la UI con la nueva data
-                updateUIOnSuccess()
-            } else {
-                Toast.makeText(this, "Error al asignar conductor.", Toast.LENGTH_SHORT).show()
-            }
+            // 🏆 LLAMADA REST para Asignación
+            updateRequestAssignment(currentRequest.id, selectedDriverId!!)
         }
     }
 
@@ -203,15 +223,8 @@ class RequestDetailActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // TODO: Implementar el método updateRequestStatus en UserRepository
-            val success = updateRequestStatus(currentRequest.id, selectedStatus!!)
-            if (success) {
-                Toast.makeText(this, "Estado actualizado a $selectedStatus.", Toast.LENGTH_SHORT).show()
-                // Recargar o actualizar la UI con la nueva data
-                updateUIOnSuccess()
-            } else {
-                Toast.makeText(this, "Error al actualizar estado.", Toast.LENGTH_SHORT).show()
-            }
+            // 🏆 LLAMADA REST para Actualización de Estado
+            updateRequestStatus(currentRequest.id, selectedStatus!!)
         }
     }
 
@@ -221,17 +234,16 @@ class RequestDetailActivity : AppCompatActivity() {
     }
 
     private fun updateUIOnSuccess() {
-        // Idealmente, recargar la solicitud desde la BD para tener la data más fresca
-        // Por simplicidad, actualizaremos los campos que cambiaron:
+        // 🏆 CORRECCIÓN CRÍTICA: Actualizar la Request con el nombre del conductor seleccionado.
+        val newDriverName = driverOptionsList.find { it.id == selectedDriverId }?.name
+
         currentRequest = currentRequest.copy(
             assignedRecolectorId = selectedDriverId,
-            // Aquí tendrías que buscar el nombre del conductor si selectedDriverId cambió
-            assignedRecolectorName = driverOptions.find { it.first == selectedDriverId }?.second,
+            assignedRecolectorName = newDriverName,
             status = selectedStatus ?: currentRequest.status
         )
         displayRequestDetails()
 
-        // Notificar a la lista principal (ViewAllRequestsActivity) que debe recargar sus datos
         setResult(RESULT_OK)
     }
 
@@ -255,21 +267,52 @@ class RequestDetailActivity : AppCompatActivity() {
     /**
      * IMPORTANTE: Estos métodos deben ser añadidos a tu UserRepository.kt
      */
-    private fun updateRequestAssignment(requestId: Long, recolectorId: Long): Boolean {
-        // DEBES LLAMAR AL MÉTODO REAL EN userRepository
-        // return userRepository.updateRequestAssignment(requestId, recolectorId)
+// En RequestDetailActivity.kt
 
-        // Simulando éxito para que puedas probar la UI
-        Log.d("RequestDetailActivity", "Simulando asignación de Request $requestId al Recolector $recolectorId")
-        return true
+    private fun updateRequestAssignment(requestId: Long, recolectorId: Long) {
+        val assignmentBody = mapOf("recolectorId" to recolectorId.toString())
+
+        // 🏆 CORRECCIÓN: Cambiar Callback<Void> a Callback<Solicitud>
+        RetrofitClient.apiService.assignRequest(requestId, assignmentBody).enqueue(object : Callback<Solicitud> {
+
+            // El método onResponse ahora espera una Solicitud
+            override fun onResponse(call: Call<Solicitud>, response: Response<Solicitud>) {
+
+                if (response.isSuccessful) {
+                    // Opcional: Usar el objeto Solicitud actualizado si lo necesitas:
+                    // val updatedSolicitud = response.body()
+
+                    Toast.makeText(this@RequestDetailActivity, "Conductor asignado con éxito.", Toast.LENGTH_SHORT).show()
+                    updateUIOnSuccess()
+                } else {
+                    Toast.makeText(this@RequestDetailActivity, "Error al asignar conductor. Código: ${response.code()}", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            // El método onFailure ahora espera Solicitud
+            override fun onFailure(call: Call<Solicitud>, t: Throwable) {
+                Toast.makeText(this@RequestDetailActivity, "Fallo de red al asignar conductor.", Toast.LENGTH_LONG).show()
+            }
+        })
     }
 
-    private fun updateRequestStatus(requestId: Long, status: String): Boolean {
-        // DEBES LLAMAR AL MÉTODO REAL EN userRepository
-        // return userRepository.updateRequestStatus(requestId, status)
+    private fun updateRequestStatus(requestId: Long, status: String) {
+        val statusBody = mapOf("estado" to status)
 
-        // Simulando éxito para que puedas probar la UI
-        Log.d("RequestDetailActivity", "Simulando cambio de estado de Request $requestId a $status")
-        return true
+        // 🏆 CORRECCIÓN 2: Usar Callback<Void> directamente
+        RetrofitClient.apiService.actualizarEstado(requestId, statusBody).enqueue(object : Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                if (response.isSuccessful) {
+                    Toast.makeText(this@RequestDetailActivity, "Estado actualizado a $status.", Toast.LENGTH_SHORT).show()
+                    updateUIOnSuccess()
+                } else {
+                    // Si falla, no hay cuerpo que leer (response.errorBody().string())
+                    Toast.makeText(this@RequestDetailActivity, "Error al actualizar estado. Código: ${response.code()}", Toast.LENGTH_SHORT).show()
+                }
+            }
+            override fun onFailure(call: Call<Void>, t: Throwable) {
+                Toast.makeText(this@RequestDetailActivity, "Fallo de red al actualizar estado.", Toast.LENGTH_LONG).show()
+            }
+        })
     }
 }

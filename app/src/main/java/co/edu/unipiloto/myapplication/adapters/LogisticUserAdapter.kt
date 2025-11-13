@@ -91,4 +91,5 @@ class LogisticUserAdapter(
             return oldItem == newItem
         }
     }
+
 }

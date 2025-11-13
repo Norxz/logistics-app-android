@@ -2,7 +2,6 @@ package co.edu.unipiloto.myapplication.ui
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -32,12 +31,14 @@ class GuideConfirmationActivity : AppCompatActivity() {
 
     private fun setupListeners(solicitudId: Long) {
         findViewById<MaterialButton>(R.id.btnGenerateAndSend).setOnClickListener {
-            // TODO: Implementar lógica para generar la guía (PDF) y enviarla por email.
+            // 💡 FUTURA IMPLEMENTACIÓN REST:
+            // Aquí llamarías a un endpoint: POST /api/v1/guide/send/{solicitudId}
             Toast.makeText(this, "Generando y Enviando Guía $solicitudId...", Toast.LENGTH_SHORT).show()
         }
 
         findViewById<MaterialButton>(R.id.btnGenerateGuide).setOnClickListener {
-            // TODO: Implementar lógica para solo descargar la guía (PDF).
+            // 💡 FUTURA IMPLEMENTACIÓN REST:
+            // Aquí llamarías a un endpoint: GET /api/v1/guide/download/{solicitudId}
             Toast.makeText(this, "Descargando Guía $solicitudId...", Toast.LENGTH_SHORT).show()
         }
 

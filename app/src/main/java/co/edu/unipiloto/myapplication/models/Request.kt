@@ -1,7 +1,7 @@
-// Archivo: co.edu.unipiloto.myapplication.models/Request.kt
 
 package co.edu.unipiloto.myapplication.models
 
+import java.io.Serializable
 /**
  * Modelo de datos para representar una Solicitud de Recolección o Entrega.
  * Esta es la entidad central para la gestión administrativa.
@@ -28,4 +28,4 @@ data class Request(
     val creationTimestamp: String,
     val assignedRecolectorId: Long? = null,
     val assignedRecolectorName: String? = null
-)
+):Serializable

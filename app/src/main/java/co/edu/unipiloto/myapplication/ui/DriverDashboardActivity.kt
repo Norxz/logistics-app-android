@@ -11,10 +11,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.storage.SessionManager
-import co.edu.unipiloto.myapplication.db.SolicitudRepository
-// import co.edu.unipiloto.myapplication.db.UserRepository // Ya no es estrictamente necesario aquí
-import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter // Asumimos esta será la ruta
 import com.google.android.material.button.MaterialButton
+import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter
+import co.edu.unipiloto.myapplication.models.Solicitud // 👈 Modelo de Respuesta REST
+import co.edu.unipiloto.myapplication.rest.RetrofitClient // 👈 Cliente REST
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 /**
  * Activity para el panel de control (dashboard) del conductor.
@@ -30,8 +33,6 @@ class DriverDashboardActivity : AppCompatActivity() {
 
     // --- UTILIDADES ---
     private lateinit var sessionManager: SessionManager
-    // private lateinit var userRepository: UserRepository // Ya no se necesita aquí
-    private lateinit var solicitudRepository: SolicitudRepository
     private lateinit var adapter: SolicitudAdapter
 
     // --- DATOS DE SESIÓN ---
@@ -40,16 +41,12 @@ class DriverDashboardActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Nota: Asumo que tienes un layout llamado activity_driver_dashboard
         setContentView(R.layout.activity_driver_dashboard)
 
         supportActionBar?.hide()
 
-        // Inicializar gestores y repositorios
+        // Inicializar gestores
         sessionManager = SessionManager(this)
-        // Nota: Necesitas la clase SolicitudRepository para que esto compile.
-        solicitudRepository = SolicitudRepository(this)
-        // userRepository = UserRepository(this) // Ya no es necesario
 
         // Verificar si el usuario está logueado y tiene el rol correcto.
         if (!sessionManager.isLoggedIn() || sessionManager.getRole() != "CONDUCTOR") {
@@ -65,13 +62,15 @@ class DriverDashboardActivity : AppCompatActivity() {
         initViews()
         setupListeners()
         setupRecyclerView()
-        //loadAssignedRoutes() // Se ejecutará cuando SolicitudRepository esté listo
+        loadAssignedRoutes() // 👈 Llamada para cargar rutas
     }
 
-    /**
-     * Inicializa y mapea las vistas. Personaliza los textos de bienvenida
-     * obteniendo el nombre directamente del SessionManager.
-     */
+    override fun onResume() {
+        super.onResume()
+        // Asegura que las rutas se recarguen al volver de una acción (ej., marcar recogida).
+        loadAssignedRoutes()
+    }
+
     private fun initViews() {
         tvDriverTitle = findViewById(R.id.tvDriverTitle)
         tvDriverSubtitle = findViewById(R.id.tvDriverSubtitle)
@@ -79,45 +78,33 @@ class DriverDashboardActivity : AppCompatActivity() {
         recyclerViewRoutes = findViewById(R.id.recyclerViewRoutes)
         tvNoRoutes = findViewById(R.id.tvNoRoutes)
 
-        // 🏆 AJUSTE CRÍTICO: Obtener el nombre del SessionManager (es más rápido y eficiente)
-        // Usamos el primer nombre para un saludo más casual.
         val driverName = sessionManager.getName().split(" ").firstOrNull() ?: "Conductor"
-
-        // Personaliza el título con el nombre real.
         tvDriverTitle.text = getString(R.string.driver_dashboard_title, driverName)
-
-        // Muestra la zona asignada o un texto por defecto.
         tvDriverSubtitle.text =
             getString(R.string.driver_dashboard_subtitle, driverZona ?: "Sin Zona")
     }
 
-    /**
-     * Configura los listeners.
-     */
     private fun setupListeners() {
         btnLogout.setOnClickListener {
             logoutUser()
         }
     }
 
-    /**
-     * Configura el RecyclerView.
-     */
     private fun setupRecyclerView() {
-        // ⚠️ Nota: Necesitas crear el SolicitudAdapter y el modelo Solicitud
-        // Antes de que esta línea compile:
-        // adapter = SolicitudAdapter.forConductor(items = emptyList())
-
-        // Mientras tanto, usaremos una inicialización básica para que compile:
-        // Asegúrate de crear esta clase pronto:
-        // adapter = SolicitudAdapter(emptyList())
+        // Inicializamos el adaptador con el rol CONDUCTOR para que muestre los botones correctos
+        adapter = SolicitudAdapter(
+            items = emptyList<Solicitud>(),
+            role = sessionManager.getRole()
+            // Aquí iría el listener para manejar acciones del conductor (INICIAR, RECOGIDA, ENTREGADA)
+            // onActionClick = { solicitud, action -> handleDriverAction(solicitud, action) }
+        )
 
         recyclerViewRoutes.layoutManager = LinearLayoutManager(this)
-        // recyclerViewRoutes.adapter = adapter
+        recyclerViewRoutes.adapter = adapter
     }
 
     /**
-     * Carga las rutas (solicitudes) asignadas al conductor.
+     * Carga las rutas (solicitudes) asignadas al conductor usando el servicio REST.
      */
     private fun loadAssignedRoutes() {
         if (driverId == -1L) {
@@ -125,25 +112,36 @@ class DriverDashboardActivity : AppCompatActivity() {
             return
         }
 
-        // ⚠️ Esta línea requiere que SolicitudRepository esté implementado:
-        // val assignedSolicitudes = solicitudRepository.getSolicitudesByRecolectorId(driverId)
+        // 🏆 LLAMADA A RETROFIT
+        RetrofitClient.apiService.getDriverRoutes(driverId).enqueue(object : Callback<List<Solicitud>> {
+            override fun onResponse(call: Call<List<Solicitud>>, response: Response<List<Solicitud>>) {
+                val assignedSolicitudes = response.body() ?: emptyList()
 
-        // if (assignedSolicitudes.isNotEmpty()) {
-        //     adapter.updateData(assignedSolicitudes)
-        //     recyclerViewRoutes.visibility = View.VISIBLE
-        //     tvNoRoutes.visibility = View.GONE
-        // } else {
-        //     recyclerViewRoutes.visibility = View.GONE
-        //     tvNoRoutes.visibility = View.VISIBLE
-        // }
+                if (response.isSuccessful) {
+                    if (assignedSolicitudes.isNotEmpty()) {
+                        adapter.updateData(assignedSolicitudes)
+                        recyclerViewRoutes.visibility = View.VISIBLE
+                        tvNoRoutes.visibility = View.GONE
+                    } else {
+                        recyclerViewRoutes.visibility = View.GONE
+                        tvNoRoutes.visibility = View.VISIBLE
+                        tvNoRoutes.text = getString(R.string.no_routes_assigned) // Asegúrate de tener este string
+                    }
+                } else {
+                    Log.e("DriverDash", "Error ${response.code()} al cargar rutas.")
+                    Toast.makeText(this@DriverDashboardActivity, "Error al cargar rutas del servidor.", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onFailure(call: Call<List<Solicitud>>, t: Throwable) {
+                Log.e("DriverDash", "Fallo de red: ${t.message}")
+                Toast.makeText(this@DriverDashboardActivity, "Fallo de red: No se pudo conectar al backend.", Toast.LENGTH_LONG).show()
+            }
+        })
     }
 
-    /**
-     * Cierra la sesión y redirige al Hub de Bienvenida (MainActivity).
-     */
     private fun logoutUser() {
         sessionManager.logoutUser()
-        // 🏆 AJUSTE: Redirigir a MainActivity (Hub) para consistencia
         val intent = Intent(this, MainActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)

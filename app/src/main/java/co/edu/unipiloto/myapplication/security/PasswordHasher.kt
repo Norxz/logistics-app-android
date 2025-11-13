@@ -1,4 +1,3 @@
-// EN co.edu.unipiloto.myapplication.security/PasswordHasher.kt
 
 package co.edu.unipiloto.myapplication.security
 

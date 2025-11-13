@@ -10,26 +10,25 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter // Usaremos el adaptador genérico
-import co.edu.unipiloto.myapplication.db.SolicitudRepository
-import co.edu.unipiloto.myapplication.models.Solicitud
+import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter
 import co.edu.unipiloto.myapplication.storage.SessionManager
+import co.edu.unipiloto.myapplication.models.Solicitud // Asegúrate de usar el nuevo modelo DTO/Response
+import co.edu.unipiloto.myapplication.rest.RetrofitClient // 👈 NUEVO: Cliente REST
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 /**
  * Fragmento que lista las solicitudes que ya han sido asignadas a conductores para el Manager/Gestor.
- * Usa fragment_branch_list.xml.
  */
 class AssignedRequestsFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var tvNoRequests: TextView
-    private lateinit var solicitudRepository: SolicitudRepository
     private lateinit var sessionManager: SessionManager
 
-    // Usamos el SolicitudAdapter genérico (lo renombramos para compatibilidad)
     private lateinit var adapter: SolicitudAdapter
 
-    // Almacenamos el rol para inicializar el adaptador correctamente
     private var userRole: String = "GESTOR"
 
     override fun onCreateView(
@@ -42,10 +41,10 @@ class AssignedRequestsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Inicializar repositorios
-        solicitudRepository = SolicitudRepository(requireContext())
+        // Inicializar gestores
+        // ❌ ELIMINADA: solicitudRepository = SolicitudRepository(requireContext())
         sessionManager = SessionManager(requireContext())
-        userRole = sessionManager.getRole() ?: "GESTOR" // Obtener el rol real
+        userRole = sessionManager.getRole() ?: "GESTOR"
 
         // Mapear vistas
         recyclerView = view.findViewById(R.id.recyclerViewBranchList)
@@ -54,15 +53,12 @@ class AssignedRequestsFragment : Fragment() {
         // Configurar RecyclerView
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        // 🏆 CORRECCIÓN: Inicializar y asignar adaptador.
-        // 1. Especificar el tipo de lista vacía.
-        // 2. Pasar el rol y un listener de acción (aunque esté vacío por ahora).
         adapter = SolicitudAdapter(
             items = emptyList<Solicitud>(),
             role = userRole,
             onActionClick = { solicitud, action ->
                 Log.d("AssignedFrag", "Acción: $action en solicitud ${solicitud.id}")
-                // Implementar lógica de acción del gestor aquí (ej: reasignar, cancelar, etc.)
+                // Implementar lógica de acción (reasignar, etc.)
             }
         )
         recyclerView.adapter = adapter
@@ -71,29 +67,42 @@ class AssignedRequestsFragment : Fragment() {
     }
 
     /**
-     * Carga las solicitudes que ya están en estado 'ASIGNADA', 'EN RECOLECCION', etc.
-     * para la zona del gestor.
+     * Carga las solicitudes asignadas usando el servicio REST.
      */
     private fun loadAssignedRequests() {
-        // Obtenemos la zona, si es nula, salimos de la función.
         val zona = sessionManager.getZona() ?: run {
             tvNoRequests.visibility = View.VISIBLE
             tvNoRequests.text = getString(R.string.error_no_zone)
             return
         }
 
-        // Carga las solicitudes asignadas de la zona.
-        val assignedItems = solicitudRepository.getSolicitudesAsignadasEnriquecidasPorZona(zona)
+        // 🏆 LLAMADA A RETROFIT: Asumimos el endpoint /zone/{zona}/assigned
+        RetrofitClient.apiService.getAssignedSolicitudesByZone(zona).enqueue(object : Callback<List<Solicitud>> {
+            override fun onResponse(call: Call<List<Solicitud>>, response: Response<List<Solicitud>>) {
+                val assignedItems = response.body() ?: emptyList()
 
-        if (assignedItems.isNotEmpty()) {
-            tvNoRequests.visibility = View.GONE
-            recyclerView.visibility = View.VISIBLE
-            adapter.updateData(assignedItems)
-        } else {
-            // Muestra mensaje si no hay solicitudes asignadas
-            recyclerView.visibility = View.GONE
-            tvNoRequests.visibility = View.VISIBLE
-            tvNoRequests.text = getString(R.string.no_assigned_requests)
-        }
+                if (response.isSuccessful) {
+                    if (assignedItems.isNotEmpty()) {
+                        tvNoRequests.visibility = View.GONE
+                        recyclerView.visibility = View.VISIBLE
+                        adapter.updateData(assignedItems)
+                    } else {
+                        recyclerView.visibility = View.GONE
+                        tvNoRequests.visibility = View.VISIBLE
+                        tvNoRequests.text = getString(R.string.no_assigned_requests)
+                    }
+                } else {
+                    Log.e("AssignedFrag", "Error ${response.code()} al cargar asignadas.")
+                    tvNoRequests.visibility = View.VISIBLE
+                    tvNoRequests.text = "Error al conectar con el servidor: ${response.code()}"
+                }
+            }
+
+            override fun onFailure(call: Call<List<Solicitud>>, t: Throwable) {
+                Log.e("AssignedFrag", "Fallo de red: ${t.message}")
+                tvNoRequests.visibility = View.VISIBLE
+                tvNoRequests.text = "Fallo de red. Verifique el servidor."
+            }
+        })
     }
 }

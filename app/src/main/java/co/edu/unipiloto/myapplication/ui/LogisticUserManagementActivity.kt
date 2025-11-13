@@ -5,23 +5,28 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.adapters.LogisticUserAdapter // Debes crear este Adapter
-import co.edu.unipiloto.myapplication.db.UserRepository
-import co.edu.unipiloto.myapplication.models.LogisticUser // Debes crear este modelo de datos
+import co.edu.unipiloto.myapplication.adapters.LogisticUserAdapter
+import co.edu.unipiloto.myapplication.models.LogisticUser
+import co.edu.unipiloto.myapplication.rest.RetrofitClient
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class LogisticUserManagementActivity : AppCompatActivity() {
 
-    private lateinit var userRepository: UserRepository
     private lateinit var rvUsers: RecyclerView
     private lateinit var etSearch: TextInputEditText
     private lateinit var fabAddUser: FloatingActionButton
+    // Cambiado de ListAdapter a RecyclerView.Adapter para simplificar la migración
     private lateinit var userAdapter: LogisticUserAdapter
 
     // Lista de trabajo para la búsqueda
@@ -33,12 +38,17 @@ class LogisticUserManagementActivity : AppCompatActivity() {
 
         supportActionBar?.title = "Gestión Logística"
 
-        userRepository = UserRepository(this)
 
         initViews()
         setupRecyclerView()
         loadUsers()
         setupListeners()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Recargar datos siempre que la actividad vuelva a estar visible (después de editar/crear)
+        loadUsers()
     }
 
     private fun initViews() {
@@ -48,7 +58,7 @@ class LogisticUserManagementActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        // El adaptador manejará las acciones de Modificar y Eliminar
+        // Inicializar el adaptador usando el modelo del paquete ui.adapters
         userAdapter = LogisticUserAdapter(
             onEditClick = { user -> navigateToEditUser(user) },
             onDeleteClick = { user -> confirmAndDeleteUser(user) }
@@ -57,30 +67,35 @@ class LogisticUserManagementActivity : AppCompatActivity() {
         rvUsers.adapter = userAdapter
     }
 
-    // Simula la carga de datos de la base de datos
+    /**
+     * Carga los usuarios logísticos desde el backend REST.
+     */
     private fun loadUsers() {
-        // TODO: Reemplazar con la llamada real a UserRepository
-        // allUsers = userRepository.getAllLogisticUsers()
-
-        // Simulación:
-        allUsers = listOf(
-            LogisticUser(1, "func@logistica.com", "Juan Pérez", "FUNCIONARIO", "Bogotá - Norte", "3001234567", true),
-            LogisticUser(2, "driver@logistica.com", "Maria López", "CONDUCTOR", "Bogotá - Sur", "3109876543", true),
-            LogisticUser(3, "analyst@logistica.com", "Carlos Soto", "ANALISTA", "N/A", "3205551111", false)
-        )
-
-        userAdapter.submitList(allUsers)
+        // 🏆 LLAMADA A RETROFIT (GET: Asumimos endpoint /api/v1/logistic-users)
+        RetrofitClient.apiService.getAllLogisticUsers().enqueue(object : Callback<List<LogisticUser>> {
+            override fun onResponse(call: Call<List<LogisticUser>>, response: Response<List<LogisticUser>>) {
+                if (response.isSuccessful && response.body() != null) {
+                    allUsers = response.body()!!
+                    userAdapter.submitList(allUsers)
+                } else {
+                    Log.e("LogUserMgmt", "Error ${response.code()} al cargar usuarios.")
+                    Toast.makeText(this@LogisticUserManagementActivity, "Error al cargar personal logístico.", Toast.LENGTH_SHORT).show()
+                }
+            }
+            override fun onFailure(call: Call<List<LogisticUser>>, t: Throwable) {
+                Log.e("LogUserMgmt", "Fallo de red: ${t.message}")
+                Toast.makeText(this@LogisticUserManagementActivity, "Fallo de red. Servidor no disponible.", Toast.LENGTH_LONG).show()
+            }
+        })
     }
 
     private fun setupListeners() {
-        // Acción CREAR: Navegar a RegisterActivity en modo Admin
         fabAddUser.setOnClickListener {
             val intent = Intent(this, RegisterActivity::class.java)
             intent.putExtra(RegisterActivity.EXTRA_IS_ADMIN_REGISTER, true)
             startActivity(intent)
         }
 
-        // Acción BUSCAR/FILTRAR
         etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
@@ -91,6 +106,7 @@ class LogisticUserManagementActivity : AppCompatActivity() {
     }
 
     private fun filterUsers(query: String) {
+        // Mantiene la lógica de filtrado local sobre 'allUsers'
         val lowerCaseQuery = query.lowercase()
         val filteredList = allUsers.filter { user ->
             user.email.lowercase().contains(lowerCaseQuery) ||
@@ -100,30 +116,43 @@ class LogisticUserManagementActivity : AppCompatActivity() {
         userAdapter.submitList(filteredList)
     }
 
-    // Acción MODIFICAR: Navegar a la pantalla de detalle/edición
     private fun navigateToEditUser(user: LogisticUser) {
-        // Aquí se navegaría a una Activity de detalle/edición pasando el ID del usuario
-        // val intent = Intent(this, UserDetailActivity::class.java)
-        // intent.putExtra("USER_ID", user.id)
-        // startActivity(intent)
-        Toast.makeText(this, "Modificar usuario: ${user.name}", Toast.LENGTH_SHORT).show()
+        val intent = Intent(this, EditLogisticUserActivity::class.java)
+        intent.putExtra("RECOLECTOR_ID", user.id) // Usar el ID del recolector
+        startActivity(intent)
     }
 
-    // Acción ELIMINAR: Mostrar diálogo de confirmación y eliminar
+    /**
+     * Muestra diálogo de confirmación y llama al servicio REST para eliminar.
+     */
     private fun confirmAndDeleteUser(user: LogisticUser) {
-        // TODO: Implementar un AlertDialog para confirmar la eliminación
-        // Después de la confirmación:
-        // val success = userRepository.deleteUser(user.id)
-        // if (success) { loadUsers() }
-
-        Toast.makeText(this, "Eliminar usuario (Confirmar diálogo): ${user.name}", Toast.LENGTH_LONG).show()
-        // Recargar lista para reflejar el cambio (simulado)
-        loadUsers()
+        AlertDialog.Builder(this)
+            .setTitle("Confirmar Eliminación")
+            .setMessage("¿Estás seguro de que deseas eliminar a ${user.name}? Esta acción es permanente.")
+            .setPositiveButton("Eliminar") { dialog, which ->
+                deleteLogisticUser(user.id, user.name)
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
     }
 
-    // Recargar datos cuando volvemos a esta Activity (ej: después de crear o editar)
-    override fun onResume() {
-        super.onResume()
-        loadUsers()
+    private fun deleteLogisticUser(userId: Long, userName: String) {
+        // 🏆 LLAMADA A RETROFIT (DELETE)
+        RetrofitClient.apiService.deleteLogisticUser(userId).enqueue(object : Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                if (response.isSuccessful) {
+                    Toast.makeText(this@LogisticUserManagementActivity, "$userName eliminado correctamente.", Toast.LENGTH_SHORT).show()
+                    loadUsers() // Recargar la lista
+                } else {
+                    Log.e("LogUserMgmt", "Fallo al eliminar: ${response.code()}")
+                    Toast.makeText(this@LogisticUserManagementActivity, "Error al eliminar a $userName. Código: ${response.code()}.", Toast.LENGTH_LONG).show()
+                }
+            }
+            override fun onFailure(call: Call<Void>, t: Throwable) {
+                Toast.makeText(this@LogisticUserManagementActivity, "Fallo de red al eliminar.", Toast.LENGTH_LONG).show()
+            }
+        })
     }
+
+
 }

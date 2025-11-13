@@ -8,7 +8,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.models.User // Asegúrate que esta importación sea correcta
+import co.edu.unipiloto.myapplication.models.User
 
 /**
  * Adaptador para mostrar la lista de usuarios logísticos en el RecyclerView.

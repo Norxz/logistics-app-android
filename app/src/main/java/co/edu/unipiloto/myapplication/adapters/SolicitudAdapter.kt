@@ -69,18 +69,40 @@ class SolicitudAdapter(
             // --- 1. SETEAR DATOS ---
             tvSolicitudID.text = itemView.context.getString(R.string.guide_example, solicitud.id.toString())
             tvEstado.text = solicitud.estado.replace("_", " ").uppercase()
-            tvDireccion.text = itemView.context.getString(R.string.full_address_format, solicitud.fullAddress, solicitud.ciudad)
-            tvFecha.text = itemView.context.getString(R.string.collection_time_format, solicitud.fecha, solicitud.franja)
-
+            tvDireccion.text = itemView.context.getString(
+                R.string.full_address_format,
+                solicitud.direccion.direccionCompleta,
+                solicitud.direccion.ciudad
+            )
+            tvFecha.text = itemView.context.getString(
+                R.string.collection_time_format,
+                solicitud.fechaRecoleccion,
+                solicitud.franjaHoraria
+            )
             // Asumiendo que createdAt es un Long (timestamp)
-            tvCreado.text = itemView.context.getString(R.string.created_at_format, convertTimestampToDate(solicitud.createdAt))
-
+            tvCreado.text = itemView.context.getString(
+                R.string.created_at_format,
+                formatInstantToDate(solicitud.createdAt)
+            )
             // --- 2. GESTIONAR VISIBILIDAD DE BOTONES ---
             hideAllButtons()
             setupButtonsByRoleAndState(solicitud, role, onActionClick)
 
             // --- 3. COLOR DEL ESTADO ---
             setEstadoColor(itemView.context, solicitud.estado.uppercase(), tvEstado)
+        }
+
+        private fun formatInstantToDate(instantString: String): String {
+            return try {
+                // Formato ISO 8601 (el que Spring Boot usa para Instant)
+                val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", Locale.getDefault())
+                // Simplificado para Android si solo necesitas la parte de fecha
+                val outputFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+                val date = inputFormat.parse(instantString)
+                outputFormat.format(date!!)
+            } catch (e: Exception) {
+                "Fecha inválida"
+            }
         }
 
         private fun hideAllButtons() {
