@@ -8,7 +8,6 @@ import co.edu.unipiloto.myapplication.storage.SessionManager
 import com.google.android.material.button.MaterialButton
 import android.widget.Toast
 import android.util.Log
-import co.edu.unipiloto.myapplication.db.UserRepository
 
 /**
  * Activity Principal (Hub de Bienvenida).
@@ -27,18 +26,14 @@ class MainActivity : AppCompatActivity() {
     // --- UTILIDADES ---
     private lateinit var sessionManager: SessionManager
 
-    private lateinit var userRepository: UserRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // 1. Ocultar la barra de acción (opcional, ya que este es un hub)
         supportActionBar?.hide()
 
         sessionManager = SessionManager(this)
-        // 🏆 INICIALIZACIÓN AÑADIDA
-        userRepository = UserRepository(this)
 
         initViews()
         setupListeners()

@@ -146,6 +146,7 @@
     <string name="all_solicitude">Todas las Solicitudes</string>
     <string name="personal_access">Acceso de Personal</string>
     <string name="admin_managing">Gestión Admin</string>
+    <string name="no_routes_assigned">No tienes rutas asignadas o pendientes de recolección.</string>
 
     <string-array name="logistic_roles">
         <item>CONDUCTOR</item>

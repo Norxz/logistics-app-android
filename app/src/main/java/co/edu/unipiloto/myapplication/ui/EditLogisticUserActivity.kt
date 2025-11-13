@@ -4,18 +4,22 @@ import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.db.UserRepository
-import co.edu.unipiloto.myapplication.models.LogisticUser
+// ❌ ELIMINAR: import co.edu.unipiloto.myapplication.db.UserRepository
+import co.edu.unipiloto.myapplication.models.LogisticUser // Modelo de datos
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
+import co.edu.unipiloto.myapplication.rest.RetrofitClient // 👈 NUEVO: Cliente REST
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class EditLogisticUserActivity : AppCompatActivity() {
 
-    private lateinit var userRepository: UserRepository
+    // ❌ ELIMINADA: private lateinit var userRepository: UserRepository
     private var recolectorId: Long = -1L
     private var currentUser: LogisticUser? = null
 
-    // Vistas
+    // Vistas (se mantienen)
     private lateinit var tvTitle: TextView
     private lateinit var etName: TextInputEditText
     private lateinit var etEmail: TextInputEditText
@@ -26,18 +30,16 @@ class EditLogisticUserActivity : AppCompatActivity() {
     private lateinit var btnSave: MaterialButton
     private lateinit var btnBack: ImageButton
 
-    // Opciones
-    private val roles = arrayOf("CONDUCTOR", "FUNCIONARIO", "GESTOR") // Roles disponibles
-    private val sucursales = arrayOf("Bogotá - Norte", "Bogotá - Sur", "Medellín", "Cali", "Barranquilla", "N/A") // Sucursales
+    // Opciones (se mantienen)
+    private val roles = arrayOf("CONDUCTOR", "FUNCIONARIO", "GESTOR")
+    private val sucursales = arrayOf("Bogotá - Norte", "Bogotá - Sur", "Medellín", "Cali", "Barranquilla", "N/A")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit_logistic_user)
         supportActionBar?.hide()
 
-        userRepository = UserRepository(this)
 
-        // 1. Obtener el ID del usuario
         recolectorId = intent.getLongExtra("RECOLECTOR_ID", -1L)
         if (recolectorId == -1L) {
             Toast.makeText(this, "Error: ID de usuario no proporcionado.", Toast.LENGTH_SHORT).show()
@@ -46,9 +48,8 @@ class EditLogisticUserActivity : AppCompatActivity() {
         }
 
         initViews()
-        loadUserData()
-        setupSpinners()
-        setupListeners()
+        loadUserData() // Ahora asíncrono
+
     }
 
     private fun initViews() {
@@ -63,48 +64,68 @@ class EditLogisticUserActivity : AppCompatActivity() {
         btnBack = findViewById(R.id.btnBack)
     }
 
+    /**
+     * Carga los datos del usuario desde el backend REST.
+     */
     private fun loadUserData() {
-        // Cargar usuario desde la BD
-        currentUser = userRepository.getLogisticUserById(recolectorId)
+        RetrofitClient.apiService.getLogisticUserById(recolectorId).enqueue(object : Callback<LogisticUser> {
+            override fun onResponse(call: Call<LogisticUser>, response: Response<LogisticUser>) {
+                if (response.isSuccessful && response.body() != null) {
+                    currentUser = response.body()
 
-        if (currentUser == null) {
-            Toast.makeText(this, "Usuario no encontrado.", Toast.LENGTH_SHORT).show()
-            finish()
-            return
-        }
+                    // 🏆 FLUJO ASÍNCRONO CORRECTO: Una vez que currentUser está cargado:
+                    displayUserData(currentUser!!)
+                    setupSpinners(currentUser!!) // Inicializa Spinners con data
+                    setupListeners() // Habilita botones de guardar
 
-        // Mostrar datos en la UI
-        tvTitle.text = "Editar: ${currentUser!!.name}"
-        etName.setText(currentUser!!.name)
-        etEmail.setText(currentUser!!.email)
-        etPhone.setText(currentUser!!.phoneNumber)
-        switchActive.isChecked = currentUser!!.isActive
+                } else {
+                    Toast.makeText(this@EditLogisticUserActivity, "Usuario no encontrado en el servidor.", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+            }
 
-        // Inicializar Switch con texto basado en el estado
-        updateSwitchText(currentUser!!.isActive)
+            override fun onFailure(call: Call<LogisticUser>, t: Throwable) {
+                Toast.makeText(this@EditLogisticUserActivity, "Fallo de red al cargar usuario.", Toast.LENGTH_LONG).show()
+                finish()
+            }
+        })
+    }
 
-        // El Spinner se inicializa después en setupSpinners()
+    /**
+     * Muestra los datos obtenidos del backend en la UI.
+     */
+    private fun displayUserData(user: LogisticUser) {
+        tvTitle.text = "Editar: ${user.name}"
+        etName.setText(user.name)
+        etEmail.setText(user.email)
+        etPhone.setText(user.phoneNumber)
+        switchActive.isChecked = user.isActive
+
+        updateSwitchText(user.isActive)
+        setupSpinners(user) // Llamamos setupSpinners con el usuario cargado
     }
 
     private fun updateSwitchText(isActive: Boolean) {
         switchActive.text = if (isActive) "Estado: Activo" else "Estado: Inactivo"
     }
 
-    private fun setupSpinners() {
+    private fun setupSpinners(user: LogisticUser) { // Acepta el usuario cargado
         // Adaptador de Roles
         val roleAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, roles)
         spinnerRole.adapter = roleAdapter
-        val currentRoleIndex = roles.indexOf(currentUser!!.role)
+        val currentRoleIndex = roles.indexOf(user.role)
         if (currentRoleIndex != -1) spinnerRole.setSelection(currentRoleIndex)
 
         // Adaptador de Sucursales
         val sucursalAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, sucursales)
         spinnerSucursal.adapter = sucursalAdapter
-        val currentSucursalIndex = sucursales.indexOf(currentUser!!.sucursal)
+        val currentSucursalIndex = sucursales.indexOf(user.sucursal)
         if (currentSucursalIndex != -1) spinnerSucursal.setSelection(currentSucursalIndex)
     }
 
     private fun setupListeners() {
+        // ... (Listeners para Back y Switch se mantienen) ...
+
         btnBack.setOnClickListener {
             onBackPressedDispatcher.onBackPressed()
         }
@@ -114,11 +135,16 @@ class EditLogisticUserActivity : AppCompatActivity() {
         }
 
         btnSave.setOnClickListener {
-            saveChanges()
+            saveChanges() // Ahora llama a la lógica REST
         }
     }
 
+    /**
+     * Guarda los cambios llamando al endpoint REST (PUT).
+     */
     private fun saveChanges() {
+        val user = currentUser ?: return
+
         val newName = etName.text.toString().trim()
         val newEmail = etEmail.text.toString().trim()
         val newPhone = etPhone.text.toString().trim()
@@ -131,8 +157,8 @@ class EditLogisticUserActivity : AppCompatActivity() {
             return
         }
 
-        // Crear una copia del usuario con los nuevos datos
-        val updatedUser = currentUser!!.copy(
+        // 1. Crear la copia del usuario con los datos actualizados
+        val updatedUser = user.copy(
             name = newName,
             email = newEmail,
             phoneNumber = newPhone,
@@ -141,16 +167,21 @@ class EditLogisticUserActivity : AppCompatActivity() {
             isActive = newIsActive
         )
 
-        // Guardar en la BD
-        val success = userRepository.updateLogisticUser(updatedUser)
+        // 2. 🏆 LLAMADA A RETROFIT (PUT)
+        RetrofitClient.apiService.updateLogisticUser(updatedUser.id, updatedUser).enqueue(object : Callback<LogisticUser> {
+            override fun onResponse(call: Call<LogisticUser>, response: Response<LogisticUser>) {
+                if (response.isSuccessful) {
+                    Toast.makeText(this@EditLogisticUserActivity, "Usuario ${newName} actualizado con éxito.", Toast.LENGTH_LONG).show()
+                    setResult(RESULT_OK) // Notificar a la Activity anterior para refrescar
+                    finish()
+                } else {
+                    Toast.makeText(this@EditLogisticUserActivity, "Error al guardar los cambios: ${response.code()}", Toast.LENGTH_LONG).show()
+                }
+            }
 
-        if (success) {
-            Toast.makeText(this, "Usuario ${newName} actualizado con éxito.", Toast.LENGTH_LONG).show()
-            // Notificar a la Activity anterior (ViewLogisticUsersActivity) que debe refrescar
-            setResult(RESULT_OK)
-            finish()
-        } else {
-            Toast.makeText(this, "Error al guardar los cambios.", Toast.LENGTH_LONG).show()
-        }
+            override fun onFailure(call: Call<LogisticUser>, t: Throwable) {
+                Toast.makeText(this@EditLogisticUserActivity, "Fallo de red al actualizar usuario.", Toast.LENGTH_LONG).show()
+            }
+        })
     }
 }

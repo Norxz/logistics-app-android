@@ -1,14 +1,21 @@
 package co.edu.unipiloto.myapplication.ui
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import co.edu.unipiloto.myapplication.R
+import co.edu.unipiloto.myapplication.models.ShippingStatus
+import co.edu.unipiloto.myapplication.rest.RetrofitClient
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 /**
  * Activity que permite a cualquier usuario rastrear un envío mediante su código de guía.
@@ -34,6 +41,10 @@ class TrackShippingActivity : AppCompatActivity() {
         cvResults = findViewById(R.id.cvResults)
         tvErrorMessage = findViewById(R.id.tvErrorMessage)
 
+        // Inicializar vistas con estado oculto
+        cvResults.visibility = View.GONE
+        tvErrorMessage.visibility = View.GONE
+
         findViewById<ImageButton>(R.id.btnBack).setOnClickListener { finish() }
     }
 
@@ -53,24 +64,57 @@ class TrackShippingActivity : AppCompatActivity() {
             return
         }
 
-        // TODO: Lógica de consulta en el repositorio para buscar el estado del envío
+        // Limpiar errores y resultados anteriores
+        tvErrorMessage.visibility = View.GONE
+        cvResults.visibility = View.GONE
 
-        // Simulación de resultado (debes reemplazar esto con tu lógica de BD)
-        if (guideCode == "1234567890") {
-            // Simulación de éxito
-            cvResults.visibility = View.VISIBLE
-            tvErrorMessage.visibility = View.GONE
+        // 🏆 LLAMADA A RETROFIT para buscar el estado del envío
+        RetrofitClient.apiService.getShippingStatus(guideCode).enqueue(object : Callback<ShippingStatus> {
+            override fun onResponse(call: Call<ShippingStatus>, response: Response<ShippingStatus>) {
+                if (response.isSuccessful && response.body() != null) {
+                    val statusData = response.body()!!
 
-            findViewById<TextView>(R.id.tvCurrentStatus).text = "EN RUTA"
-            findViewById<TextView>(R.id.tvGuideNumber).text = guideCode
-            findViewById<TextView>(R.id.tvDeliveryAddress).text = "Calle Falsa 123, Springfield"
-            findViewById<TextView>(R.id.tvDeliveryDate).text = "2025-11-10"
-            findViewById<TextView>(R.id.tvDeliveryFranja).text = "PM (14:00 - 18:00)"
-        } else {
-            // Simulación de error
-            tvErrorMessage.text = "⚠️ Error: La guía $guideCode no fue encontrada o es inválida."
-            tvErrorMessage.visibility = View.VISIBLE
-            cvResults.visibility = View.GONE
-        }
+                    // Mostrar resultados
+                    displayResults(statusData, guideCode)
+
+                } else if (response.code() == 404) {
+                    // La guía no fue encontrada en el backend
+                    showError("⚠️ Error: La guía $guideCode no fue encontrada o es inválida.")
+                }
+                else {
+                    // Otros errores 5xx o 4xx
+                    showError("Error del servidor: No se pudo obtener el estado (${response.code()}).")
+                }
+            }
+
+            override fun onFailure(call: Call<ShippingStatus>, t: Throwable) {
+                Log.e("Tracking", "Fallo de red: ${t.message}")
+                showError("Fallo de red. Verifique la conexión al servidor.")
+            }
+        })
+    }
+
+    /**
+     * Muestra la tarjeta de resultados con los datos recibidos.
+     */
+    private fun displayResults(statusData: ShippingStatus, guideCode: String) {
+        cvResults.visibility = View.VISIBLE
+        tvErrorMessage.visibility = View.GONE
+
+        // Mapear datos del DTO a la UI
+        findViewById<TextView>(R.id.tvCurrentStatus).text = statusData.status
+        findViewById<TextView>(R.id.tvGuideNumber).text = statusData.trackingNumber // Usar el tracking number
+        findViewById<TextView>(R.id.tvDeliveryAddress).text = statusData.destinationAddress
+        findViewById<TextView>(R.id.tvDeliveryDate).text = statusData.estimatedDate
+        findViewById<TextView>(R.id.tvDeliveryFranja).text = statusData.timeFranja
+    }
+
+    /**
+     * Muestra el mensaje de error y oculta la tarjeta de resultados.
+     */
+    private fun showError(message: String) {
+        tvErrorMessage.text = message
+        tvErrorMessage.visibility = View.VISIBLE
+        cvResults.visibility = View.GONE
     }
 }

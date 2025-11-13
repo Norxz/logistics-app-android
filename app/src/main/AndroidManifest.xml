@@ -15,11 +15,10 @@
         android:icon="@drawable/logo"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MyApplication">
-
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyCgMbN_NFCk1DV6wFJHwAe1auZQ5mPMAPo" />
+        android:theme="@style/Theme.MyApplication"
+        android:usesCleartextTraffic="true"> <meta-data
+        android:name="com.google.android.geo.API_KEY"
+        android:value="AIzaSyCgMbN_NFCk1DV6wFJHwAe1auZQ5mPMAPo" />
 
         <activity
             android:name=".ui.MainActivity"

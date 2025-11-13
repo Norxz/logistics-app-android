@@ -10,26 +10,29 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
-// Importamos el adaptador genérico
 import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter
-import co.edu.unipiloto.myapplication.db.SolicitudRepository
-// Importamos el modelo de datos
-import co.edu.unipiloto.myapplication.models.Solicitud
 import co.edu.unipiloto.myapplication.storage.SessionManager
+import co.edu.unipiloto.myapplication.models.Solicitud // 👈 Modelo de Respuesta REST
+import co.edu.unipiloto.myapplication.rest.RetrofitClient // 👈 Cliente REST
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 /**
  * Fragmento que muestra las solicitudes que ya han sido asignadas y están "En Ruta".
- * (Pestaña 1 de BranchPagerAdapter, que incluye estados: ASIGNADA, EN_RECOLECCION, RECOGIDA)
+ * (Pestaña 1 de BranchPagerAdapter)
  */
 class BranchInRouteFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var tvEmpty: TextView
-    private lateinit var solicitudRepository: SolicitudRepository
+    // ❌ ELIMINADA: private lateinit var solicitudRepository: SolicitudRepository
     private lateinit var sessionManager: SessionManager
 
     // 1. Declarar el adaptador usando el modelo Solicitud
     private lateinit var adapter: SolicitudAdapter
+
+    private var userRole: String = "GESTOR"
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -41,9 +44,10 @@ class BranchInRouteFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Inicializar repositorios
-        solicitudRepository = SolicitudRepository(requireContext())
+        // Inicializar gestores
+        // ❌ ELIMINADA: solicitudRepository = SolicitudRepository(requireContext())
         sessionManager = SessionManager(requireContext())
+        userRole = sessionManager.getRole() ?: "GESTOR"
 
         // Mapear vistas
         recyclerView = view.findViewById(R.id.recyclerViewBranchList)
@@ -54,12 +58,11 @@ class BranchInRouteFragment : Fragment() {
 
         // 2. Inicializar el adaptador correctamente:
         adapter = SolicitudAdapter(
-            items = emptyList<Solicitud>(), // Especificamos el tipo de lista
-            role = sessionManager.getRole() ?: "GESTOR",
+            items = emptyList<Solicitud>(),
+            role = userRole,
             onActionClick = { solicitud, action ->
-                // Lógica de acción del Gestor/Funcionario:
-                // Puede ser reasignar, cancelar, o ver detalles.
                 Log.d("InRouteFrag", "Acción: $action en solicitud ${solicitud.id}")
+                // Aquí se llamaría a un endpoint PUT/POST para cambiar estado o reasignar
             }
         )
         recyclerView.adapter = adapter
@@ -74,7 +77,8 @@ class BranchInRouteFragment : Fragment() {
     }
 
     /**
-     * Carga las solicitudes que ya están en estado 'ASIGNADA' o 'EN RUTA' para la zona del gestor.
+     * Carga las solicitudes que ya están en estado 'ASIGNADA' o 'EN RUTA' para la zona del gestor,
+     * usando el servicio REST.
      */
     private fun loadInRouteRequests() {
         val zona = sessionManager.getZona() ?: run {
@@ -84,20 +88,33 @@ class BranchInRouteFragment : Fragment() {
             return
         }
 
-        // 3. Usar el método existente y correcto del repositorio:
-        // getSolicitudesAsignadasEnriquecidasPorZona engloba los estados 'en ruta'.
-        val inRouteItems = solicitudRepository.getSolicitudesAsignadasEnriquecidasPorZona(zona)
+        // 🏆 LLAMADA A RETROFIT: Usamos el endpoint para solicitudes asignadas/en ruta por zona
+        RetrofitClient.apiService.getAssignedSolicitudesByZone(zona).enqueue(object : Callback<List<Solicitud>> {
+            override fun onResponse(call: Call<List<Solicitud>>, response: Response<List<Solicitud>>) {
+                val assignedItems = response.body() ?: emptyList()
 
-        if (inRouteItems.isNotEmpty()) {
-            tvEmpty.visibility = View.GONE
-            recyclerView.visibility = View.VISIBLE
-            adapter.updateData(inRouteItems) // Pasa los datos al adaptador
-        } else {
-            // Muestra mensaje si no hay solicitudes en ruta
-            tvEmpty.visibility = View.VISIBLE
-            recyclerView.visibility = View.GONE
-            // Usamos un string más descriptivo
-            tvEmpty.text = getString(R.string.no_assigned_requests)
-        }
+                if (response.isSuccessful) {
+                    if (assignedItems.isNotEmpty()) {
+                        tvEmpty.visibility = View.GONE
+                        recyclerView.visibility = View.VISIBLE
+                        adapter.updateData(assignedItems) // Pasa los datos al adaptador
+                    } else {
+                        recyclerView.visibility = View.GONE
+                        tvEmpty.visibility = View.VISIBLE
+                        tvEmpty.text = getString(R.string.no_assigned_requests)
+                    }
+                } else {
+                    Log.e("InRouteFrag", "Error ${response.code()} al cargar asignadas.")
+                    tvEmpty.visibility = View.VISIBLE
+                    tvEmpty.text = "Error al conectar con el servidor: ${response.code()}"
+                }
+            }
+
+            override fun onFailure(call: Call<List<Solicitud>>, t: Throwable) {
+                Log.e("InRouteFrag", "Fallo de red: ${t.message}")
+                tvEmpty.visibility = View.VISIBLE
+                tvEmpty.text = "Fallo de red. Verifique el servidor."
+            }
+        })
     }
 }
