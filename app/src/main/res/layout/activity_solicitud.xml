@@ -20,8 +20,7 @@
             android:textSize="28sp"
             android:textStyle="bold" />
 
-
-        <!-- SECCIÓN REMITENTE -->
+        <!-- REMITENTE -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -31,24 +30,20 @@
             android:textSize="20sp"
             android:textStyle="bold" />
 
-        <!-- 1. Campo: Nombre completo del remitente (etSenderName) -->
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:hint="@string/delivery_send_text_name"
-            app:boxStrokeColor="@color/primary_color">
+            android:hint="@string/delivery_send_text_name">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etSenderName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPersonName"
-                android:textColor="@color/on_surface" />
+                android:inputType="textPersonName" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- 2. Campo: Tipo de ID (Spinner) y Número de ID (etSenderID SIN LUPA) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -57,31 +52,26 @@
 
             <Spinner
                 android:id="@+id/spIDType"
-                style="@style/Widget.AppCompat.Spinner.Underlined"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
                 android:layout_weight="1"
-                android:minHeight="48dp" />
+                android:layout_marginEnd="8dp" />
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="2"
-                android:hint="@string/delivery_id_text"
-                app:boxStrokeColor="@color/primary_color">
+                android:hint="@string/delivery_id_text">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etSenderID"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="number"
-                    android:textColor="@color/on_surface" />
+                    android:inputType="number" />
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
-        <!-- Teléfono del remitente -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -90,147 +80,116 @@
 
             <Spinner
                 android:id="@+id/spSenderCountryCode"
-                style="@style/Widget.AppCompat.Spinner.Underlined"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
                 android:layout_weight="1"
-                android:minHeight="48dp" />
+                android:layout_marginEnd="8dp" />
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="2"
-                android:hint="@string/delivery_phone"
-                app:boxStrokeColor="@color/primary_color">
+                android:hint="@string/delivery_phone">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etSenderPhone"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="phone"
-                    android:textColor="@color/on_surface" />
+                    android:inputType="phone" />
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
-
-        <!-- SECCIÓN PAQUETE (Sin cambios) -->
+        <!-- PAQUETE -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:text="@string/delivery_package_text"
+            android:text="Detalles del Paquete"
             android:textColor="@color/on_surface"
             android:textSize="20sp"
             android:textStyle="bold" />
 
-        <LinearLayout
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:baselineAligned="false"
-            android:orientation="horizontal">
+            android:hint="Alto (cm)">
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPackageHeight"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="1"
-                android:hint="@string/delivery_package_height"
-                app:boxStrokeColor="@color/primary_color">
+                android:inputType="numberDecimal" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etPackageHeight"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="numberDecimal" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="1"
-                android:hint="@string/delivery_package_width"
-                app:boxStrokeColor="@color/primary_color">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etPackageWidth"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="numberDecimal" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:hint="@string/delivery_package_large"
-                app:boxStrokeColor="@color/primary_color">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etPackageLength"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="numberDecimal" />
-            </com.google.android.material.textfield.TextInputLayout>
-        </LinearLayout>
-
-        <LinearLayout
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:baselineAligned="false"
-            android:orientation="horizontal">
+            android:hint="Ancho (cm)">
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPackageWidth"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="1"
-                android:hint="@string/delivery_package_weight"
-                app:boxStrokeColor="@color/primary_color">
+                android:inputType="numberDecimal" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etPackageWeight"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="numberDecimal" />
-            </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="Largo (cm)">
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPackageLength"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="2"
-                android:hint="@string/delivery_package_content"
-                app:boxStrokeColor="@color/primary_color">
+                android:inputType="numberDecimal" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etPackageContent"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="textCapSentences" />
-            </com.google.android.material.textfield.TextInputLayout>
-        </LinearLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="Peso (kg)">
 
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPackageWeight"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- SECCIÓN DESTINATARIO -->
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:hint="Contenido del paquete">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPackageContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- DESTINATARIO -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:text="@string/delivery_destination_title"
+            android:textStyle="bold"
             android:textColor="@color/on_surface"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:textSize="20sp" />
 
-        <!-- Campo: Tipo de ID (Spinner) y Número de ID del Receptor (CON LUPA) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -239,23 +198,20 @@
 
             <Spinner
                 android:id="@+id/spReceiverIDType"
-                style="@style/Widget.AppCompat.Spinner.Underlined"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
                 android:layout_weight="1"
-                android:minHeight="48dp" />
+                android:layout_marginEnd="8dp" />
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilReceiverID"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="2"
                 android:hint="@string/delivery_id_text"
-                app:boxStrokeColor="@color/primary_color"
                 app:endIconMode="custom"
-                app:endIconDrawable="@drawable/ic_search"
-                app:endIconContentDescription="Buscar destinatario por ID">
+                app:endIconDrawable="@drawable/ic_search">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etReceiverID"
@@ -265,14 +221,12 @@
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
-        <!-- Campo: Nombre completo del receptor -->
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:hint="@string/delivery_destination_name"
-            app:boxStrokeColor="@color/primary_color">
+            android:hint="@string/delivery_destination_name">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etReceiverName"
@@ -289,20 +243,17 @@
 
             <Spinner
                 android:id="@+id/spReceiverCountryCode"
-                style="@style/Widget.AppCompat.Spinner.Underlined"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
                 android:layout_weight="1"
-                android:minHeight="48dp" />
+                android:layout_marginEnd="8dp" />
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="2"
-                android:hint="@string/delivery_phone"
-                app:boxStrokeColor="@color/primary_color">
+                android:hint="@string/delivery_phone">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etReceiverPhone"
@@ -313,15 +264,14 @@
         </LinearLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilReceiverAddress"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:hint="@string/delivery_adress"
-            app:boxStrokeColor="@color/primary_color"
             app:endIconMode="custom"
-            app:endIconDrawable="@drawable/ic_location"
-            app:endIconContentDescription="Seleccionar dirección desde el mapa">
+            app:endIconDrawable="@drawable/ic_location">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etReceiverAddress"
@@ -330,31 +280,12 @@
                 android:inputType="textPostalAddress" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- APARTADO: MAPA -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="8dp"
-            android:text="@string/delivery_map_location_title"
-            android:textColor="@color/on_surface"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <FrameLayout
-            android:id="@+id/mapContainer"
+        <!-- MAPA -->
+        <fragment
+            android:id="@+id/mapFragment"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:layout_marginBottom="32dp"
-            android:background="@drawable/map_placeholder_border">
-            <!-- Aquí se insertará el Fragmento del Mapa de Google en la clase Kotlin/Java -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="Vista de Mapa (Google Maps Fragment)"
-                android:textColor="@color/on_surface_secondary" />
-        </FrameLayout>
+            android:layout_height="200dp" />
 
 
         <!-- SECCIÓN RECOGIDA Y PRECIO -->

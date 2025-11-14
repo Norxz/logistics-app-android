@@ -19,23 +19,23 @@ import co.edu.unipiloto.myapplication.storage.SessionManager
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+
 /**
  * Fragmento que muestra las solicitudes en la sucursal pendientes de ser asignadas.
  * (Pestaña 0 de BranchPagerAdapter)
  */
-class BranchPendingFragment : Fragment() { // Usamos el nombre que ya corregimos
+class BranchPendingFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
-    private lateinit var tvEmpty: TextView // Cambiado de tvNoRequests a tvEmpty (usado en el layout de branch)
+    private lateinit var tvEmpty: TextView
     private lateinit var sessionManager: SessionManager
 
-    private lateinit var adapter: SolicitudAdapter // 🏆 El adaptador genérico
+    private lateinit var adapter: SolicitudAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Asumo que estás usando el layout correcto para la lista de sucursal
         return inflater.inflate(R.layout.fragment_branch_list, container, false)
     }
 
@@ -44,17 +44,15 @@ class BranchPendingFragment : Fragment() { // Usamos el nombre que ya corregimos
 
         sessionManager = SessionManager(requireContext())
 
-        recyclerView = view.findViewById(R.id.recyclerViewBranchList) // Usando ID del layout branch
-        tvEmpty = view.findViewById(R.id.tvBranchEmpty) // Usando ID del layout branch
+        recyclerView = view.findViewById(R.id.recyclerViewBranchList)
+        tvEmpty = view.findViewById(R.id.tvBranchEmpty)
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        // Inicializar el adaptador correctamente:
         adapter = SolicitudAdapter(
             items = emptyList<Solicitud>(),
             role = sessionManager.getRole() ?: "GESTOR",
             onActionClick = { solicitud, action ->
-                // La acción del GESTOR en PENDIENTES es siempre ASIGNAR
                 if (action == "ASIGNAR") {
                     handleAssignmentAction(solicitud)
                 }
@@ -81,7 +79,6 @@ class BranchPendingFragment : Fragment() { // Usamos el nombre que ya corregimos
             return
         }
 
-        // 🏆 LLAMADA A RETROFIT: Endpoint para solicitudes PENDIENTES por zona
         RetrofitClient.apiService.getPendingSolicitudesByZone(zona).enqueue(object : Callback<List<Solicitud>> {
             override fun onResponse(call: Call<List<Solicitud>>, response: Response<List<Solicitud>>) {
                 val pendingItems = response.body() ?: emptyList()
@@ -115,19 +112,20 @@ class BranchPendingFragment : Fragment() { // Usamos el nombre que ya corregimos
      * Maneja la lógica de asignar un recolector a una solicitud (usando el primer conductor disponible).
      */
     private fun handleAssignmentAction(solicitud: Solicitud) {
-        // La lógica de seleccionar el mejor conductor debe estar en el backend.
-        // Aquí solo enviamos la solicitud al backend para que él decida y asigne.
 
-        // Primero, intentamos obtener un conductor disponible (Necesitas este endpoint en el backend)
-        // Usaremos el ID de la solicitud y la zona para que el backend encuentre al conductor adecuado.
+        // CORRECTED: Access zona from the nested direccion object
+        val zona = solicitud.direccion.zona ?: run {
+            Toast.makeText(requireContext(), "Error: Zona no definida para esta solicitud.", Toast.LENGTH_LONG).show()
+            return
+        }
 
-        RetrofitClient.apiService.getAvailableDriverByZone(solicitud.zona).enqueue(object : Callback<LogisticUser> {
+        RetrofitClient.apiService.getAvailableDriverByZone(zona).enqueue(object : Callback<LogisticUser> {
             override fun onResponse(call: Call<LogisticUser>, response: Response<LogisticUser>) {
                 if (response.isSuccessful && response.body() != null) {
                     val availableRecolector = response.body()!!
                     assignRequest(solicitud.id, availableRecolector)
                 } else {
-                    Toast.makeText(requireContext(), "No hay recolectores disponibles en ${solicitud.zona}.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(requireContext(), "No hay recolectores disponibles en $zona.", Toast.LENGTH_LONG).show()
                 }
             }
             override fun onFailure(call: Call<LogisticUser>, t: Throwable) {
@@ -142,7 +140,6 @@ class BranchPendingFragment : Fragment() { // Usamos el nombre que ya corregimos
     private fun assignRequest(solicitudId: Long, recolector: LogisticUser) {
         val requestBody = mapOf("recolectorId" to recolector.id.toString())
 
-        // 🏆 LLAMADA REST PARA ASIGNAR (PUT /solicitudes/{id}/assign)
         RetrofitClient.apiService.assignRequest(solicitudId, requestBody).enqueue(object : Callback<Solicitud> {
             override fun onResponse(call: Call<Solicitud>, response: Response<Solicitud>) {
                 if (response.isSuccessful) {

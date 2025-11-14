@@ -28,6 +28,8 @@
     <string name="delivery_package_weight">Peso (kg)</string>
     <string name="delivery_package_width">Ancho (cm)</string>
     <string name="delivery_pickup_details">Detalles de Recolección</string>
+    <string name="delivery_pickup_address_label">Dirección de Recolección</string>
+    <string name="delivery_pickup_address">Selecciona el punto de recogida</string>
     <string name="delivery_pickup_zone_label">Zona de Recolección</string>
     <string name="delivery_time_slot_label">Franja Horaria</string>
     <string name="delivery_phone">Teléfono</string>

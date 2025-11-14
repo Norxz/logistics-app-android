@@ -1,6 +1,7 @@
 package co.edu.unipiloto.myapplication.adapters
 
 import android.content.Context
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,10 +10,11 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.models.Solicitud
+import co.edu.unipiloto.myapplication.models.Solicitud // Assuming Solicitud is updated
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 /**
  * Adaptador ÚNICO y GENÉRICO para la lista de solicitudes, maneja la lógica de visualización
@@ -69,24 +71,29 @@ class SolicitudAdapter(
             // --- 1. SETEAR DATOS ---
             tvSolicitudID.text = itemView.context.getString(R.string.guide_example, solicitud.id.toString())
             tvEstado.text = solicitud.estado.replace("_", " ").uppercase()
+
+            // CORRECTED: Access properties directly from the non-nullable 'direccion' object
             val direccionCompleta = solicitud.direccion?.direccionCompleta ?: "Dirección No Registrada"
             val ciudad = solicitud.direccion?.ciudad ?: "N/D"
 
             tvDireccion.text = itemView.context.getString(
                 R.string.full_address_format,
-                direccionCompleta, // 👈 Usa la variable segura
-                ciudad              // 👈 Usa la variable segura
+                direccionCompleta,
+                ciudad
             )
+
             tvFecha.text = itemView.context.getString(
                 R.string.collection_time_format,
                 solicitud.fechaRecoleccion,
                 solicitud.franjaHoraria
             )
-            // Asumiendo que createdAt es un Long (timestamp)
+
+            // Asumiendo que createdAt es un Instant (serializado a String)
             tvCreado.text = itemView.context.getString(
                 R.string.created_at_format,
                 formatInstantToDate(solicitud.createdAt)
             )
+
             // --- 2. GESTIONAR VISIBILIDAD DE BOTONES ---
             hideAllButtons()
             setupButtonsByRoleAndState(solicitud, role, onActionClick)
@@ -95,16 +102,34 @@ class SolicitudAdapter(
             setEstadoColor(itemView.context, solicitud.estado.uppercase(), tvEstado)
         }
 
-        private fun formatInstantToDate(instantString: String): String {
+        private fun formatInstantToDate(instantString: String?): String {
+            if (instantString.isNullOrEmpty()) {
+                return "Fecha/Hora Desconocida"
+            }
+
             return try {
-                // Formato ISO 8601 (el que Spring Boot usa para Instant)
-                val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", Locale.getDefault())
-                // Simplificado para Android si solo necesitas la parte de fecha
+                // 1. Limpieza de microsegundos y Z
+                // Tomamos la parte antes de la 'Z' y truncamos a 3 milisegundos si existen.
+                val basePart = instantString.substringBefore('Z').substringBeforeLast('.')
+                val millisPart = instantString.substringAfterLast('.').substringBefore('Z').take(3)
+
+                val cleanedString = "${basePart}.${millisPart}Z"
+
+                // 2. Definición del Formato de Entrada ISO (patrón fijo)
+                val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
+                inputFormat.timeZone = TimeZone.getTimeZone("UTC") // La entrada siempre es UTC
+
+                // 3. Definición del Formato de Salida
                 val outputFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-                val date = inputFormat.parse(instantString)
-                outputFormat.format(date!!)
+                outputFormat.timeZone = TimeZone.getDefault() // Convertir a zona local
+
+                val date = inputFormat.parse(cleanedString)
+                return outputFormat.format(date!!)
+
             } catch (e: Exception) {
-                "Fecha inválida"
+                // Si falla, devuelve una versión simplificada del string (solo fecha y hora)
+                Log.e("Adapter", "Fallo de parsing '$instantString': ${e.message}")
+                return instantString.substringBefore("T") + " (Error Formato)"
             }
         }
 
@@ -181,16 +206,6 @@ class SolicitudAdapter(
             tvStatus.setTextColor(ContextCompat.getColor(context, colorRes))
         }
 
-        // Función de utilidad para formatear el timestamp
-        private fun convertTimestampToDate(timestamp: Long): String {
-            return try {
-                val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-                val netDate = Date(timestamp)
-                sdf.format(netDate)
-            } catch (e: Exception) {
-                "Fecha inválida"
-            }
-        }
 
         // Clase de datos auxiliar para retornar cuatro valores
         data class Quad<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)

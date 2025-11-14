@@ -1,33 +1,61 @@
 package co.edu.unipiloto.myapplication.models
 
-import co.edu.unipiloto.myapplication.rest.GuiaResponse
+import co.edu.unipiloto.myapplication.rest.GuiaResponse // Can be removed if Guia is defined here
+import java.io.Serializable // Recommended for models used in intents
 
-// Modelo Anidado necesario para que Retrofit mapee la dirección anidada
-data class DireccionResponse(
+// Nested Address Model
+data class Direccion(
     val direccionCompleta: String,
-    val ciudad: String
-)
+    val ciudad: String,
+    val latitud: Double,
+    val longitud: Double,
+    val pisoApto: String?,
+    val notasEntrega: String?,
+    val zona: String? // Added 'zona' for the pending requests fragment fix
+) : Serializable
+
+// Nested Guide Model
+data class Guia(
+    val numeroGuia: String,
+    val trackingNumber: String
+) : Serializable
 
 /**
- * Modelo DTO utilizado por la UI y el SolicitudAdapter.
- * Refleja la respuesta JSON de la Entidad Solicitud del Backend.
+ * Modelo DTO utilizado por la UI, mapeado de la respuesta del Backend.
+ * Coincide con la estructura de co.edu.unipiloto.backend.model.Solicitud.
  */
 data class Solicitud(
-    val id: Long,
-    val clientId: Long, // 👈 Relación al cliente (mapea client.id)
+    // METADATA & RELATIONS (Needed by Adapter)
+    val id: Long, // 👈 Required by adapter (previously missing)
+    val estado: String, // 👈 Required by adapter (previously missing)
+    val createdAt: String, // 👈 Required by adapter (previously missing, usually Instant or String)
+    val guia: Guia, // 👈 Required for tracking number (previously missing)
+    val direccion: Direccion, // 👈 Required for address details (previously missing/incorrect)
 
-    // --- Campos de Logística (Directamente en la tabla 'solicitudes' del backend) ---
-    val estado: String,
-    val fechaRecoleccion: String, // Usar String para fecha (campo plano del backend)
+    // Remitente
+    val remitenteNombre: String, // Adapter uses 'remitente' (must be mapped)
+    val remitenteTipoId: String,
+    val remitenteNumeroId: String,
+    val remitenteTelefono: String,
+    val remitenteCodigoPais: String,
+
+    // Paquete
+    val alto: Double?,
+    val ancho: Double?,
+    val largo: Double?,
+    val pesoKg: Double,
+    val contenido: String?,
+
+    // Destinatario (Receptor)
+    val receptorNombre: String, // Adapter uses 'nombreReceptor' (must be mapped)
+    val receptorTipoId: String,
+    val receptorNumeroId: String,
+    val receptorTelefono: String,
+    val receptorCodigoPais: String,
+    // Note: direccionReceptor and ciudad from your old model are now inside 'direccion' object
+
+    // Logística
+    val fechaRecoleccion: String,
     val franjaHoraria: String,
-    val zona: String, // 👈 Campo necesario para filtrar por zona
-    val pesoKg: Double, // 👈 Campo del paquete
-    val precio: Double, // 👈 Campo del precio
-
-    // El 'createdAt' es un String ISO 8601 que necesitas formatear en el Adapter
-    val createdAt: String,
-
-    // --- Estructuras Anidadas (Mapean a las Entidades relacionadas del backend) ---
-    val direccion: DireccionResponse?,
-    val guia: GuiaResponse?
-)
+    val precio: Double
+) : Serializable // Recommended to implement Serializable
