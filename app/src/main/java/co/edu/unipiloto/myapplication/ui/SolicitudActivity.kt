@@ -20,9 +20,10 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.models.Solicitud
-import co.edu.unipiloto.myapplication.models.Direccion
-import co.edu.unipiloto.myapplication.models.Guia
+import co.edu.unipiloto.myapplication.rest.ClienteRequest
 // 🌟 IMPORTS FOR API SUBMISSION
+import co.edu.unipiloto.myapplication.rest.DireccionRequest
+import co.edu.unipiloto.myapplication.rest.PaqueteRequest
 import co.edu.unipiloto.myapplication.rest.RetrofitClient
 import co.edu.unipiloto.myapplication.rest.SolicitudRequest
 import co.edu.unipiloto.myapplication.storage.SessionManager
@@ -82,22 +83,23 @@ class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     // Retained launcher for compatibility, though MapActivity launch is removed
-    private val mapActivityResultLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val data: Intent? = result.data
+    private val mapActivityResultLauncher: ActivityResultLauncher<Intent> =
+        registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val data: Intent? = result.data
 
-            selectedLat = data?.getDoubleExtra("lat", 0.0)
-            selectedLon = data?.getDoubleExtra("lon", 0.0)
-            val address = data?.getStringExtra("address") ?: ""
+                selectedLat = data?.getDoubleExtra("lat", 0.0)
+                selectedLon = data?.getDoubleExtra("lon", 0.0)
+                val address = data?.getStringExtra("address") ?: ""
 
-            etReceiverAddress.setText(address)
+                etReceiverAddress.setText(address)
 
-            Toast.makeText(this, "Ubicación seleccionada", Toast.LENGTH_SHORT).show()
-            updateMapLocation() // Update the map with the new location
+                Toast.makeText(this, "Ubicación seleccionada", Toast.LENGTH_SHORT).show()
+                updateMapLocation() // Update the map with the new location
+            }
         }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -178,7 +180,11 @@ class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
             if (addressText.isNotEmpty()) {
                 geocodeAddress(addressText)
             } else {
-                Toast.makeText(this, "Por favor ingresa una dirección primero (ej: Calle 174 #8-30).", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this,
+                    "Por favor ingresa una dirección primero (ej: Calle 174 #8-30).",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
     }
@@ -205,23 +211,39 @@ class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
                         val canonicalAddress = firstAddress.getAddressLine(0) ?: address
                         etReceiverAddress.setText(canonicalAddress)
 
-                        Toast.makeText(this, "Dirección localizada. Coordenadas fijadas.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this,
+                            "Dirección localizada. Coordenadas fijadas.",
+                            Toast.LENGTH_SHORT
+                        ).show()
 
                         updateMapLocation()
                     } else {
-                        Toast.makeText(this, "Dirección no encontrada. Intenta otra dirección.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            this,
+                            "Dirección no encontrada. Intenta otra dirección.",
+                            Toast.LENGTH_LONG
+                        ).show()
                         selectedLat = null
                         selectedLon = null
                     }
                 }
             } catch (e: IOException) {
                 Handler(Looper.getMainLooper()).post {
-                    Toast.makeText(this, "Error de red/servicio de geocodificación.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this,
+                        "Error de red/servicio de geocodificación.",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
                 Log.e("SolicitudActivity", "Geocoding failed: ${e.message}")
             } catch (e: Exception) {
                 Handler(Looper.getMainLooper()).post {
-                    Toast.makeText(this, "Ocurrió un error inesperado al buscar la dirección.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this,
+                        "Ocurrió un error inesperado al buscar la dirección.",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
                 Log.e("SolicitudActivity", "Unexpected error during geocoding: ${e.message}")
             }
@@ -261,73 +283,112 @@ class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
 
             // 1. VALIDATION
             if (height == null || width == null || length == null || weight == null || price == null) {
-                Toast.makeText(this, "Por favor llena todos los valores numéricos", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    "Por favor llena todos los valores numéricos",
+                    Toast.LENGTH_SHORT
+                ).show()
                 return@setOnClickListener
             }
             if (selectedLat == null || selectedLon == null) {
-                Toast.makeText(this, "Por favor busca una dirección válida para fijar la ubicación.", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this,
+                    "Por favor busca una dirección válida para fijar la ubicación.",
+                    Toast.LENGTH_LONG
+                ).show()
                 return@setOnClickListener
             }
 
             // Get logged-in client ID (Crucial for API submission)
             val clientId = sessionManager.getUserId() ?: run {
-                Toast.makeText(this, "Error: Usuario no logueado. Cierre sesión y vuelva a iniciar.", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this,
+                    "Error: Usuario no logueado. Cierre sesión y vuelva a iniciar.",
+                    Toast.LENGTH_LONG
+                ).show()
                 return@setOnClickListener
             }
 
-            // 2. CONSTRUCT DTO FOR API (SolicitudRequest)
-            val requestDto = SolicitudRequest(
-                clientId = clientId,
-                remitenteNombre = senderName,
-                remitenteTipoId = spIDType.selectedItem.toString(),
-                remitenteNumeroId = senderId,
-                remitenteTelefono = senderPhone,
-                remitenteCodigoPais = spSenderCountryCode.selectedItem.toString(),
-                alto = height,
-                ancho = width,
-                largo = length,
-                pesoKg = weight,
-                contenido = etPackageContent.text.toString(),
-                receptorNombre = receiverName,
-                receptorTipoId = spReceiverIDType.selectedItem.toString(),
-                receptorNumeroId = receiverId,
-                receptorTelefono = receiverPhone,
-                receptorCodigoPais = spReceiverCountryCode.selectedItem.toString(),
-                direccionCompleta = receiverAddress,
-                ciudad = city,
-                latitud = selectedLat!!,
-                longitud = selectedLon!!,
-                zona = zona,
-                fechaRecoleccion = fechaRecoleccion,
-                franjaHoraria = timeSlot,
-                precio = price
+            val remitente = ClienteRequest(
+                nombre = etSenderName.text.toString().trim(),
+                tipoId = spIDType.selectedItem.toString(),
+                numeroId = etSenderID.text.toString().trim(),
+                telefono = etSenderPhone.text.toString().trim(),
+                codigoPais = spSenderCountryCode.selectedItem.toString()
             )
 
-            // 3. 🚀 API CALL
-            RetrofitClient.apiService.crearSolicitud(requestDto).enqueue(object : Callback<Solicitud> {
-                override fun onResponse(call: Call<Solicitud>, response: Response<Solicitud>) {
-                    if (response.isSuccessful) {
-                        Toast.makeText(this@SolicitudActivity, "¡Solicitud enviada (Guía #${response.body()?.id})!", Toast.LENGTH_LONG).show()
-                        // Optional: finish() the activity or clear the form
-                    } else {
-                        val errorBody = response.errorBody()?.string()
-                        Log.e("API_CALL", "Error ${response.code()}: $errorBody")
-                        Toast.makeText(this@SolicitudActivity, "Error ${response.code()} al enviar: ${response.message()}", Toast.LENGTH_LONG).show()
-                    }
-                }
+            val receptor = ClienteRequest(
+                nombre = etReceiverName.text.toString().trim(),
+                tipoId = spReceiverIDType.selectedItem.toString(),
+                numeroId = etReceiverID.text.toString().trim(),
+                telefono = etReceiverPhone.text.toString().trim(),
+                codigoPais = spReceiverCountryCode.selectedItem.toString()
+            )
 
-                override fun onFailure(call: Call<Solicitud>, t: Throwable) {
-                    Log.e("API_CALL", "Fallo de red: ${t.message}")
-                    Toast.makeText(this@SolicitudActivity, "Fallo de conexión. Verifique el servidor.", Toast.LENGTH_LONG).show()
-                }
-            })
+
+            val requestDto = SolicitudRequest(
+                clientId = clientId,
+                remitente = remitente,
+                receptor = receptor,
+                direccion = DireccionRequest(
+                    direccionCompleta = etReceiverAddress.text.toString().trim(),
+                    ciudad = spCiudad.selectedItem.toString(),
+                    latitud = selectedLat,
+                    longitud = selectedLon,
+                    pisoApto = null,
+                    notasEntrega = null
+                ),
+                paquete = PaqueteRequest(
+                    peso = etPackageWeight.text.toString().toDouble(),
+                    alto = etPackageHeight.text.toString().toDouble(),
+                    ancho = etPackageWidth.text.toString().toDouble(),
+                    largo = etPackageLength.text.toString().toDouble(),
+                    contenido = etPackageContent.text.toString().trim()
+                ),
+                fechaRecoleccion = fechaRecoleccion,
+                franjaHoraria = spFranja.selectedItem.toString()
+            )
+
+
+            // 3. 🚀 API CALL
+            RetrofitClient.apiService.crearSolicitud(requestDto)
+                .enqueue(object : Callback<Solicitud> {
+                    override fun onResponse(call: Call<Solicitud>, response: Response<Solicitud>) {
+                        if (response.isSuccessful) {
+                            Toast.makeText(
+                                this@SolicitudActivity,
+                                "¡Solicitud enviada (Guía #${response.body()?.id})!",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            // Optional: finish() the activity or clear the form
+                        } else {
+                            val errorBody = response.errorBody()?.string()
+                            Log.e("API_CALL", "Error ${response.code()}: $errorBody")
+                            Toast.makeText(
+                                this@SolicitudActivity,
+                                "Error ${response.code()} al enviar: ${response.message()}",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+
+                    override fun onFailure(call: Call<Solicitud>, t: Throwable) {
+                        Log.e("API_CALL", "Fallo de red: ${t.message}")
+                        Toast.makeText(
+                            this@SolicitudActivity,
+                            "Fallo de conexión. Verifique el servidor.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                })
 
             // Original Log.d removed, as API call is now primary action
         }
     }
 
     private fun setupMap() {
-        val mapFragment = supportFragmentManager.findFragmentById(R.id.mapFragment) as? SupportMapFragment
+        val mapFragment =
+            supportFragmentManager.findFragmentById(R.id.mapFragment) as? SupportMapFragment
         mapFragment?.getMapAsync(this)
     }
 
