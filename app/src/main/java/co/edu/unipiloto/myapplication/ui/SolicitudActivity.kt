@@ -1,397 +1,357 @@
 package co.edu.unipiloto.myapplication.ui
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.ArrayAdapter
-import android.widget.Spinner
-import android.widget.Toast
+import android.widget.*
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.storage.SessionManager
-import com.google.android.material.button.MaterialButton
+// 🌟 IMPORTS FOR GEOCODING
+import android.location.Geocoder
+import android.os.Handler
+import android.os.Looper
+import java.io.IOException
+import java.util.Locale
+// -----------------------------
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import co.edu.unipiloto.myapplication.R
+import co.edu.unipiloto.myapplication.models.Solicitud
+import co.edu.unipiloto.myapplication.models.Direccion
+import co.edu.unipiloto.myapplication.models.Guia
+// 🌟 IMPORTS FOR API SUBMISSION
 import co.edu.unipiloto.myapplication.rest.RetrofitClient
 import co.edu.unipiloto.myapplication.rest.SolicitudRequest
-import co.edu.unipiloto.myapplication.models.Solicitud
+import co.edu.unipiloto.myapplication.storage.SessionManager
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import java.util.Calendar
+// -----------------------------
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 
-/**
- * Activity para el registro de una nueva solicitud de envío.
- */
-class SolicitudActivity : AppCompatActivity() {
+// Removed 'GoogleMap.OnMapClickListener' interface
+class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
 
-    // --- UTILIDADES ---
-    private lateinit var sessionManager: SessionManager
-
-    // --- VISTAS REMITENTE ---
+    // Remitente
     private lateinit var etSenderName: TextInputEditText
     private lateinit var etSenderID: TextInputEditText
     private lateinit var etSenderPhone: TextInputEditText
     private lateinit var spIDType: Spinner
     private lateinit var spSenderCountryCode: Spinner
 
-    // --- VISTAS PAQUETE (Dimensiones y Contenido) ---
+    // Paquete
     private lateinit var etPackageHeight: TextInputEditText
     private lateinit var etPackageWidth: TextInputEditText
     private lateinit var etPackageLength: TextInputEditText
     private lateinit var etPackageWeight: TextInputEditText
     private lateinit var etPackageContent: TextInputEditText
 
-    // --- VISTAS DESTINATARIO (ACTUALIZADAS PARA ICONOS) ---
+    // Destinatario
+    private lateinit var spReceiverIDType: Spinner
+    private lateinit var etReceiverID: TextInputEditText
     private lateinit var etReceiverName: TextInputEditText
     private lateinit var etReceiverPhone: TextInputEditText
+    private lateinit var etReceiverAddress: TextInputEditText
     private lateinit var spReceiverCountryCode: Spinner
 
-    // Referencias a los EditTexts envueltos:
-    private lateinit var etReceiverID: TextInputEditText
-    private lateinit var etReceiverAddress: TextInputEditText
-
-    // Referencias a los Contenedores (TextInputLayout) para los End Icons:
+    // TextInputLayouts
     private lateinit var tilReceiverID: TextInputLayout
     private lateinit var tilReceiverAddress: TextInputLayout
 
-    // --- VISTAS RECOLECCIÓN Y PRECIO ---
-    private lateinit var spCiudad: Spinner // ID: spCity
-    private lateinit var spFranja: Spinner // ID: spTimeSlot
+    // Otros
+    private lateinit var spCiudad: Spinner
+    private lateinit var spFranja: Spinner
     private lateinit var etPrice: TextInputEditText
+    private lateinit var btnSend: View
+    private lateinit var sessionManager: SessionManager // 👈 Added Session Manager
 
-    // --- ACCIÓN ---
-    private lateinit var btnSend: MaterialButton
+    private var googleMap: GoogleMap? = null
+    private var selectedLat: Double? = null
+    private var selectedLon: Double? = null
 
+    companion object {
+        const val REQUEST_MAP = 1001
+    }
 
-    // --- DATOS DE RECOLECCIÓN ---
-    private val ZONAS_DISPONIBLES = listOf("Bogotá - Norte", "Bogotá - Sur", "Bogotá - Occidente")
-    private val FRANJAS_HORARIAS = listOf("AM (8:00 - 12:00)", "PM (14:00 - 18:00)")
+    // Retained launcher for compatibility, though MapActivity launch is removed
+    private val mapActivityResultLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data: Intent? = result.data
 
-    private var recolectionAddress: String? = null
-    private var recolectionLatitude: Double? = null
-    private var recolectionLongitude: Double? = null
+            selectedLat = data?.getDoubleExtra("lat", 0.0)
+            selectedLon = data?.getDoubleExtra("lon", 0.0)
+            val address = data?.getStringExtra("address") ?: ""
 
+            etReceiverAddress.setText(address)
+
+            Toast.makeText(this, "Ubicación seleccionada", Toast.LENGTH_SHORT).show()
+            updateMapLocation() // Update the map with the new location
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_solicitud)
 
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = getString(R.string.new_shipment_title)
-
-        sessionManager = SessionManager(this)
-
-        if (!sessionManager.isLoggedIn() || sessionManager.getUserId() == -1L) {
-            Toast.makeText(this, "Debe iniciar sesión para crear una solicitud.", Toast.LENGTH_LONG)
-                .show()
-            finish()
-            return
-        }
+        sessionManager = SessionManager(this) // 👈 Initialize Session Manager
 
         initViews()
         setupSpinners()
-        handleIntentData()
+        setupEndIcons()
         setupListeners()
-    }
-
-    // -----------------------------------------------------------------------------------
-    private fun handleIntentData() {
-        recolectionAddress = intent.getStringExtra("RECOLECTION_ADDRESS")
-        recolectionLatitude = intent.getDoubleExtra("RECOLECTION_LATITUDE", Double.NaN).let {
-            if (it.isNaN()) null else it
-        }
-        recolectionLongitude = intent.getDoubleExtra("RECOLECTION_LONGITUDE", Double.NaN).let {
-            if (it.isNaN()) null else it
-        }
-
-        if (!recolectionAddress.isNullOrEmpty()) {
-            Toast.makeText(
-                this,
-                "Dirección de recolección recibida: $recolectionAddress",
-                Toast.LENGTH_LONG
-            ).show()
-        }
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        finish()
-        return true
+        setupMap()
     }
 
     private fun initViews() {
-        // --- VISTAS REMITENTE ---
+
         etSenderName = findViewById(R.id.etSenderName)
         etSenderID = findViewById(R.id.etSenderID)
         etSenderPhone = findViewById(R.id.etSenderPhone)
         spIDType = findViewById(R.id.spIDType)
         spSenderCountryCode = findViewById(R.id.spSenderCountryCode)
 
-        // --- VISTAS PAQUETE ---
+        // Paquete
         etPackageHeight = findViewById(R.id.etPackageHeight)
         etPackageWidth = findViewById(R.id.etPackageWidth)
         etPackageLength = findViewById(R.id.etPackageLength)
         etPackageWeight = findViewById(R.id.etPackageWeight)
         etPackageContent = findViewById(R.id.etPackageContent)
 
-        // --- VISTAS DESTINATARIO ---
+        // Destinatario
+        spReceiverIDType = findViewById(R.id.spReceiverIDType)
+        etReceiverID = findViewById(R.id.etReceiverID)
         etReceiverName = findViewById(R.id.etReceiverName)
         etReceiverPhone = findViewById(R.id.etReceiverPhone)
         spReceiverCountryCode = findViewById(R.id.spReceiverCountryCode)
-
-        // Buscar EditTexts
         etReceiverAddress = findViewById(R.id.etReceiverAddress)
-        etReceiverID = findViewById(R.id.etReceiverID)
 
-        // Obtener las referencias de TextInputLayout (el padre directo del EditText)
-        // Esto es necesario para configurar los click listeners en los iconos (endIconMode)
+        // CORRECTO → ahora sí existen en tu XML
         tilReceiverID = findViewById(R.id.tilReceiverID)
         tilReceiverAddress = findViewById(R.id.tilReceiverAddress)
 
-        // --- VISTAS RECOLECCIÓN Y PRECIO ---
+        // Otros
         spCiudad = findViewById(R.id.spCity)
         spFranja = findViewById(R.id.spTimeSlot)
         etPrice = findViewById(R.id.etPrice)
-
-        // --- ACCIÓN ---
         btnSend = findViewById(R.id.btnSend)
     }
 
     private fun setupSpinners() {
-        val idTypes = listOf("Cédula", "Pasaporte", "RUT")
-        spIDType.adapter =
-            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, idTypes)
+        val idTypes = listOf("CC", "TI", "CE", "Pasaporte")
+        val adapterId = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, idTypes)
+        spIDType.adapter = adapterId
+        spReceiverIDType.adapter = adapterId
 
-        val countryCodes = listOf("+57", "+1", "+52")
-        val codeAdapter =
+        val countryCodes = listOf("+57", "+1", "+52", "+593")
+        val adapterCode =
             ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, countryCodes)
+        spSenderCountryCode.adapter = adapterCode
+        spReceiverCountryCode.adapter = adapterCode
 
-        spSenderCountryCode.adapter = codeAdapter
-        spReceiverCountryCode.adapter = codeAdapter
-
+        val ciudades = listOf("Zona Norte", "Zona Sur", "Zona Centro")
         spCiudad.adapter =
-            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, ZONAS_DISPONIBLES)
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, ciudades)
 
+        val franjas = listOf("Mañana (8-12)", "Tarde (12-6)", "Noche (6-10)")
         spFranja.adapter =
-            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, FRANJAS_HORARIAS)
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, franjas)
     }
+
+    private fun setupEndIcons() {
+        tilReceiverID.setEndIconOnClickListener {
+            Toast.makeText(this, "Buscar ID: ${etReceiverID.text}", Toast.LENGTH_SHORT).show()
+        }
+
+        // Trigger Geocoding when the user clicks the address field icon
+        tilReceiverAddress.setEndIconOnClickListener {
+            val addressText = etReceiverAddress.text.toString().trim()
+            if (addressText.isNotEmpty()) {
+                geocodeAddress(addressText)
+            } else {
+                Toast.makeText(this, "Por favor ingresa una dirección primero (ej: Calle 174 #8-30).", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    // Converts address string to LatLng
+    private fun geocodeAddress(address: String) {
+        val geocoder = Geocoder(this, Locale.getDefault())
+
+        Toast.makeText(this, "Buscando dirección: $address...", Toast.LENGTH_SHORT).show()
+
+        // Run the geocoding operation on a background thread
+        Thread {
+            try {
+                val addresses = geocoder.getFromLocationName(address, 1)
+
+                Handler(Looper.getMainLooper()).post {
+                    if (addresses != null && addresses.isNotEmpty()) {
+                        val firstAddress = addresses[0]
+
+                        // Update coordinates and map
+                        selectedLat = firstAddress.latitude
+                        selectedLon = firstAddress.longitude
+
+                        val canonicalAddress = firstAddress.getAddressLine(0) ?: address
+                        etReceiverAddress.setText(canonicalAddress)
+
+                        Toast.makeText(this, "Dirección localizada. Coordenadas fijadas.", Toast.LENGTH_SHORT).show()
+
+                        updateMapLocation()
+                    } else {
+                        Toast.makeText(this, "Dirección no encontrada. Intenta otra dirección.", Toast.LENGTH_LONG).show()
+                        selectedLat = null
+                        selectedLon = null
+                    }
+                }
+            } catch (e: IOException) {
+                Handler(Looper.getMainLooper()).post {
+                    Toast.makeText(this, "Error de red/servicio de geocodificación.", Toast.LENGTH_LONG).show()
+                }
+                Log.e("SolicitudActivity", "Geocoding failed: ${e.message}")
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post {
+                    Toast.makeText(this, "Ocurrió un error inesperado al buscar la dirección.", Toast.LENGTH_LONG).show()
+                }
+                Log.e("SolicitudActivity", "Unexpected error during geocoding: ${e.message}")
+            }
+        }.start()
+    }
+
 
     private fun setupListeners() {
+
         btnSend.setOnClickListener {
-            submitSolicitud()
-        }
-        findViewById<MaterialButton>(R.id.btnLogout).setOnClickListener {
-            sessionManager.logoutUser()
-            val intent = Intent(this, LoginActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+
+            val senderName = etSenderName.text.toString().trim()
+            val senderId = etSenderID.text.toString().trim()
+            val senderPhone = etSenderPhone.text.toString().trim()
+
+            val height = etPackageHeight.text.toString().toDoubleOrNull()
+            val width = etPackageWidth.text.toString().toDoubleOrNull()
+            val length = etPackageLength.text.toString().toDoubleOrNull()
+            val weight = etPackageWeight.text.toString().toDoubleOrNull()
+            val price = etPrice.text.toString().toDoubleOrNull()
+
+            val receiverId = etReceiverID.text.toString().trim()
+            val receiverPhone = etReceiverPhone.text.toString().trim()
+            val receiverAddress = etReceiverAddress.text.toString().trim()
+            val receiverName = etReceiverName.text.toString()
+
+            val city = spCiudad.selectedItem.toString()
+            val timeSlot = spFranja.selectedItem.toString()
+            val fechaRecoleccion = "2025-01-01" // ⚠️ To be replaced with actual date
+
+            val zona = when (city) {
+                "Zona Norte" -> "ZN"
+                "Zona Sur" -> "ZS"
+                "Zona Centro" -> "ZC"
+                else -> "ND"
             }
-            startActivity(intent)
-            finish()
-        }
 
-        // --- Listener para el ícono de Ubicación (etReceiverAddress) ---
-        tilReceiverAddress.setEndIconOnClickListener {
-            Toast.makeText(
-                this,
-                "Abriendo mapa para seleccionar la dirección de entrega...",
-                Toast.LENGTH_SHORT
-            ).show()
-            // Aquí iría la lógica para iniciar una actividad de selección de mapa.
-            // Por ejemplo: startActivity(Intent(this, MapSelectionActivity::class.java).apply { putExtra("MODE", "DESTINATION") })
-        }
-
-        // --- Listener para el ícono de Lupa (etReceiverID) ---
-        tilReceiverID.setEndIconOnClickListener {
-            val receiverID = etReceiverID.text.toString().trim()
-            if (receiverID.isNotEmpty()) {
-                Toast.makeText(
-                    this,
-                    "Simulando búsqueda de destinatario con ID: $receiverID",
-                    Toast.LENGTH_SHORT
-                ).show()
-                // Aquí iría la lógica REST de búsqueda de cliente/destinatario.
-            } else {
-                Toast.makeText(this, "Ingrese una identificación para buscar.", Toast.LENGTH_SHORT)
-                    .show()
+            // 1. VALIDATION
+            if (height == null || width == null || length == null || weight == null || price == null) {
+                Toast.makeText(this, "Por favor llena todos los valores numéricos", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
             }
-        }
-    }
+            if (selectedLat == null || selectedLon == null) {
+                Toast.makeText(this, "Por favor busca una dirección válida para fijar la ubicación.", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
 
-    private fun submitSolicitud() {
-        // 1. Recopilar y validar datos
-        val senderName = etSenderName.text.toString().trim()
-        val senderID = etSenderID.text.toString().trim()
-        val senderPhone = etSenderPhone.text.toString().trim()
-        val receiverName = etReceiverName.text.toString().trim()
-        val receiverPhone = etReceiverPhone.text.toString().trim()
-        val receiverAddress = etReceiverAddress.text.toString().trim()
-        val weight = etPackageWeight.text.toString().toDoubleOrNull()
-        val content = etPackageContent.text.toString().trim()
-        val price = etPrice.text.toString().toDoubleOrNull()
-        val zonaCompleta = spCiudad.selectedItem?.toString()?.trim() ?: ""
-        val franja = spFranja.selectedItem?.toString()?.trim() ?: ""
-        val recolectionDir = recolectionAddress ?: ""
-        val recolectionLat = recolectionLatitude
-        val recolectionLon = recolectionLongitude
-        val ciudad = zonaCompleta.split(" - ").firstOrNull() ?: ""
+            // Get logged-in client ID (Crucial for API submission)
+            val clientId = sessionManager.getUserId() ?: run {
+                Toast.makeText(this, "Error: Usuario no logueado. Cierre sesión y vuelva a iniciar.", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
 
-        // 2. Validación
-        if (!validateFields(
-                senderName, senderID, senderPhone,
-                receiverName, receiverPhone, receiverAddress,
-                weight, content, price,
-                zonaCompleta, franja
+            // 2. CONSTRUCT DTO FOR API (SolicitudRequest)
+            val requestDto = SolicitudRequest(
+                clientId = clientId,
+                remitenteNombre = senderName,
+                remitenteTipoId = spIDType.selectedItem.toString(),
+                remitenteNumeroId = senderId,
+                remitenteTelefono = senderPhone,
+                remitenteCodigoPais = spSenderCountryCode.selectedItem.toString(),
+                alto = height,
+                ancho = width,
+                largo = length,
+                pesoKg = weight,
+                contenido = etPackageContent.text.toString(),
+                receptorNombre = receiverName,
+                receptorTipoId = spReceiverIDType.selectedItem.toString(),
+                receptorNumeroId = receiverId,
+                receptorTelefono = receiverPhone,
+                receptorCodigoPais = spReceiverCountryCode.selectedItem.toString(),
+                direccionCompleta = receiverAddress,
+                ciudad = city,
+                latitud = selectedLat!!,
+                longitud = selectedLon!!,
+                zona = zona,
+                fechaRecoleccion = fechaRecoleccion,
+                franjaHoraria = timeSlot,
+                precio = price
             )
-        ) {
-            return
-        }
 
-        if (recolectionDir.isEmpty() || recolectionLat == null || recolectionLon == null) {
-            Toast.makeText(
-                this,
-                "Faltan los datos de la dirección de Recolección.",
-                Toast.LENGTH_LONG
-            ).show()
-            return
-        }
-
-        // 3. Definir fecha de recolección
-        val calendar = Calendar.getInstance()
-        val year = calendar.get(Calendar.YEAR)
-        val month = calendar.get(Calendar.MONTH) + 1
-        val day = calendar.get(Calendar.DAY_OF_MONTH)
-        val today = "$year-$month-$day"
-
-        // 4. 🌟 CREAR REQUEST DTO para el Backend 🌟
-        val solicitudRequest = SolicitudRequest(
-            clientId = sessionManager.getUserId(),
-            direccionCompleta = recolectionDir,
-            ciudad = ciudad,
-            latitud = recolectionLat,
-            longitud = recolectionLon,
-            pesoKg = weight!!,
-            precio = price!!,
-            fechaRecoleccion = today,
-            franjaHoraria = franja,
-            notas = content,
-            zona = zonaCompleta,
-            pisoApto = null,
-            notasEntrega = null
-        )
-
-        // 5. Llamar al servicio REST (Reemplazando la llamada a SQLite)
-        RetrofitClient.apiService.crearSolicitud(solicitudRequest)
-            .enqueue(object : Callback<Solicitud> {
+            // 3. 🚀 API CALL
+            RetrofitClient.apiService.crearSolicitud(requestDto).enqueue(object : Callback<Solicitud> {
                 override fun onResponse(call: Call<Solicitud>, response: Response<Solicitud>) {
-                    if (response.isSuccessful && response.body() != null) {
-                        val nuevaSolicitud = response.body()!!
-
-                        Toast.makeText(
-                            this@SolicitudActivity,
-                            "Solicitud ${nuevaSolicitud.id} creada exitosamente!",
-                            Toast.LENGTH_LONG
-                        ).show()
-
-                        // 6. Redirigir a la pantalla de éxito/guía
-                        val intent = Intent(
-                            this@SolicitudActivity,
-                            GuideConfirmationActivity::class.java
-                        ).apply {
-                            putExtra("SOLICITUD_ID", nuevaSolicitud.id)
-                        }
-                        startActivity(intent)
-                        finish()
+                    if (response.isSuccessful) {
+                        Toast.makeText(this@SolicitudActivity, "¡Solicitud enviada (Guía #${response.body()?.id})!", Toast.LENGTH_LONG).show()
+                        // Optional: finish() the activity or clear the form
                     } else {
-                        val errorBody = response.errorBody()?.string() ?: response.message()
-                        Log.e("Solicitud", "Error ${response.code()}: $errorBody")
-                        Toast.makeText(
-                            this@SolicitudActivity,
-                            "Error al crear solicitud. Intente de nuevo.",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        val errorBody = response.errorBody()?.string()
+                        Log.e("API_CALL", "Error ${response.code()}: $errorBody")
+                        Toast.makeText(this@SolicitudActivity, "Error ${response.code()} al enviar: ${response.message()}", Toast.LENGTH_LONG).show()
                     }
                 }
 
                 override fun onFailure(call: Call<Solicitud>, t: Throwable) {
-                    Log.e("Solicitud", "Fallo de red: ${t.message}")
-                    Toast.makeText(
-                        this@SolicitudActivity,
-                        "Fallo de red al enviar solicitud.",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    Log.e("API_CALL", "Fallo de red: ${t.message}")
+                    Toast.makeText(this@SolicitudActivity, "Fallo de conexión. Verifique el servidor.", Toast.LENGTH_LONG).show()
                 }
             })
+
+            // Original Log.d removed, as API call is now primary action
+        }
     }
 
-    /**
-     * Función que valida todos los campos y muestra los errores directamente en el TextInputLayout.
-     */
-    private fun validateFields(
-        senderName: String, senderID: String, senderPhone: String,
-        receiverName: String, receiverPhone: String, receiverAddress: String,
-        weight: Double?, content: String, price: Double?,
-        zonaCompleta: String, franja: String
-    ): Boolean {
-
-        var isValid = true
-
-        fun clearError(editText: TextInputEditText) {
-            // El padre directo del EditText es el TextInputLayout
-            (editText.parent as? TextInputLayout)?.error = null
-        }
-
-        fun setError(editText: TextInputEditText, message: String) {
-            (editText.parent as? TextInputLayout)?.error = message
-            isValid = false
-        }
-
-        clearError(etSenderName)
-        clearError(etSenderID)
-        clearError(etSenderPhone)
-        clearError(etReceiverName)
-        clearError(etReceiverPhone)
-        clearError(etReceiverAddress)
-        clearError(etPackageWeight)
-        clearError(etPackageContent)
-        clearError(etPrice)
-
-        // Validación de Remitente
-        if (senderName.isEmpty()) setError(etSenderName, "Nombre obligatorio")
-        if (senderID.isEmpty()) setError(etSenderID, "Identificación obligatoria")
-        if (senderPhone.isEmpty() || senderPhone.length < 7) setError(
-            etSenderPhone,
-            "Teléfono inválido"
-        )
-
-        // Validación de Destinatario
-        if (receiverName.isEmpty()) setError(etReceiverName, "Nombre obligatorio")
-        if (receiverPhone.isEmpty() || receiverPhone.length < 7) setError(
-            etReceiverPhone,
-            "Teléfono inválido"
-        )
-        if (receiverAddress.isEmpty()) setError(
-            etReceiverAddress,
-            "Dirección de entrega obligatoria"
-        )
-
-        // Validación de Paquete
-        if (weight == null || weight <= 0) setError(etPackageWeight, "Peso inválido")
-        if (content.isEmpty()) setError(etPackageContent, "Contenido obligatorio")
-
-        // Validación de Precio
-        if (price == null || price <= 0) setError(etPrice, "Precio inválido")
-
-        // Validación de Recolección (Spinner)
-        if (zonaCompleta.isEmpty() || franja.isEmpty()) {
-            Toast.makeText(
-                this,
-                "Debe seleccionar la Zona y Franja Horaria de recolección.",
-                Toast.LENGTH_LONG
-            ).show()
-            isValid = false
-        }
-
-        return isValid
+    private fun setupMap() {
+        val mapFragment = supportFragmentManager.findFragmentById(R.id.mapFragment) as? SupportMapFragment
+        mapFragment?.getMapAsync(this)
     }
+
+    override fun onMapReady(map: GoogleMap) {
+        googleMap = map
+        googleMap?.uiSettings?.isMapToolbarEnabled = false
+        googleMap?.uiSettings?.isZoomControlsEnabled = true
+
+
+        val defaultLocation = LatLng(4.7110, -74.0721)
+        googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 10f))
+    }
+
+    private fun updateMapLocation() {
+        googleMap?.clear()
+        selectedLat?.let { lat ->
+            selectedLon?.let { lon ->
+                val location = LatLng(lat, lon)
+                googleMap?.addMarker(MarkerOptions().position(location).title("Destino"))
+                // Zoom in after finding coordinates
+                googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
+            }
+        }
+    }
+
+    private fun Double.format(digits: Int) = "%.${digits}f".format(this)
 }
