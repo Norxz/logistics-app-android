@@ -247,15 +247,16 @@
                 android:minHeight="48dp" />
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilReceiverID"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="2"
                 android:hint="@string/delivery_id_text"
                 app:boxStrokeColor="@color/primary_color"
-                app:endIconMode="custom"
+                app:endIconContentDescription="Buscar destinatario por ID"
                 app:endIconDrawable="@drawable/ic_search"
-                app:endIconContentDescription="Buscar destinatario por ID">
+                app:endIconMode="custom">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etReceiverID"
@@ -313,15 +314,16 @@
         </LinearLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilReceiverAddress"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:hint="@string/delivery_adress"
             app:boxStrokeColor="@color/primary_color"
-            app:endIconMode="custom"
+            app:endIconContentDescription="Seleccionar dirección desde el mapa"
             app:endIconDrawable="@drawable/ic_location"
-            app:endIconContentDescription="Seleccionar dirección desde el mapa">
+            app:endIconMode="custom">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etReceiverAddress"
@@ -437,9 +439,9 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogout"
             style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_gravity="center_horizontal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
             android:paddingVertical="14dp"
             android:text="@string/logout"
             android:textColor="@color/on_surface_secondary" />

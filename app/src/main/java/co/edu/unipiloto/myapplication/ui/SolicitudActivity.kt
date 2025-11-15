@@ -95,6 +95,7 @@ class SolicitudActivity : AppCompatActivity() {
         handleIntentData()
         setupListeners()
     }
+
     // -----------------------------------------------------------------------------------
     private fun handleIntentData() {
         recolectionAddress = intent.getStringExtra("RECOLECTION_ADDRESS")
@@ -106,7 +107,11 @@ class SolicitudActivity : AppCompatActivity() {
         }
 
         if (!recolectionAddress.isNullOrEmpty()) {
-            Toast.makeText(this, "Dirección de recolección recibida: $recolectionAddress", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this,
+                "Dirección de recolección recibida: $recolectionAddress",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
@@ -141,8 +146,8 @@ class SolicitudActivity : AppCompatActivity() {
 
         // Obtener las referencias de TextInputLayout (el padre directo del EditText)
         // Esto es necesario para configurar los click listeners en los iconos (endIconMode)
-        tilReceiverID = etReceiverID.parent as TextInputLayout
-        tilReceiverAddress = etReceiverAddress.parent as TextInputLayout
+        tilReceiverID = findViewById(R.id.tilReceiverID)
+        tilReceiverAddress = findViewById(R.id.tilReceiverAddress)
 
         // --- VISTAS RECOLECCIÓN Y PRECIO ---
         spCiudad = findViewById(R.id.spCity)
@@ -187,7 +192,11 @@ class SolicitudActivity : AppCompatActivity() {
 
         // --- Listener para el ícono de Ubicación (etReceiverAddress) ---
         tilReceiverAddress.setEndIconOnClickListener {
-            Toast.makeText(this, "Abriendo mapa para seleccionar la dirección de entrega...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                "Abriendo mapa para seleccionar la dirección de entrega...",
+                Toast.LENGTH_SHORT
+            ).show()
             // Aquí iría la lógica para iniciar una actividad de selección de mapa.
             // Por ejemplo: startActivity(Intent(this, MapSelectionActivity::class.java).apply { putExtra("MODE", "DESTINATION") })
         }
@@ -196,10 +205,15 @@ class SolicitudActivity : AppCompatActivity() {
         tilReceiverID.setEndIconOnClickListener {
             val receiverID = etReceiverID.text.toString().trim()
             if (receiverID.isNotEmpty()) {
-                Toast.makeText(this, "Simulando búsqueda de destinatario con ID: $receiverID", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    "Simulando búsqueda de destinatario con ID: $receiverID",
+                    Toast.LENGTH_SHORT
+                ).show()
                 // Aquí iría la lógica REST de búsqueda de cliente/destinatario.
             } else {
-                Toast.makeText(this, "Ingrese una identificación para buscar.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Ingrese una identificación para buscar.", Toast.LENGTH_SHORT)
+                    .show()
             }
         }
     }
@@ -234,7 +248,11 @@ class SolicitudActivity : AppCompatActivity() {
         }
 
         if (recolectionDir.isEmpty() || recolectionLat == null || recolectionLon == null) {
-            Toast.makeText(this, "Faltan los datos de la dirección de Recolección.", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this,
+                "Faltan los datos de la dirección de Recolección.",
+                Toast.LENGTH_LONG
+            ).show()
             return
         }
 
@@ -263,31 +281,47 @@ class SolicitudActivity : AppCompatActivity() {
         )
 
         // 5. Llamar al servicio REST (Reemplazando la llamada a SQLite)
-        RetrofitClient.apiService.crearSolicitud(solicitudRequest).enqueue(object : Callback<Solicitud> {
-            override fun onResponse(call: Call<Solicitud>, response: Response<Solicitud>) {
-                if (response.isSuccessful && response.body() != null) {
-                    val nuevaSolicitud = response.body()!!
+        RetrofitClient.apiService.crearSolicitud(solicitudRequest)
+            .enqueue(object : Callback<Solicitud> {
+                override fun onResponse(call: Call<Solicitud>, response: Response<Solicitud>) {
+                    if (response.isSuccessful && response.body() != null) {
+                        val nuevaSolicitud = response.body()!!
 
-                    Toast.makeText(this@SolicitudActivity, "Solicitud ${nuevaSolicitud.id} creada exitosamente!", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            this@SolicitudActivity,
+                            "Solicitud ${nuevaSolicitud.id} creada exitosamente!",
+                            Toast.LENGTH_LONG
+                        ).show()
 
-                    // 6. Redirigir a la pantalla de éxito/guía
-                    val intent = Intent(this@SolicitudActivity, GuideConfirmationActivity::class.java).apply {
-                        putExtra("SOLICITUD_ID", nuevaSolicitud.id)
+                        // 6. Redirigir a la pantalla de éxito/guía
+                        val intent = Intent(
+                            this@SolicitudActivity,
+                            GuideConfirmationActivity::class.java
+                        ).apply {
+                            putExtra("SOLICITUD_ID", nuevaSolicitud.id)
+                        }
+                        startActivity(intent)
+                        finish()
+                    } else {
+                        val errorBody = response.errorBody()?.string() ?: response.message()
+                        Log.e("Solicitud", "Error ${response.code()}: $errorBody")
+                        Toast.makeText(
+                            this@SolicitudActivity,
+                            "Error al crear solicitud. Intente de nuevo.",
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
-                    startActivity(intent)
-                    finish()
-                } else {
-                    val errorBody = response.errorBody()?.string() ?: response.message()
-                    Log.e("Solicitud", "Error ${response.code()}: $errorBody")
-                    Toast.makeText(this@SolicitudActivity, "Error al crear solicitud. Intente de nuevo.", Toast.LENGTH_LONG).show()
                 }
-            }
 
-            override fun onFailure(call: Call<Solicitud>, t: Throwable) {
-                Log.e("Solicitud", "Fallo de red: ${t.message}")
-                Toast.makeText(this@SolicitudActivity, "Fallo de red al enviar solicitud.", Toast.LENGTH_LONG).show()
-            }
-        })
+                override fun onFailure(call: Call<Solicitud>, t: Throwable) {
+                    Log.e("Solicitud", "Fallo de red: ${t.message}")
+                    Toast.makeText(
+                        this@SolicitudActivity,
+                        "Fallo de red al enviar solicitud.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            })
     }
 
     /**
