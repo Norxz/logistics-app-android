@@ -360,7 +360,15 @@ class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
                                 "¡Solicitud enviada (Guía #${response.body()?.id})!",
                                 Toast.LENGTH_LONG
                             ).show()
-                            // Optional: finish() the activity or clear the form
+                            val intent =
+                                Intent(this@SolicitudActivity, GuideConfirmationActivity::class.java)
+                            intent.putExtra(
+                                "solicitudId",
+                                response.body()?.id
+                            )
+                            startActivity(intent)
+
+                            finish()
                         } else {
                             val errorBody = response.errorBody()?.string()
                             Log.e("API_CALL", "Error ${response.code()}: $errorBody")
