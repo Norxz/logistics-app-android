@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_surface">
@@ -54,8 +55,8 @@
                 android:id="@+id/spIDType"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp" />
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1" />
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -82,8 +83,8 @@
                 android:id="@+id/spSenderCountryCode"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp" />
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1" />
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -110,61 +111,76 @@
             android:textSize="20sp"
             android:textStyle="bold" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        <GridLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="Alto (cm)">
+            android:alignmentMode="alignMargins"
+            android:columnCount="2"
+            android:rowCount="2"
+            android:rowOrderPreserved="false"
+            android:useDefaultMargins="true">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etPackageHeight"
-                android:layout_width="match_parent"
+            <!-- Alto -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:inputType="numberDecimal" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_columnWeight="1"
+                android:hint="Alto (cm)">
 
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="Ancho (cm)">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPackageHeight"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etPackageWidth"
-                android:layout_width="match_parent"
+            <!-- Ancho -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:inputType="numberDecimal" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_columnWeight="1"
+                android:hint="Ancho (cm)">
 
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="Largo (cm)">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPackageWidth"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etPackageLength"
-                android:layout_width="match_parent"
+            <!-- Largo -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:inputType="numberDecimal" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_columnWeight="1"
+                android:hint="Largo (cm)">
 
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="Peso (kg)">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPackageLength"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etPackageWeight"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:inputType="numberDecimal" />
-        </com.google.android.material.textfield.TextInputLayout>
+            <!-- Peso -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:hint="Peso (kg)">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPackageWeight"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+        </GridLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -186,9 +202,9 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:text="@string/delivery_destination_title"
-            android:textStyle="bold"
             android:textColor="@color/on_surface"
-            android:textSize="20sp" />
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -200,8 +216,8 @@
                 android:id="@+id/spReceiverIDType"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp" />
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilReceiverID"
@@ -210,8 +226,8 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="2"
                 android:hint="@string/delivery_id_text"
-                app:endIconMode="custom"
-                app:endIconDrawable="@drawable/ic_search">
+                app:endIconDrawable="@drawable/ic_search"
+                app:endIconMode="custom">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etReceiverID"
@@ -245,8 +261,8 @@
                 android:id="@+id/spReceiverCountryCode"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp" />
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1" />
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -270,8 +286,8 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:hint="@string/delivery_adress"
-            app:endIconMode="custom"
-            app:endIconDrawable="@drawable/ic_location">
+            app:endIconDrawable="@drawable/ic_location"
+            app:endIconMode="custom">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etReceiverAddress"
@@ -281,11 +297,12 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- MAPA -->
-        <fragment
+        <androidx.fragment.app.FragmentContainerView
             android:id="@+id/mapFragment"
             android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
-            android:layout_height="200dp" />
+            android:layout_height="200dp"
+            tools:ignore="FragmentTagUsage" />
 
 
         <!-- SECCIÓN RECOGIDA Y PRECIO -->
@@ -368,9 +385,9 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogout"
             style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_gravity="center_horizontal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
             android:paddingVertical="14dp"
             android:text="@string/logout"
             android:textColor="@color/on_surface_secondary" />
