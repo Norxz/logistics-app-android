@@ -3,9 +3,14 @@ package co.edu.unipiloto.myapplication.service
 
 import co.edu.unipiloto.myapplication.models.*
 import co.edu.unipiloto.myapplication.rest.* // Importa tus DTOs
-
 import retrofit2.Call
 import retrofit2.http.*
+import okhttp3.ResponseBody
+import retrofit2.http.GET
+import retrofit2.http.Query
+import retrofit2.Response
+import retrofit2.http.Path
+import retrofit2.http.Streaming
 
 interface ApiService {
 
@@ -30,7 +35,10 @@ interface ApiService {
     // Cancelar Solicitud (Actualizar Estado): PUT /api/v1/solicitudes/{solicitudId}/estado
     // Nota: El backend debe estar preparado para recibir un cuerpo {"estado": "CANCELADA"}
     @PUT("api/v1/solicitudes/{solicitudId}/estado")
-    fun actualizarEstado(@Path("solicitudId") id: Long, @Body estado: Map<String, String>): Call<Void>
+    fun actualizarEstado(
+        @Path("solicitudId") id: Long,
+        @Body estado: Map<String, String>
+    ): Call<Void>
 
     @GET("api/v1/tracking/{guideId}")
     fun getShippingStatus(@Path("guideId") guideCode: String): Call<ShippingStatus>
@@ -50,13 +58,17 @@ interface ApiService {
     fun getLogisticUserById(@Path("recolectorId") recolectorId: Long): Call<LogisticUser>
 
     @PUT("api/v1/logistic-users/{recolectorId}")
-    fun updateLogisticUser(@Path("recolectorId") recolectorId: Long, @Body user: LogisticUser): Call<LogisticUser>
+    fun updateLogisticUser(
+        @Path("recolectorId") recolectorId: Long,
+        @Body user: LogisticUser
+    ): Call<LogisticUser>
 
     @GET("api/v1/logistic-users")
     fun getAllLogisticUsers(): Call<List<LogisticUser>>
 
     @DELETE("api/v1/logistic-users/{userId}")
     fun deleteLogisticUser(@Path("userId") userId: Long): Call<Void>
+
     @GET("api/v1/solicitudes/zone/{zona}/pending")
     fun getPendingSolicitudesByZone(@Path("zona") zona: String): Call<List<Solicitud>>
 
@@ -64,7 +76,11 @@ interface ApiService {
     fun getAvailableDriverByZone(@Path("zona") zona: String): Call<LogisticUser>
 
     @PUT("api/v1/solicitudes/{solicitudId}/assign")
-    fun assignRequest(@Path("solicitudId") solicitudId: Long, @Body recolectorId: Map<String, String>): Call<Solicitud>
+    fun assignRequest(
+        @Path("solicitudId") solicitudId: Long,
+        @Body recolectorId: Map<String, String>
+    ): Call<Solicitud>
+
     @GET("api/v1/logistic-users/drivers") // Endpoint para obtener lista de conductores activos
     fun getDriversForAssignment(): Call<List<LogisticUser>>
 
@@ -72,4 +88,13 @@ interface ApiService {
     @GET("api/v1/solicitudes/all")
     fun getAllRequests(): Call<List<Request>>
 
+    @GET("api/guia/pdf")
+    suspend fun downloadGuide(@Query("id") id: Long): ResponseBody
+
+    @GET("api/v1/guia/download/{id}")
+    @Streaming
+    suspend fun downloadGuidePdf(@Path("id") solicitudId: Long): Response<ResponseBody>
+
+    @GET("api/v1/guia/{id}")
+    suspend fun getGuiaInfo(@Path("id") solicitudId: Long): Response<GuiaResponse>
 }
