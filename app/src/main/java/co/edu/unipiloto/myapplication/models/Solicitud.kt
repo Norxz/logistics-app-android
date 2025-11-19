@@ -1,24 +1,7 @@
 package co.edu.unipiloto.myapplication.models
 
-import co.edu.unipiloto.myapplication.rest.GuiaResponse // Can be removed if Guia is defined here
 import java.io.Serializable // Recommended for models used in intents
 
-// Nested Address Model
-data class Direccion(
-    val direccionCompleta: String,
-    val ciudad: String,
-    val latitud: Double,
-    val longitud: Double,
-    val pisoApto: String?,
-    val notasEntrega: String?,
-    val zona: String? // Added 'zona' for the pending requests fragment fix
-) : Serializable
-
-// Nested Guide Model
-data class Guia(
-    val numeroGuia: String,
-    val trackingNumber: String
-) : Serializable
 
 /**
  * Modelo DTO utilizado por la UI, mapeado de la respuesta del Backend.
