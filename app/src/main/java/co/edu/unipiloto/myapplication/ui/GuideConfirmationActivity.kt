@@ -3,6 +3,7 @@ package co.edu.unipiloto.myapplication.ui
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -70,13 +71,16 @@ class GuideConfirmationActivity : AppCompatActivity() {
                 }
 
                 if (response.isSuccessful && response.body() != null) {
-                    val inputStream = response.body()!!.byteStream()
 
-                    val pdfFile = FileUtils.savePdfToExternalFile(
-                        this@GuideConfirmationActivity,
-                        inputStream,
-                        "guia_solicitud_$solicitudId.pdf"
-                    )
+                    val pdfFile = withContext(Dispatchers.IO) {
+                        val inputStream = response.body()!!.byteStream()
+
+                        FileUtils.savePdfToExternalFile(
+                            this@GuideConfirmationActivity,
+                            inputStream,
+                            "guia_solicitud_$solicitudId.pdf"
+                        )
+                    }
 
                     try {
                         FileUtils.openPdf(this@GuideConfirmationActivity, pdfFile)
@@ -97,9 +101,10 @@ class GuideConfirmationActivity : AppCompatActivity() {
                 }
 
             } catch (e: Exception) {
+                Log.e("PDF_ERROR", "Error descargando PDF", e)
                 Toast.makeText(
                     this@GuideConfirmationActivity,
-                    "Error: ${e.message}",
+                    "Error descargando PDF (ver LogCat)",
                     Toast.LENGTH_LONG
                 ).show()
             }
