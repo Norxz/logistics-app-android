@@ -272,7 +272,7 @@ class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
 
             val city = spCiudad.selectedItem.toString()
             val timeSlot = spFranja.selectedItem.toString()
-            val fechaRecoleccion = "2025-01-01" // ⚠️ To be replaced with actual date
+            val fechaRecoleccion = "2025-01-01"
 
             val zona = when (city) {
                 "Zona Norte" -> "ZN"

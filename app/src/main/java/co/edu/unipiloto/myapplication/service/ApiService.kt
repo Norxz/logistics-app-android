@@ -7,7 +7,6 @@ import retrofit2.Call
 import retrofit2.http.*
 import okhttp3.ResponseBody
 import retrofit2.http.GET
-import retrofit2.http.Query
 import retrofit2.Response
 import retrofit2.http.Path
 import retrofit2.http.Streaming
@@ -88,13 +87,11 @@ interface ApiService {
     @GET("api/v1/solicitudes/all")
     fun getAllRequests(): Call<List<Request>>
 
-    @GET("api/guia/pdf")
-    suspend fun downloadGuide(@Query("id") id: Long): ResponseBody
-
     @GET("api/v1/guia/download/{id}")
     @Streaming
     suspend fun downloadGuidePdf(@Path("id") solicitudId: Long): Response<ResponseBody>
 
     @GET("api/v1/guia/{id}")
     suspend fun getGuiaInfo(@Path("id") solicitudId: Long): Response<GuiaResponse>
+
 }

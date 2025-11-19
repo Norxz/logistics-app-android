@@ -25,7 +25,7 @@ class GuideConfirmationActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_guide)
 
-        val solicitudId = intent.getLongExtra("SOLICITUD_ID", -1L)
+        val solicitudId = intent.getLongExtra("solicitudId", -1L)
 
         initViews()
         setupListeners(solicitudId)
@@ -80,7 +80,7 @@ class GuideConfirmationActivity : AppCompatActivity() {
 
                     try {
                         FileUtils.openPdf(this@GuideConfirmationActivity, pdfFile)
-                    } catch (e: ActivityNotFoundException) {
+                    } catch (_: ActivityNotFoundException) {
                         Toast.makeText(
                             this@GuideConfirmationActivity,
                             "No hay visor de PDF instalado.",
