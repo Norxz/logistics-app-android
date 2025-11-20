@@ -12,11 +12,21 @@ import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.rest.RetrofitClient
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import co.edu.unipiloto.myapplication.utils.FileUtils
+import co.edu.unipiloto.myapplication.utils.NotificationHelper
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.Properties
+import javax.mail.internet.InternetAddress
+import javax.mail.internet.MimeMessage
+import javax.mail.Message
+import javax.mail.PasswordAuthentication
+import javax.mail.Session
+import javax.mail.Transport
+import javax.mail.internet.MimeBodyPart
+import javax.mail.internet.MimeMultipart
 
 
 /**
@@ -129,6 +139,14 @@ class GuideConfirmationActivity : AppCompatActivity() {
     private fun downloadAndSendGuidePdf(solicitudId: Long, usuarioEmail: String) {
         lifecycleScope.launch {
             try {
+                // Mostrar diálogo de progreso
+                val progressDialog =
+                    android.app.ProgressDialog(this@GuideConfirmationActivity).apply {
+                        setMessage("Descargando y enviando guía...")
+                        setCancelable(false)
+                        show()
+                    }
+
                 val response = withContext(Dispatchers.IO) {
                     RetrofitClient.apiService.downloadGuidePdf(solicitudId)
                 }
@@ -154,9 +172,60 @@ class GuideConfirmationActivity : AppCompatActivity() {
                         ).show()
                     }
 
-                    sendPdfByEmail(pdfFile, usuarioEmail)
+                    // Enviar el PDF por correo en segundo plano
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        try {
+                            val senderEmail = "santi.ch.lokcis@gmail.com"
+                            val senderPassword = "ubwd edem tnfc uktb" // App Password
+
+                            val messageBody = """
+                            Hola,
+
+                            Adjunto encontrarás la guía de la solicitud #$solicitudId.
+
+                            Saludos,
+                            Logistics App
+                        """.trimIndent()
+
+                            sendMailWithAttachment(
+                                fromEmail = senderEmail,
+                                fromPassword = senderPassword,
+                                toEmail = usuarioEmail,
+                                subject = "Guía de Solicitud",
+                                messageBody = messageBody,
+                                pdfFile = pdfFile
+                            )
+
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(
+                                    this@GuideConfirmationActivity,
+                                    "Correo enviado correctamente a $usuarioEmail",
+                                    Toast.LENGTH_LONG
+                                ).show()
+
+                                NotificationHelper.showNotification(
+                                    context = this@GuideConfirmationActivity,
+                                    title = "Guía enviada",
+                                    content = "El correo con la guía de la solicitud #$solicitudId fue enviado a $usuarioEmail"
+                                )
+                            }
+
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(
+                                    this@GuideConfirmationActivity,
+                                    "Error enviando correo: ${e.message}",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        } finally {
+                            withContext(Dispatchers.Main) { progressDialog.dismiss() }
+                        }
+                    }
 
                 } else {
+                    progressDialog.dismiss()
                     Toast.makeText(
                         this@GuideConfirmationActivity,
                         "Error al descargar PDF",
@@ -165,32 +234,91 @@ class GuideConfirmationActivity : AppCompatActivity() {
                 }
 
             } catch (e: Exception) {
-                Log.e("PDF_ERROR", "Error descargando PDF", e)
                 Toast.makeText(
                     this@GuideConfirmationActivity,
                     "Error descargando PDF (ver LogCat)",
                     Toast.LENGTH_LONG
                 ).show()
+                Log.e("PDF_ERROR", "Error descargando PDF", e)
             }
         }
     }
 
+
     private fun sendPdfByEmail(pdfFile: File, usuarioEmail: String) {
-        val uri = FileUtils.getUriForFile(this, pdfFile)
+        val senderEmail = "santi.ch.lokcis@gmail.com"
+        val senderPassword = "ubwd edem tnfc uktb" // ⚠️ Genera un App Password en Gmail
 
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/pdf"
-            putExtra(Intent.EXTRA_EMAIL, arrayOf(usuarioEmail))
-            putExtra(Intent.EXTRA_SUBJECT, "Guía de Solicitud")
-            putExtra(Intent.EXTRA_TEXT, "Adjunto encontrarás la guía de la solicitud.")
-            putExtra(Intent.EXTRA_STREAM, uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
+        val messageBody = """
+        Hola,
+        
+        Adjunto encontrarás la guía de la solicitud #${intent.getLongExtra("solicitudId", -1L)}.
+        
+        Saludos,
+        Logistics App
+    """.trimIndent()
 
-        try {
-            startActivity(Intent.createChooser(intent, "Enviar PDF por correo"))
-        } catch (e: ActivityNotFoundException) {
-            Toast.makeText(this, "No hay app de correo instalada", Toast.LENGTH_SHORT).show()
-        }
+        sendMailWithAttachment(
+            fromEmail = senderEmail,
+            fromPassword = senderPassword,
+            toEmail = usuarioEmail,
+            subject = "Guía de Solicitud",
+            messageBody = messageBody,
+            pdfFile = pdfFile
+        )
+
+        Toast.makeText(this, "Correo enviado en segundo plano a $usuarioEmail", Toast.LENGTH_LONG)
+            .show()
     }
+
+    fun sendMailWithAttachment(
+        fromEmail: String,
+        fromPassword: String,
+        toEmail: String,
+        subject: String,
+        messageBody: String,
+        pdfFile: File
+    ) {
+        Thread {
+            try {
+                val props = Properties().apply {
+                    put("mail.smtp.auth", "true")
+                    put("mail.smtp.starttls.enable", "true")
+                    put("mail.smtp.host", "smtp.gmail.com")
+                    put("mail.smtp.port", "587")
+                }
+
+                val session = Session.getInstance(props, object : javax.mail.Authenticator() {
+                    override fun getPasswordAuthentication(): PasswordAuthentication {
+                        return PasswordAuthentication(fromEmail, fromPassword)
+                    }
+                })
+
+                val message = MimeMessage(session).apply {
+                    setFrom(InternetAddress(fromEmail))
+                    setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail))
+                    setSubject(subject)
+                }
+
+                val multipart = MimeMultipart()
+
+                // Texto
+                val textPart = MimeBodyPart()
+                textPart.setText(messageBody)
+                multipart.addBodyPart(textPart)
+
+                // PDF
+                val filePart = MimeBodyPart()
+                filePart.attachFile(pdfFile)
+                multipart.addBodyPart(filePart)
+
+                message.setContent(multipart)
+
+                Transport.send(message)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }.start()
+    }
+
 }
