@@ -13,7 +13,6 @@ import androidx.appcompat.app.AppCompatActivity
 import android.location.Geocoder
 import android.os.Handler
 import android.os.Looper
-import java.io.IOException
 import java.util.Locale
 // -----------------------------
 import com.google.android.material.textfield.TextInputEditText
@@ -28,19 +27,15 @@ import co.edu.unipiloto.myapplication.rest.RetrofitClient
 import co.edu.unipiloto.myapplication.rest.SolicitudRequest
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import co.edu.unipiloto.myapplication.utils.LocationHelper
-import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 // -----------------------------
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.MapView
 
-class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
+class SolicitudActivity : AppCompatActivity() {
 
     // Remitente
     private lateinit var etSenderName: TextInputEditText
@@ -73,20 +68,14 @@ class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var spFranja: Spinner
     private lateinit var etPrice: TextInputEditText
     private lateinit var btnSend: View
-    private lateinit var sessionManager: SessionManager // 👈 Added Session Manager
+    private lateinit var btnUseGps: ImageButton
+    private lateinit var sessionManager: SessionManager
 
     private var selectedLat: Double? = null
     private var selectedLon: Double? = null
 
     private lateinit var locationHelper: LocationHelper
 
-
-    companion object {
-        const val REQUEST_MAP = 1001
-        const val LOCATION_PERMISSION_REQUEST = 2001
-    }
-
-    // Retained launcher for compatibility, though MapActivity launch is removed
     private val mapActivityResultLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
@@ -115,25 +104,61 @@ class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
         setupEndIcons()
         setupListeners()
 
-        // Inicializar LocationHelper
-        val mapFragment =
-            supportFragmentManager.findFragmentById(R.id.mapFragment) as? SupportMapFragment
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        val mapView = findViewById<MapView>(R.id.mapView)
+        mapView.onCreate(null)
+
+        etReceiverAddress.setText("")
 
         locationHelper = LocationHelper(
             this,
-            fusedLocationClient,
-            mapFragment
-        ) { lat, lon ->
+            mapView
+        ) { address, lat, lon ->
+            etReceiverAddress.setText(address)
             selectedLat = lat
             selectedLon = lon
-            Toast.makeText(this, "Ubicación obtenida: $lat, $lon", Toast.LENGTH_SHORT).show()
         }
 
-        // Solicitar permisos y obtener ubicación
+        btnUseGps.setOnClickListener {
+            locationHelper.getCurrentLocation { address, lat, lon ->
+                etReceiverAddress.setText(address)
+                selectedLat = lat
+                selectedLon = lon
+            }
+        }
 
-        // Pedir permisos y obtener ubicación
-        locationHelper.checkLocationPermission(LOCATION_PERMISSION_REQUEST)
+
+
+        etReceiverAddress.setOnEditorActionListener { _, actionId, event ->
+            val isEnter = actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH ||
+                    (event?.keyCode == android.view.KeyEvent.KEYCODE_ENTER &&
+                            event.action == android.view.KeyEvent.ACTION_DOWN)
+
+            if (isEnter) {
+                val query = etReceiverAddress.text.toString().trim()
+                if (query.isNotEmpty()) locationHelper.searchAddress(query)
+                true
+            } else false
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        findViewById<MapView>(R.id.mapView).onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        findViewById<MapView>(R.id.mapView).onPause()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        findViewById<MapView>(R.id.mapView).onDestroy()
+    }
+
+    override fun onLowMemory() {
+        super.onLowMemory()
+        findViewById<MapView>(R.id.mapView).onLowMemory()
     }
 
     private fun initViews() {
@@ -157,9 +182,8 @@ class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
         etReceiverName = findViewById(R.id.etReceiverName)
         etReceiverPhone = findViewById(R.id.etReceiverPhone)
         spReceiverCountryCode = findViewById(R.id.spReceiverCountryCode)
-        etReceiverAddress = findViewById(R.id.etReceiverAddress)
+        etReceiverAddress = findViewById(R.id.etAddress)
 
-        // CORRECTO → ahora sí existen en tu XML
         tilReceiverID = findViewById(R.id.tilReceiverID)
         tilReceiverAddress = findViewById(R.id.tilReceiverAddress)
 
@@ -168,6 +192,7 @@ class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
         spFranja = findViewById(R.id.spTimeSlot)
         etPrice = findViewById(R.id.etPrice)
         btnSend = findViewById(R.id.btnSend)
+        btnUseGps = findViewById(R.id.btnUseGps)
     }
 
     private fun setupSpinners() {
@@ -196,82 +221,13 @@ class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
             Toast.makeText(this, "Buscar ID: ${etReceiverID.text}", Toast.LENGTH_SHORT).show()
         }
 
-        // Trigger Geocoding when the user clicks the address field icon
         tilReceiverAddress.setEndIconOnClickListener {
             val addressText = etReceiverAddress.text.toString().trim()
             if (addressText.isNotEmpty()) {
-                geocodeAddress(addressText)
-            } else {
-                Toast.makeText(
-                    this,
-                    "Por favor ingresa una dirección primero (ej: Calle 174 #8-30).",
-                    Toast.LENGTH_LONG
-                ).show()
+                locationHelper.searchAddress(addressText)
             }
         }
     }
-
-    // Converts address string to LatLng
-    private fun geocodeAddress(address: String) {
-        val geocoder = Geocoder(this, Locale.getDefault())
-
-        Toast.makeText(this, "Buscando dirección: $address...", Toast.LENGTH_SHORT).show()
-
-        // Run the geocoding operation on a background thread
-        Thread {
-            try {
-                val addresses = geocoder.getFromLocationName(address, 1)
-
-                Handler(Looper.getMainLooper()).post {
-                    if (addresses != null && addresses.isNotEmpty()) {
-                        val firstAddress = addresses[0]
-
-                        // Update coordinates and map
-                        selectedLat = firstAddress.latitude
-                        selectedLon = firstAddress.longitude
-
-                        val canonicalAddress = firstAddress.getAddressLine(0) ?: address
-                        etReceiverAddress.setText(canonicalAddress)
-
-                        Toast.makeText(
-                            this,
-                            "Dirección localizada. Coordenadas fijadas.",
-                            Toast.LENGTH_SHORT
-                        ).show()
-
-                        locationHelper.updateMapLocation()
-                    } else {
-                        Toast.makeText(
-                            this,
-                            "Dirección no encontrada. Intenta otra dirección.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        selectedLat = null
-                        selectedLon = null
-                    }
-                }
-            } catch (e: IOException) {
-                Handler(Looper.getMainLooper()).post {
-                    Toast.makeText(
-                        this,
-                        "Error de red/servicio de geocodificación.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-                Log.e("SolicitudActivity", "Geocoding failed: ${e.message}")
-            } catch (e: Exception) {
-                Handler(Looper.getMainLooper()).post {
-                    Toast.makeText(
-                        this,
-                        "Ocurrió un error inesperado al buscar la dirección.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-                Log.e("SolicitudActivity", "Unexpected error during geocoding: ${e.message}")
-            }
-        }.start()
-    }
-
 
     private fun setupListeners() {
 
@@ -459,19 +415,4 @@ class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }.start()
     }
-
-    override fun onMapReady(googleMap: GoogleMap) {
-        if (selectedLat != null && selectedLon != null) {
-            val initialLatLng = LatLng(selectedLat!!, selectedLon!!)
-            googleMap.addMarker(
-                MarkerOptions()
-                    .position(initialLatLng)
-                    .title("Destino")
-            )
-            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, 15f))
-        } else {
-            Toast.makeText(this, "Ubicación no definida", Toast.LENGTH_SHORT).show()
-        }
-    }
-
 }

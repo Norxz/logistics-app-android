@@ -1,111 +1,196 @@
 package co.edu.unipiloto.myapplication.utils
 
+import android.Manifest
 import android.content.pm.PackageManager
-import android.content.Context.LOCATION_SERVICE
+import android.location.Geocoder
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import java.util.Locale
 
 class LocationHelper(
     private val activity: AppCompatActivity,
-    private val fusedLocationClient: FusedLocationProviderClient,
-    private val mapFragment: SupportMapFragment?,
-    private val onLocationObtained: (lat: Double, lon: Double) -> Unit
+    private val mapView: MapView,
+    private val onLocationSelected: (address: String, lat: Double, lon: Double) -> Unit
 ) : OnMapReadyCallback {
 
+    private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(activity)
     private var googleMap: GoogleMap? = null
-    var selectedLat: Double? = null
-        private set
-    var selectedLon: Double? = null
-        private set
+    private var marker: Marker? = null
+
+    companion object {
+        const val PERMISSION_CODE = 1001
+    }
 
     init {
-        mapFragment?.getMapAsync(this)
+        mapView.getMapAsync(this)
     }
 
     fun checkLocationPermission(requestCode: Int) {
-        if (ActivityCompat.checkSelfPermission(
-                activity,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
+        if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(
                 activity,
-                arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                 requestCode
             )
         } else {
-            checkLocationEnabled()
+            requestCurrentLocation()
         }
     }
 
-    private fun checkLocationEnabled() {
-        val locationManager = activity.getSystemService(LOCATION_SERVICE) as android.location.LocationManager
-        val isGpsEnabled = locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)
-        val isNetworkEnabled = locationManager.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER)
-
-        if (!isGpsEnabled && !isNetworkEnabled) {
-            Toast.makeText(activity, "La ubicación está desactivada", Toast.LENGTH_LONG).show()
-        } else {
-            getCurrentLocation()
-        }
+    fun requestLocationPermission() {
+        ActivityCompat.requestPermissions(
+            activity,
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+            PERMISSION_CODE
+        )
     }
 
-    private fun getCurrentLocation() {
-        if (ActivityCompat.checkSelfPermission(
-                activity,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
+    private fun requestCurrentLocation() {
+        if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
         ) return
 
-        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-            if (location != null) {
-                setLocation(location.latitude, location.longitude)
-            } else {
-                fusedLocationClient.getCurrentLocation(
-                    com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCURACY,
-                    null
-                ).addOnSuccessListener { newLocation ->
-                    if (newLocation != null) {
-                        setLocation(newLocation.latitude, newLocation.longitude)
-                    } else {
-                        Toast.makeText(activity, "No se pudo obtener ubicación actual", Toast.LENGTH_SHORT).show()
-                    }
-                }
+        fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
+            if (loc != null) {
+                val latLng = LatLng(loc.latitude, loc.longitude)
+                updateMarker(latLng)
+                reverseGeocode(latLng)
             }
         }
     }
 
-    private fun setLocation(lat: Double, lon: Double) {
-        selectedLat = lat
-        selectedLon = lon
-        onLocationObtained(lat, lon)
-        updateMapLocation()
+    private fun updateMarker(latLng: LatLng) {
+        if (marker == null) {
+            marker = googleMap?.addMarker(
+                MarkerOptions().position(latLng).title("Ubicación seleccionada")
+            )
+        } else {
+            marker!!.position = latLng
+        }
+
+        googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16f))
+    }
+
+    private fun reverseGeocode(latLng: LatLng) {
+        try {
+            val geocoder = Geocoder(activity, Locale.getDefault())
+            val list = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
+
+            if (!list.isNullOrEmpty()) {
+                val address = list[0].getAddressLine(0)
+                onLocationSelected(address, latLng.latitude, latLng.longitude)
+            }
+        } catch (e: Exception) {
+            Toast.makeText(activity, "Error obteniendo dirección", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun searchAddress(address: String) {
+        Thread {
+            try {
+                val geocoder = Geocoder(activity, Locale.getDefault())
+                val result = geocoder.getFromLocationName(address, 1)
+
+                if (result != null && result.isNotEmpty()) {
+                    val r = result[0]
+                    val latLng = LatLng(r.latitude, r.longitude)
+
+                    Handler(Looper.getMainLooper()).post {
+                        updateMarker(latLng)
+                        onLocationSelected(address, r.latitude, r.longitude)
+                    }
+                } else {
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(activity, "Dirección no encontrada", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                }
+
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post {
+                    Toast.makeText(activity, "Error buscando dirección", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }.start()
+    }
+
+    fun setEmptyMapPosition(map: GoogleMap) {
+        val emptyLatLng = LatLng(0.0, 0.0)
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(emptyLatLng, 1f))
     }
 
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
-        googleMap?.uiSettings?.isMapToolbarEnabled = false
         googleMap?.uiSettings?.isZoomControlsEnabled = true
-        val defaultLocation = LatLng(4.7110, -74.0721)
-        googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 10f))
+
+        googleMap?.moveCamera(
+            CameraUpdateFactory.newLatLngZoom(LatLng(0.0, 0.0), 1f)
+        )
+
+        googleMap?.setOnMapClickListener { latLng ->
+            updateMarker(latLng)
+            reverseGeocode(latLng)
+        }
     }
 
-    fun updateMapLocation() {
-        googleMap?.clear()
-        selectedLat?.let { lat ->
-            selectedLon?.let { lon ->
-                val location = LatLng(lat, lon)
-                googleMap?.addMarker(MarkerOptions().position(location).title("Destino"))
-                googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
+    fun getCurrentLocation(onResult: (String, Double, Double) -> Unit) {
+        val permission = ActivityCompat.checkSelfPermission(
+            activity,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            requestLocationPermission()
+            return
+        }
+
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            if (location != null) {
+                val lat = location.latitude
+                val lon = location.longitude
+
+                // Geocoder → dirección
+                val geocoder = Geocoder(activity, Locale.getDefault())
+                val addresses = geocoder.getFromLocation(lat, lon, 1)
+
+                val address = if (!addresses.isNullOrEmpty()) {
+                    addresses[0].getAddressLine(0)
+                } else {
+                    "Dirección desconocida"
+                }
+
+                // Mover marcador del mapa
+                googleMap?.clear()
+                val pos = LatLng(lat, lon)
+                googleMap?.addMarker(MarkerOptions().position(pos).title(address))
+                googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(pos, 16f))
+
+                onResult(address, lat, lon)
+            } else {
+                Toast.makeText(activity, "No se pudo obtener ubicación", Toast.LENGTH_SHORT).show()
             }
         }
     }
+
+    private fun hasLocationPermission(): Boolean {
+        return ActivityCompat.checkSelfPermission(
+            activity,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
 }
+

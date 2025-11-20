@@ -279,30 +279,53 @@
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilReceiverAddress"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/clReceiverAddressContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="@string/delivery_adress"
-            app:endIconDrawable="@drawable/ic_location"
-            app:endIconMode="custom">
+            android:layout_marginBottom="16dp">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etReceiverAddress"
-                android:layout_width="match_parent"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilReceiverAddress"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:inputType="textPostalAddress" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:hint="@string/delivery_adress"
+                app:boxStrokeColor="@color/primary_color"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/btnUseGps">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etAddress"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPostalAddress" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <ImageButton
+                android:id="@+id/btnUseGps"
+                android:layout_width="56dp"
+                android:layout_height="0dp"
+                android:background="?attr/selectableItemBackground"
+                android:contentDescription="@string/pick_up_icon"
+                android:src="@drawable/ic_location"
+                android:padding="8dp"
+                android:layout_marginStart="8dp"
+                app:layout_constraintTop_toTopOf="@id/tilReceiverAddress"
+                app:layout_constraintBottom_toBottomOf="@id/tilReceiverAddress"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:tint="@color/primary_color" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
 
         <!-- MAPA -->
-        <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/mapFragment"
-            android:name="com.google.android.gms.maps.SupportMapFragment"
+        <com.google.android.gms.maps.MapView
+            android:id="@+id/mapView"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            tools:ignore="FragmentTagUsage" />
+            android:layout_height="200dp" />
 
 
         <!-- SECCIÓN RECOGIDA Y PRECIO -->
