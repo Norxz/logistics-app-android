@@ -27,18 +27,19 @@ import co.edu.unipiloto.myapplication.rest.PaqueteRequest
 import co.edu.unipiloto.myapplication.rest.RetrofitClient
 import co.edu.unipiloto.myapplication.rest.SolicitudRequest
 import co.edu.unipiloto.myapplication.storage.SessionManager
+import co.edu.unipiloto.myapplication.utils.LocationHelper
+import com.google.android.gms.maps.GoogleMap
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 // -----------------------------
-import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.MarkerOptions
 
-// Removed 'GoogleMap.OnMapClickListener' interface
 class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
 
     // Remitente
@@ -74,12 +75,15 @@ class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var btnSend: View
     private lateinit var sessionManager: SessionManager // 👈 Added Session Manager
 
-    private var googleMap: GoogleMap? = null
     private var selectedLat: Double? = null
     private var selectedLon: Double? = null
 
+    private lateinit var locationHelper: LocationHelper
+
+
     companion object {
         const val REQUEST_MAP = 1001
+        const val LOCATION_PERMISSION_REQUEST = 2001
     }
 
     // Retained launcher for compatibility, though MapActivity launch is removed
@@ -97,7 +101,6 @@ class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
                 etReceiverAddress.setText(address)
 
                 Toast.makeText(this, "Ubicación seleccionada", Toast.LENGTH_SHORT).show()
-                updateMapLocation() // Update the map with the new location
             }
         }
 
@@ -105,13 +108,32 @@ class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_solicitud)
 
-        sessionManager = SessionManager(this) // 👈 Initialize Session Manager
+        sessionManager = SessionManager(this)
 
         initViews()
         setupSpinners()
         setupEndIcons()
         setupListeners()
-        setupMap()
+
+        // Inicializar LocationHelper
+        val mapFragment =
+            supportFragmentManager.findFragmentById(R.id.mapFragment) as? SupportMapFragment
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        locationHelper = LocationHelper(
+            this,
+            fusedLocationClient,
+            mapFragment
+        ) { lat, lon ->
+            selectedLat = lat
+            selectedLon = lon
+            Toast.makeText(this, "Ubicación obtenida: $lat, $lon", Toast.LENGTH_SHORT).show()
+        }
+
+        // Solicitar permisos y obtener ubicación
+
+        // Pedir permisos y obtener ubicación
+        locationHelper.checkLocationPermission(LOCATION_PERMISSION_REQUEST)
     }
 
     private fun initViews() {
@@ -217,7 +239,7 @@ class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
                             Toast.LENGTH_SHORT
                         ).show()
 
-                        updateMapLocation()
+                        locationHelper.updateMapLocation()
                     } else {
                         Toast.makeText(
                             this,
@@ -363,11 +385,18 @@ class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
 
                             val usuarioEmail = sessionManager.getUserEmail()
                             if (usuarioEmail.isNullOrEmpty()) {
-                                Toast.makeText(this@SolicitudActivity, "No hay email en sesión. Por favor inicia sesión primero.", Toast.LENGTH_LONG).show()
+                                Toast.makeText(
+                                    this@SolicitudActivity,
+                                    "No hay email en sesión. Por favor inicia sesión primero.",
+                                    Toast.LENGTH_LONG
+                                ).show()
                                 return
                             }
 
-                            val intent = Intent(this@SolicitudActivity, GuideConfirmationActivity::class.java)
+                            val intent = Intent(
+                                this@SolicitudActivity,
+                                GuideConfirmationActivity::class.java
+                            )
                             intent.putExtra("solicitudId", response.body()?.id)
                             intent.putExtra("usuarioEmail", usuarioEmail)
                             startActivity(intent)
@@ -399,33 +428,50 @@ class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun setupMap() {
-        val mapFragment =
-            supportFragmentManager.findFragmentById(R.id.mapFragment) as? SupportMapFragment
-        mapFragment?.getMapAsync(this)
-    }
+    private fun Double.format(digits: Int) = "%.${digits}f".format(this)
 
-    override fun onMapReady(map: GoogleMap) {
-        googleMap = map
-        googleMap?.uiSettings?.isMapToolbarEnabled = false
-        googleMap?.uiSettings?.isZoomControlsEnabled = true
-
-
-        val defaultLocation = LatLng(4.7110, -74.0721)
-        googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 10f))
-    }
-
-    private fun updateMapLocation() {
-        googleMap?.clear()
-        selectedLat?.let { lat ->
-            selectedLon?.let { lon ->
-                val location = LatLng(lat, lon)
-                googleMap?.addMarker(MarkerOptions().position(location).title("Destino"))
-                // Zoom in after finding coordinates
-                googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
+    fun geocodeAddress(
+        address: String,
+        onResult: (lat: Double, lon: Double, formattedAddress: String) -> Unit
+    ) {
+        Thread {
+            try {
+                val geocoder = Geocoder(this, Locale.getDefault())
+                val addresses = geocoder.getFromLocationName(address, 1)
+                if (addresses != null && addresses.isNotEmpty()) {
+                    val firstAddress = addresses[0]
+                    val lat = firstAddress.latitude
+                    val lon = firstAddress.longitude
+                    val formatted = firstAddress.getAddressLine(0) ?: address
+                    Handler(Looper.getMainLooper()).post {
+                        onResult(lat, lon, formatted)
+                    }
+                } else {
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(this, "Dirección no encontrada", Toast.LENGTH_LONG).show()
+                    }
+                }
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post {
+                    Toast.makeText(this, "Error al geocodificar", Toast.LENGTH_LONG).show()
+                    Log.e("SolicitudActivity", e.message ?: "Geocode error")
+                }
             }
+        }.start()
+    }
+
+    override fun onMapReady(googleMap: GoogleMap) {
+        if (selectedLat != null && selectedLon != null) {
+            val initialLatLng = LatLng(selectedLat!!, selectedLon!!)
+            googleMap.addMarker(
+                MarkerOptions()
+                    .position(initialLatLng)
+                    .title("Destino")
+            )
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, 15f))
+        } else {
+            Toast.makeText(this, "Ubicación no definida", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun Double.format(digits: Int) = "%.${digits}f".format(this)
 }
