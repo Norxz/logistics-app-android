@@ -360,13 +360,18 @@ class SolicitudActivity : AppCompatActivity(), OnMapReadyCallback {
                                 "¡Solicitud enviada (Guía #${response.body()?.id})!",
                                 Toast.LENGTH_LONG
                             ).show()
-                            val intent =
-                                Intent(this@SolicitudActivity, GuideConfirmationActivity::class.java)
-                            intent.putExtra(
-                                "solicitudId",
-                                response.body()?.id
-                            )
+
+                            val usuarioEmail = sessionManager.getUserEmail()
+                            if (usuarioEmail.isNullOrEmpty()) {
+                                Toast.makeText(this@SolicitudActivity, "No hay email en sesión. Por favor inicia sesión primero.", Toast.LENGTH_LONG).show()
+                                return
+                            }
+
+                            val intent = Intent(this@SolicitudActivity, GuideConfirmationActivity::class.java)
+                            intent.putExtra("solicitudId", response.body()?.id)
+                            intent.putExtra("usuarioEmail", usuarioEmail)
                             startActivity(intent)
+
 
                             finish()
                         } else {

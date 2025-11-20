@@ -120,19 +120,15 @@ class LoginActivity : AppCompatActivity() {
 
                 if (response.isSuccessful && response.body() != null) {
                     val userData = response.body()!!
-                    // 3. Autenticación exitosa. Crear sesión.
+
                     sessionManager.createLoginSession(
                         userId = userData.id,
                         role = userData.role,
                         zona = userData.sucursal,
-                        name = userData.fullName
+                        name = userData.fullName,
+                        email = userData.email
                     )
-                    Toast.makeText(
-                        this@LoginActivity,
-                        "Bienvenido, ${userData.fullName}!",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    // 4. Navegar llamando a la función de la Activity
+
                     navigateToDashboard(userData.role)
                 } else {
                     // 4. Autenticación fallida (401 Unauthorized, 409 Conflict, etc.)
@@ -148,7 +144,8 @@ class LoginActivity : AppCompatActivity() {
             override fun onFailure(call: Call<User>, t: Throwable) {
                 // Manejo de fallos de red o servidor no disponible
                 Log.e("Login", "Error de conexión al servidor: ${t.message}")
-                Toast.makeText(this@LoginActivity, "Fallo de red: ${t.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@LoginActivity, "Fallo de red: ${t.message}", Toast.LENGTH_LONG)
+                    .show()
             }
         })
     }

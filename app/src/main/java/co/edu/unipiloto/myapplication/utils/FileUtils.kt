@@ -31,4 +31,13 @@ object FileUtils {
 
         context.startActivity(intent)
     }
+
+    fun getUriForFile(context: Context, file: File): Uri {
+        return FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+    }
+
 }
