@@ -10,11 +10,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.rest.RetrofitClient
+import co.edu.unipiloto.myapplication.storage.SessionManager
 import co.edu.unipiloto.myapplication.utils.FileUtils
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 
 /**
@@ -22,28 +24,41 @@ import kotlinx.coroutines.withContext
  */
 class GuideConfirmationActivity : AppCompatActivity() {
 
+    private lateinit var sessionManager: SessionManager
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_guide)
 
+        sessionManager = SessionManager(this)
+
+        val usuarioEmail = intent.getStringExtra("usuarioEmail")
+        if (usuarioEmail.isNullOrEmpty()) {
+            Toast.makeText(this, "No se recibió el email del usuario", Toast.LENGTH_LONG).show()
+            return
+        }
+
         val solicitudId = intent.getLongExtra("solicitudId", -1L)
 
         initViews()
-        setupListeners(solicitudId)
+        setupListeners(solicitudId, usuarioEmail)
     }
 
     private fun initViews() {
-        // Se asume que tvStatusTitle y tvStatusMessage se actualizan dinámicamente
         findViewById<TextView>(R.id.tvStatusTitle).text = getString(R.string.guide_title_text)
         findViewById<TextView>(R.id.tvStatusMessage).text = getString(R.string.guide_description)
     }
 
-    private fun setupListeners(solicitudId: Long) {
+    private fun setupListeners(solicitudId: Long, usuarioEmail: String) {
         findViewById<MaterialButton>(R.id.btnGenerateAndSend).setOnClickListener {
-            // 💡 FUTURA IMPLEMENTACIÓN REST:
-            // Aquí llamarías a un endpoint: POST /api/v1/guide/send/{solicitudId}
-            Toast.makeText(this, "Generando y Enviando Guía $solicitudId...", Toast.LENGTH_SHORT)
-                .show()
+            Log.d("DEBUG_BTN", "SolicitudId: $solicitudId, UsuarioEmail: '$usuarioEmail'")
+            if (solicitudId != -1L && usuarioEmail.isNotEmpty()) {
+                downloadAndSendGuidePdf(solicitudId, usuarioEmail)
+            } else {
+                Toast.makeText(this, "ID de solicitud o correo no válido", Toast.LENGTH_SHORT)
+                    .show()
+            }
         }
 
         findViewById<MaterialButton>(R.id.btnGenerateGuide).setOnClickListener {
@@ -55,13 +70,13 @@ class GuideConfirmationActivity : AppCompatActivity() {
         }
 
         findViewById<MaterialButton>(R.id.btnBack).setOnClickListener {
-            // Regresar al dashboard principal
             val intent = Intent(this, MainActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
             startActivity(intent)
             finish()
         }
     }
+
 
     private fun downloadGuidePdf(solicitudId: Long) {
         lifecycleScope.launch {
@@ -108,6 +123,74 @@ class GuideConfirmationActivity : AppCompatActivity() {
                     Toast.LENGTH_LONG
                 ).show()
             }
+        }
+    }
+
+    private fun downloadAndSendGuidePdf(solicitudId: Long, usuarioEmail: String) {
+        lifecycleScope.launch {
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.apiService.downloadGuidePdf(solicitudId)
+                }
+
+                if (response.isSuccessful && response.body() != null) {
+
+                    val pdfFile = withContext(Dispatchers.IO) {
+                        val inputStream = response.body()!!.byteStream()
+                        FileUtils.savePdfToExternalFile(
+                            this@GuideConfirmationActivity,
+                            inputStream,
+                            "guia_solicitud_$solicitudId.pdf"
+                        )
+                    }
+
+                    try {
+                        FileUtils.openPdf(this@GuideConfirmationActivity, pdfFile)
+                    } catch (_: ActivityNotFoundException) {
+                        Toast.makeText(
+                            this@GuideConfirmationActivity,
+                            "No hay visor de PDF instalado.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+
+                    sendPdfByEmail(pdfFile, usuarioEmail)
+
+                } else {
+                    Toast.makeText(
+                        this@GuideConfirmationActivity,
+                        "Error al descargar PDF",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+
+            } catch (e: Exception) {
+                Log.e("PDF_ERROR", "Error descargando PDF", e)
+                Toast.makeText(
+                    this@GuideConfirmationActivity,
+                    "Error descargando PDF (ver LogCat)",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+
+    private fun sendPdfByEmail(pdfFile: File, usuarioEmail: String) {
+        val uri = FileUtils.getUriForFile(this, pdfFile)
+
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "application/pdf"
+            putExtra(Intent.EXTRA_EMAIL, arrayOf(usuarioEmail))
+            putExtra(Intent.EXTRA_SUBJECT, "Guía de Solicitud")
+            putExtra(Intent.EXTRA_TEXT, "Adjunto encontrarás la guía de la solicitud.")
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        try {
+            startActivity(Intent.createChooser(intent, "Enviar PDF por correo"))
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(this, "No hay app de correo instalada", Toast.LENGTH_SHORT).show()
         }
     }
 }

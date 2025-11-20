@@ -15,9 +15,12 @@ class SessionManager(context: Context) {
     private val KEY_USER_ID = "userId"
     private val KEY_ROLE = "role"
     private val KEY_ZONA = "zona"
-    private val KEY_NAME = "name" // <-- CLAVE AÑADIDA PARA EL NOMBRE
+    private val KEY_NAME = "name"
 
-    private val pref: SharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+    private val KEY_EMAIL = "USER_EMAIL"
+
+    private val pref: SharedPreferences =
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
     private val editor: SharedPreferences.Editor = pref.edit()
 
     /**
@@ -28,12 +31,13 @@ class SessionManager(context: Context) {
      * @param zona La zona asignada.
      * @param name El nombre visible del usuario. // <-- PARÁMETRO AÑADIDO
      */
-    fun createLoginSession(userId: Long, role: String, zona: String?, name: String) {
+    fun createLoginSession(userId: Long, role: String, zona: String?, name: String, email: String) {
         editor.putBoolean(KEY_IS_LOGGED_IN, true)
         editor.putLong(KEY_USER_ID, userId)
         editor.putString(KEY_ROLE, role)
         editor.putString(KEY_ZONA, zona)
-        editor.putString(KEY_NAME, name) // <-- GUARDAR EL NOMBRE
+        editor.putString(KEY_NAME, name)
+        editor.putString(KEY_EMAIL, email)
         editor.apply()
     }
 
@@ -79,5 +83,14 @@ class SessionManager(context: Context) {
      */
     fun getZona(): String? {
         return pref.getString(KEY_ZONA, null)
+    }
+
+    fun saveUserEmail(email: String) {
+        editor.putString("USER_EMAIL", email)
+        editor.apply()
+    }
+
+    fun getUserEmail(): String? {
+        return pref.getString("USER_EMAIL", null)
     }
 }
