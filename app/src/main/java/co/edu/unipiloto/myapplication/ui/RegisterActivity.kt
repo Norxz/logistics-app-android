@@ -12,14 +12,14 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.security.PasswordHasher // 🏆 IMPORTANTE: Se mantiene para el HASH local
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import co.edu.unipiloto.myapplication.rest.RetrofitClient
 import co.edu.unipiloto.myapplication.rest.RegisterRequest
-import co.edu.unipiloto.myapplication.models.User
+import co.edu.unipiloto.myapplication.model.User
+import co.edu.unipiloto.myapplication.model.Sucursal
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -55,13 +55,12 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
 
     // --- DATOS Y UTILIDADES ---
-    // ❌ ELIMINADA: private lateinit var userRepository: UserRepository
     private lateinit var sessionManager: SessionManager
 
     // Roles que requieren selección de Zona
     private val ROLES_LOGISTICOS = listOf("CONDUCTOR", "GESTOR", "FUNCIONARIO", "ANALISTA")
     private val ADMIN_REGISTERABLE_ROLES = listOf(ROL_CLIENTE) + ROLES_LOGISTICOS.distinct()
-    private val SUCURSALES_DISPONIBLES = listOf("Bogotá - Norte", "Bogotá - Sur", "Bogotá - Occidente")
+    private lateinit var sucursalesList: List<Sucursal>
     private val PASSWORD_BLACKLIST =
         listOf("password", "123456", "qwerty", "admin", "unipiloto", "piloto")
 
@@ -125,10 +124,11 @@ class RegisterActivity : AppCompatActivity() {
         rolAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spRol.adapter = rolAdapter
 
-        val zonaAdapter =
-            ArrayAdapter(this, android.R.layout.simple_spinner_item, SUCURSALES_DISPONIBLES)
-        zonaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spZona.adapter = zonaAdapter
+        val emptyAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, arrayListOf<String>())
+        emptyAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spZona.adapter = emptyAdapter
+
+        loadSucursalesFromServer()
 
         if (isAdminRegister) {
             spRol.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -186,14 +186,18 @@ class RegisterActivity : AppCompatActivity() {
         // 1. VALIDACIÓN
         if (!validateFieldsAndPassword(fullName, phoneNumber, email, password, password2, role, zona)) return
 
+        val sucursalId = if (spZona.visibility == View.VISIBLE) {
+            sucursalesList[spZona.selectedItemPosition].id
+        } else null
+
         // 2. 🌟 CREAR REQUEST DTO para el Backend 🌟
         val registerRequest = RegisterRequest(
             fullName = fullName,
             email = email,
-            password = password, // Enviamos texto plano para que el servidor lo hashee
+            password = password,
             phoneNumber = phoneNumber,
             role = role,
-            sucursal = if (role != ROL_CLIENTE) zona else null, // Solo enviamos zona si es logístico
+            sucursalId = sucursalId,  // ✔ AHORA SÍ COINCIDE CON EL BACKEND
             isActive = true
         )
 
@@ -313,5 +317,37 @@ class RegisterActivity : AppCompatActivity() {
 
     private fun isValidEmail(target: CharSequence): Boolean {
         return android.util.Patterns.EMAIL_ADDRESS.matcher(target).matches()
+    }
+
+    private fun loadSucursalesFromServer() {
+        RetrofitClient.apiService.getSucursales().enqueue(object : Callback<List<Sucursal>> {
+            override fun onResponse(
+                call: Call<List<Sucursal>>,
+                response: Response<List<Sucursal>>
+            ) {
+                if (response.isSuccessful && response.body() != null) {
+
+                    sucursalesList = response.body()!!
+
+                    // Construimos "Ciudad - Nombre"
+                    val sucursales = sucursalesList.map { s ->
+                        "${s.direccion?.ciudad ?: "Ciudad desconocida"} - ${s.nombre}"
+                    }
+
+                    val adapter = ArrayAdapter(
+                        this@RegisterActivity,
+                        android.R.layout.simple_spinner_item,
+                        sucursales
+                    )
+
+                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                    spZona.adapter = adapter
+                }
+            }
+
+            override fun onFailure(call: Call<List<Sucursal>>, t: Throwable) {
+                Toast.makeText(this@RegisterActivity, "Error al cargar sucursales", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 }

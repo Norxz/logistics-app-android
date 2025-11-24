@@ -7,7 +7,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R // Asegúrate de que esta importación sea correcta para R
-import co.edu.unipiloto.myapplication.models.Request
+import co.edu.unipiloto.myapplication.model.Request
 import com.google.android.material.button.MaterialButton
 import java.text.SimpleDateFormat
 import java.util.Locale

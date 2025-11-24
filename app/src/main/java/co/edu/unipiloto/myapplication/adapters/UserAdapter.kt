@@ -8,7 +8,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.models.User
+import co.edu.unipiloto.myapplication.model.User
 
 /**
  * Adaptador para mostrar la lista de usuarios logísticos en el RecyclerView.
@@ -31,11 +31,10 @@ class UserAdapter(
         fun bind(user: User) {
             tvUserName.text = user.fullName
 
-            // Mostrar Rol y Sucursal (usando el nuevo ID tvUserRoleZone)
-            val roleSucursal = if (user.sucursal.isNullOrBlank()) {
+            val roleSucursal = if (user.sucursal == null) {
                 user.role
             } else {
-                "${user.role} | Zona: ${user.sucursal}"
+                "${user.role} | Zona: ${user.sucursal.nombre}"
             }
             tvUserRoleZone.text = roleSucursal
 

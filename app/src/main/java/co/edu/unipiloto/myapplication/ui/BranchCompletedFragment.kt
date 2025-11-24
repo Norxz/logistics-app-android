@@ -13,7 +13,7 @@ import co.edu.unipiloto.myapplication.R
 // Importamos el adaptador genérico que hemos desarrollado
 import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter
 // Importamos el modelo de datos para la inferencia de tipo
-import co.edu.unipiloto.myapplication.models.Solicitud // DTO de Respuesta
+import co.edu.unipiloto.myapplication.model.Solicitud // DTO de Respuesta
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import co.edu.unipiloto.myapplication.rest.RetrofitClient // 👈 NUEVO
 import retrofit2.Call

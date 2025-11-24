@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.models.LogisticUser // Asegúrate de que este modelo exista
+import co.edu.unipiloto.myapplication.model.LogisticUser // Asegúrate de que este modelo exista
 
 /**
  * Adaptador para mostrar la lista de usuarios logísticos en el RecyclerView.

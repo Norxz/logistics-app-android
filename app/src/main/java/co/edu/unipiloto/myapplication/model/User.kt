@@ -1,4 +1,4 @@
-package co.edu.unipiloto.myapplication.models
+package co.edu.unipiloto.myapplication.model
 
 /**
  * DTO utilizado para enviar datos del usuario al cliente (Android/Postman)
@@ -10,7 +10,7 @@ data class User(
     val email: String,
     val phoneNumber: String?,
     val role: String,
-    val sucursal: String?,
+    val sucursal: Sucursal?,
     val isActive: Boolean
 ) {
 

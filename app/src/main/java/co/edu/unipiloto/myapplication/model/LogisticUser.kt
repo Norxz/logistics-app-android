@@ -1,4 +1,4 @@
-package co.edu.unipiloto.myapplication.models
+package co.edu.unipiloto.myapplication.model
 
 /**
  * Modelo de datos para representar a un usuario del personal logístico.

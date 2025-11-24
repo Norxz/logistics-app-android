@@ -13,7 +13,7 @@ import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.button.MaterialButton
 import co.edu.unipiloto.myapplication.rest.RetrofitClient // Cliente Retrofit
 import co.edu.unipiloto.myapplication.rest.LoginRequest // DTO de Request
-import co.edu.unipiloto.myapplication.models.User // DTO de Response
+import co.edu.unipiloto.myapplication.model.User // DTO de Response
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -131,7 +131,7 @@ class LoginActivity : AppCompatActivity() {
                     sessionManager.createLoginSession(
                         userId = userData.id,
                         role = userData.role,
-                        zona = userData.sucursal,
+                        zona = userData.sucursal?.nombre,
                         name = userData.fullName,
                         email = userData.email
                     )
