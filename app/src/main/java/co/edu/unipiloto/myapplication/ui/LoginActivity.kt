@@ -3,6 +3,7 @@ package co.edu.unipiloto.myapplication.ui
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import co.edu.unipiloto.myapplication.R
@@ -33,6 +34,8 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var btnGoRegister: MaterialButton
     private lateinit var btnForgotPassword: MaterialButton
 
+    private var targetRole: String = "CLIENTE"
+
     // Repositorios y Gestores
     private lateinit var sessionManager: SessionManager
 
@@ -51,6 +54,10 @@ class LoginActivity : AppCompatActivity() {
             navigateToDashboard(sessionManager.getRole())
             return
         }
+
+        targetRole = intent.getStringExtra("TARGET_ROLE") ?: "CLIENTE"
+
+        configureRegisterButton()
 
         // 4. Configurar Listeners
         setupListeners()
@@ -171,4 +178,13 @@ class LoginActivity : AppCompatActivity() {
         startActivity(intent)
         finish()
     }
+
+    private fun configureRegisterButton() {
+        if (targetRole.uppercase() == "CLIENTE") {
+            btnGoRegister.visibility = View.VISIBLE
+        } else {
+            btnGoRegister.visibility = View.GONE
+        }
+    }
+
 }
