@@ -2,18 +2,16 @@ package co.edu.unipiloto.myapplication.ui
 
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-// 🌟 IMPORTS FOR GEOCODING
-import android.location.Geocoder
-import android.os.Handler
-import android.os.Looper
-import java.util.Locale
 // -----------------------------
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -27,13 +25,12 @@ import co.edu.unipiloto.myapplication.rest.RetrofitClient
 import co.edu.unipiloto.myapplication.rest.SolicitudRequest
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import co.edu.unipiloto.myapplication.utils.LocationHelper
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 // -----------------------------
 import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.model.LatLng
 
 class SolicitudActivity : AppCompatActivity() {
 
@@ -71,6 +68,11 @@ class SolicitudActivity : AppCompatActivity() {
     private lateinit var btnUseGps: ImageButton
     private lateinit var sessionManager: SessionManager
 
+    // Ubicación del recolector
+    private var recolectorLat: Double? = null
+    private var recolectorLon: Double? = null
+
+    // Ubicación del destinatario
     private var selectedLat: Double? = null
     private var selectedLon: Double? = null
 
@@ -107,37 +109,57 @@ class SolicitudActivity : AppCompatActivity() {
         val mapView = findViewById<MapView>(R.id.mapView)
         mapView.onCreate(null)
 
-        etReceiverAddress.setText("")
-
-        locationHelper = LocationHelper(
-            this,
-            mapView
-        ) { address, lat, lon ->
-            etReceiverAddress.setText(address)
+        locationHelper = LocationHelper(this, mapView) { address, lat, lon ->
             selectedLat = lat
             selectedLon = lon
         }
 
-        btnUseGps.setOnClickListener {
-            locationHelper.getCurrentLocation { address, lat, lon ->
-                etReceiverAddress.setText(address)
-                selectedLat = lat
-                selectedLon = lon
-            }
-        }
-
-
-
+        // Listener para el EditText
         etReceiverAddress.setOnEditorActionListener { _, actionId, event ->
-            val isEnter = actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH ||
-                    (event?.keyCode == android.view.KeyEvent.KEYCODE_ENTER &&
-                            event.action == android.view.KeyEvent.ACTION_DOWN)
+            val isSearch = actionId == EditorInfo.IME_ACTION_SEARCH ||
+                    (event?.keyCode == KeyEvent.KEYCODE_ENTER &&
+                            event.action == KeyEvent.ACTION_DOWN)
 
-            if (isEnter) {
+            if (isSearch) {
                 val query = etReceiverAddress.text.toString().trim()
-                if (query.isNotEmpty()) locationHelper.searchAddress(query)
+                if (query.isNotEmpty()) {
+                    locationHelper.getRouteToAddress(query) { startLat, startLon, endLat, endLon ->
+                        recolectorLat = startLat
+                        recolectorLon = startLon
+                        selectedLat = endLat
+                        selectedLon = endLon
+
+                        locationHelper.drawRoute(
+                            LatLng(startLat, startLon),
+                            LatLng(endLat, endLon)
+                        )
+
+                        etReceiverAddress.setText("Destino listo")
+                    }
+                } else {
+                    Toast.makeText(this, "Ingrese una dirección primero", Toast.LENGTH_SHORT).show()
+                }
                 true
             } else false
+        }
+
+        btnUseGps.setOnClickListener {
+            val addressText = etReceiverAddress.text.toString().trim()
+            if (addressText.isNotEmpty()) {
+                locationHelper.getRouteToAddress(addressText) { startLat, startLon, endLat, endLon ->
+                    recolectorLat = startLat
+                    recolectorLon = startLon
+                    selectedLat = endLat
+                    selectedLon = endLon
+
+                    locationHelper.drawRoute(
+                        LatLng(startLat, startLon),
+                        LatLng(endLat, endLon)
+                    )
+                }
+            } else {
+                Toast.makeText(this, "Ingrese una dirección primero", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -386,33 +408,28 @@ class SolicitudActivity : AppCompatActivity() {
 
     private fun Double.format(digits: Int) = "%.${digits}f".format(this)
 
-    fun geocodeAddress(
-        address: String,
-        onResult: (lat: Double, lon: Double, formattedAddress: String) -> Unit
+    private fun tryOpenRoute() {
+        if (recolectorLat != null && recolectorLon != null &&
+            selectedLat != null && selectedLon != null
+        ) {
+            locationHelper.drawRoute(
+                LatLng(recolectorLat!!, recolectorLon!!),
+                LatLng(selectedLat!!, selectedLon!!)
+            )
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
     ) {
-        Thread {
-            try {
-                val geocoder = Geocoder(this, Locale.getDefault())
-                val addresses = geocoder.getFromLocationName(address, 1)
-                if (addresses != null && addresses.isNotEmpty()) {
-                    val firstAddress = addresses[0]
-                    val lat = firstAddress.latitude
-                    val lon = firstAddress.longitude
-                    val formatted = firstAddress.getAddressLine(0) ?: address
-                    Handler(Looper.getMainLooper()).post {
-                        onResult(lat, lon, formatted)
-                    }
-                } else {
-                    Handler(Looper.getMainLooper()).post {
-                        Toast.makeText(this, "Dirección no encontrada", Toast.LENGTH_LONG).show()
-                    }
-                }
-            } catch (e: Exception) {
-                Handler(Looper.getMainLooper()).post {
-                    Toast.makeText(this, "Error al geocodificar", Toast.LENGTH_LONG).show()
-                    Log.e("SolicitudActivity", e.message ?: "Geocode error")
-                }
-            }
-        }.start()
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LocationHelper.PERMISSION_CODE &&
+            grantResults.isNotEmpty() &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED
+        ) {
+            Toast.makeText(this, "Permiso de ubicación concedido", Toast.LENGTH_SHORT).show()
+        }
     }
 }
