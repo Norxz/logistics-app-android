@@ -5,7 +5,7 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import co.edu.unipiloto.myapplication.R
 // ❌ ELIMINAR: import co.edu.unipiloto.myapplication.db.UserRepository
-import co.edu.unipiloto.myapplication.models.LogisticUser // Modelo de datos
+import co.edu.unipiloto.myapplication.model.LogisticUser // Modelo de datos
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import co.edu.unipiloto.myapplication.rest.RetrofitClient // 👈 NUEVO: Cliente REST

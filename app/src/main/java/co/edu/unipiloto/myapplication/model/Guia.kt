@@ -1,4 +1,4 @@
-package co.edu.unipiloto.myapplication.models
+package co.edu.unipiloto.myapplication.model
 
 data class Guia(
     val numeroGuia: String,

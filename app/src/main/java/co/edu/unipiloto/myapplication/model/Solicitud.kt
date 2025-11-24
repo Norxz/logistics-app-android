@@ -1,4 +1,4 @@
-package co.edu.unipiloto.myapplication.models
+package co.edu.unipiloto.myapplication.model
 
 import java.io.Serializable // Recommended for models used in intents
 

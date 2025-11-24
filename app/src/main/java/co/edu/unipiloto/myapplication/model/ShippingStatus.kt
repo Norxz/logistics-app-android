@@ -1,6 +1,4 @@
-package co.edu.unipiloto.myapplication.models
-
-import com.google.gson.annotations.SerializedName
+package co.edu.unipiloto.myapplication.model
 
 /**
  * Modelo de datos para mostrar el estado de seguimiento (Tracking) en la UI.

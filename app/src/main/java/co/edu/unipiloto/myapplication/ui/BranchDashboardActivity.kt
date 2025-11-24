@@ -4,16 +4,14 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageButton
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter // 👈 Necesario
-import co.edu.unipiloto.myapplication.models.Solicitud // 👈 Modelo de Respuesta REST
+import co.edu.unipiloto.myapplication.model.Solicitud // 👈 Modelo de Respuesta REST
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import com.google.android.material.button.MaterialButton
-import co.edu.unipiloto.myapplication.rest.RetrofitClient // 👈 Cliente REST
 
 /**
  * Activity para el Dashboard del Funcionario de Sucursal.

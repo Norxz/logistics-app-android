@@ -1,7 +1,7 @@
 package co.edu.unipiloto.myapplication.service
 
 
-import co.edu.unipiloto.myapplication.models.*
+import co.edu.unipiloto.myapplication.model.*
 import co.edu.unipiloto.myapplication.rest.* // Importa tus DTOs
 import retrofit2.Call
 import retrofit2.http.*
@@ -94,4 +94,16 @@ interface ApiService {
     @GET("api/v1/guia/{id}")
     suspend fun getGuiaInfo(@Path("id") solicitudId: Long): Response<GuiaResponse>
 
+    @GET("api/v1/sucursales")
+    fun getSucursales(): Call<List<Sucursal>>
+
+    @GET("solicitudes/sucursal/{id}")
+    fun getSolicitudesBySucursal(
+        @Path("id") sucursalId: Long
+    ): Call<List<Solicitud>>
+
+    @GET("users/recolectores/disponible/{sucursalId}")
+    fun getAvailableDriverBySucursal(
+        @Path("sucursalId") sucursalId: Long
+    ): Call<LogisticUser>
 }

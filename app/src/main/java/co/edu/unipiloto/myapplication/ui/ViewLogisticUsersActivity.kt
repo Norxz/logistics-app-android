@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.adapters.LogisticUserAdapter
-import co.edu.unipiloto.myapplication.models.LogisticUser
+import co.edu.unipiloto.myapplication.model.LogisticUser
 import co.edu.unipiloto.myapplication.rest.RetrofitClient // 👈 Cliente REST
 import com.google.android.material.button.MaterialButton
 import retrofit2.Call

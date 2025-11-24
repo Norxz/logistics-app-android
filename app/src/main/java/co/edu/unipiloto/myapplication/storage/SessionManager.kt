@@ -93,4 +93,13 @@ class SessionManager(context: Context) {
     fun getUserEmail(): String? {
         return pref.getString("USER_EMAIL", null)
     }
+
+    fun getSucursalId(): Long? {
+        return pref.getLong("sucursal_id", -1).takeIf { it != -1L }
+    }
+
+    fun saveSucursalId(id: Long) {
+        pref.edit().putLong("sucursal_id", id).apply()
+    }
+
 }

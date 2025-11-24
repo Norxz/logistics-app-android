@@ -18,7 +18,7 @@ import java.util.Locale
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.models.Solicitud
+import co.edu.unipiloto.myapplication.model.Solicitud
 import co.edu.unipiloto.myapplication.rest.ClienteRequest
 // 🌟 IMPORTS FOR API SUBMISSION
 import co.edu.unipiloto.myapplication.rest.DireccionRequest
@@ -27,8 +27,6 @@ import co.edu.unipiloto.myapplication.rest.RetrofitClient
 import co.edu.unipiloto.myapplication.rest.SolicitudRequest
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import co.edu.unipiloto.myapplication.utils.LocationHelper
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response

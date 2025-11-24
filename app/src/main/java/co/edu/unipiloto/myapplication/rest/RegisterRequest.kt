@@ -6,6 +6,6 @@ data class RegisterRequest(
     val password: String, // Recibimos la contraseña en texto plano (temporalmente)
     val phoneNumber: String?,
     val role: String,
-    val sucursal: String?,
+    val sucursalId: Long?,
     val isActive: Boolean = true
 )

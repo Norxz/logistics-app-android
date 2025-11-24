@@ -10,8 +10,8 @@
     <string name="background_surface">#F2F2F7</string>
     <string name="branch_dashboard_subtitle">Control de pedidos de tu sucursal</string>
     <string name="branch_dashboard_title">Gestión de Envíos</string>
-    <string name="choose_role">Selecciona tu Rol:</string>
-    <string name="choose_zone">Selecciona tu Zona:</string>
+    <string name="choose_role">Selecciona el rol del empleado:</string>
+    <string name="choose_zone">Selecciona la sucursal del empleado:</string>
     <string name="client_dashboard_title">Bienvenido, Cliente</string>
     <string name="close_session">Cerrar sesión</string>
     <string name="create_account">Crea tu Cuenta</string>

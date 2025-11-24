@@ -10,9 +10,8 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.models.Solicitud // Assuming Solicitud is updated
+import co.edu.unipiloto.myapplication.model.Solicitud // Assuming Solicitud is updated
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
