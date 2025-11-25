@@ -111,9 +111,9 @@ class ViewLogisticUsersActivity : AppCompatActivity() {
     private fun handleDeleteUserClick(user: LogisticUser) {
         AlertDialog.Builder(this)
             .setTitle("Confirmar Eliminación")
-            .setMessage("¿Estás seguro de que deseas eliminar a ${user.name}? Esta acción es permanente y eliminará también el usuario asociado.")
+            .setMessage("¿Estás seguro de que deseas eliminar a ${user.fullName}? Esta acción es permanente y eliminará también el usuario asociado.")
             .setPositiveButton("Eliminar") { dialog, which ->
-                deleteUserFromRest(user.userId, user.name) // Use the user FK (userId) if that's what the endpoint expects
+                deleteUserFromRest(user.userId, user.fullName) // Use the user FK (userId) if that's what the endpoint expects
             }
             .setNegativeButton("Cancelar", null)
             .show()

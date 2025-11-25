@@ -110,7 +110,7 @@ class LogisticUserManagementActivity : AppCompatActivity() {
         val lowerCaseQuery = query.lowercase()
         val filteredList = allUsers.filter { user ->
             user.email.lowercase().contains(lowerCaseQuery) ||
-                    user.name.lowercase().contains(lowerCaseQuery) ||
+                    user.fullName.lowercase().contains(lowerCaseQuery) ||
                     user.role.lowercase().contains(lowerCaseQuery)
         }
         userAdapter.submitList(filteredList)
@@ -128,9 +128,9 @@ class LogisticUserManagementActivity : AppCompatActivity() {
     private fun confirmAndDeleteUser(user: LogisticUser) {
         AlertDialog.Builder(this)
             .setTitle("Confirmar Eliminación")
-            .setMessage("¿Estás seguro de que deseas eliminar a ${user.name}? Esta acción es permanente.")
+            .setMessage("¿Estás seguro de que deseas eliminar a ${user.fullName}? Esta acción es permanente.")
             .setPositiveButton("Eliminar") { dialog, which ->
-                deleteLogisticUser(user.id, user.name)
+                deleteLogisticUser(user.id, user.fullName)
             }
             .setNegativeButton("Cancelar", null)
             .show()
