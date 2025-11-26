@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import co.edu.unipiloto.myapplication.R
 // ❌ ELIMINAR: import co.edu.unipiloto.myapplication.db.UserRepository
 import co.edu.unipiloto.myapplication.model.LogisticUser // Modelo de datos
+import co.edu.unipiloto.myapplication.model.Sucursal
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import co.edu.unipiloto.myapplication.rest.RetrofitClient // 👈 NUEVO: Cliente REST
@@ -32,7 +33,7 @@ class EditLogisticUserActivity : AppCompatActivity() {
 
     // Opciones (se mantienen)
     private val roles = arrayOf("CONDUCTOR", "FUNCIONARIO", "GESTOR")
-    private val sucursales = arrayOf("Bogotá - Norte", "Bogotá - Sur", "Medellín", "Cali", "Barranquilla", "N/A")
+    private var sucursales: List<Sucursal> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,8 +49,8 @@ class EditLogisticUserActivity : AppCompatActivity() {
         }
 
         initViews()
-        loadUserData() // Ahora asíncrono
-
+        loadUserData()
+        loadSucursales()
     }
 
     private fun initViews() {
@@ -64,63 +65,82 @@ class EditLogisticUserActivity : AppCompatActivity() {
         btnBack = findViewById(R.id.btnBack)
     }
 
+    private fun loadUserData() {
+        RetrofitClient.apiService.getLogisticUserById(recolectorId)
+            .enqueue(object : Callback<LogisticUser> {
+                override fun onResponse(call: Call<LogisticUser>, response: Response<LogisticUser>) {
+                    if (response.isSuccessful && response.body() != null) {
+                        currentUser = response.body()
+                        displayUserData()
+                        if (sucursales.isNotEmpty()) setupSpinners()
+                        setupListeners()
+                    } else {
+                        Toast.makeText(this@EditLogisticUserActivity, "Usuario no encontrado.", Toast.LENGTH_SHORT).show()
+                        finish()
+                    }
+                }
+
+                override fun onFailure(call: Call<LogisticUser>, t: Throwable) {
+                    Toast.makeText(this@EditLogisticUserActivity, "Fallo de red al cargar usuario.", Toast.LENGTH_LONG).show()
+                    finish()
+                }
+            })
+    }
+
     /**
      * Carga los datos del usuario desde el backend REST.
      */
-    private fun loadUserData() {
-        RetrofitClient.apiService.getLogisticUserById(recolectorId).enqueue(object : Callback<LogisticUser> {
-            override fun onResponse(call: Call<LogisticUser>, response: Response<LogisticUser>) {
-                if (response.isSuccessful && response.body() != null) {
-                    currentUser = response.body()
-
-                    // 🏆 FLUJO ASÍNCRONO CORRECTO: Una vez que currentUser está cargado:
-                    displayUserData(currentUser!!)
-                    setupSpinners(currentUser!!) // Inicializa Spinners con data
-                    setupListeners() // Habilita botones de guardar
-
-                } else {
-                    Toast.makeText(this@EditLogisticUserActivity, "Usuario no encontrado en el servidor.", Toast.LENGTH_SHORT).show()
-                    finish()
+    private fun loadSucursales() {
+        RetrofitClient.apiService.getAllSucursales()
+            .enqueue(object : Callback<List<Sucursal>> {
+                override fun onResponse(call: Call<List<Sucursal>>, response: Response<List<Sucursal>>) {
+                    if (response.isSuccessful && response.body() != null) {
+                        sucursales = response.body()!!
+                        if (currentUser != null) setupSpinners()
+                    }
                 }
-            }
 
-            override fun onFailure(call: Call<LogisticUser>, t: Throwable) {
-                Toast.makeText(this@EditLogisticUserActivity, "Fallo de red al cargar usuario.", Toast.LENGTH_LONG).show()
-                finish()
-            }
-        })
+                override fun onFailure(call: Call<List<Sucursal>>, t: Throwable) {
+                    Toast.makeText(this@EditLogisticUserActivity, "Error cargando sucursales.", Toast.LENGTH_LONG).show()
+                }
+            })
     }
 
     /**
      * Muestra los datos obtenidos del backend en la UI.
      */
-    private fun displayUserData(user: LogisticUser) {
-        tvTitle.text = "Editar: ${user.name}"
-        etName.setText(user.name)
+    private fun displayUserData() {
+        val user = currentUser ?: return
+
+        tvTitle.text = "Editar: ${user.fullName}"
+        etName.setText(user.fullName)
         etEmail.setText(user.email)
         etPhone.setText(user.phoneNumber)
         switchActive.isChecked = user.isActive
-
         updateSwitchText(user.isActive)
-        setupSpinners(user) // Llamamos setupSpinners con el usuario cargado
     }
 
     private fun updateSwitchText(isActive: Boolean) {
         switchActive.text = if (isActive) "Estado: Activo" else "Estado: Inactivo"
     }
 
-    private fun setupSpinners(user: LogisticUser) { // Acepta el usuario cargado
-        // Adaptador de Roles
+    private fun setupSpinners() {
+        val user = currentUser ?: return
+
+        // -------- ROLES --------
         val roleAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, roles)
         spinnerRole.adapter = roleAdapter
-        val currentRoleIndex = roles.indexOf(user.role)
-        if (currentRoleIndex != -1) spinnerRole.setSelection(currentRoleIndex)
+        spinnerRole.setSelection(roles.indexOf(user.role))
 
-        // Adaptador de Sucursales
-        val sucursalAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, sucursales)
+        // -------- SUCURSALES --------
+        val sucursalNames = sucursales.map { it.nombre }
+        val sucursalAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, sucursalNames)
         spinnerSucursal.adapter = sucursalAdapter
-        val currentSucursalIndex = sucursales.indexOf(user.sucursal)
-        if (currentSucursalIndex != -1) spinnerSucursal.setSelection(currentSucursalIndex)
+
+        val indexFound = sucursales.indexOfFirst { it.id == user.sucursal?.id }
+        val safeIndex = if (indexFound != -1) indexFound else 0
+
+        spinnerSucursal.setSelection(safeIndex)
     }
 
     private fun setupListeners() {
@@ -149,39 +169,40 @@ class EditLogisticUserActivity : AppCompatActivity() {
         val newEmail = etEmail.text.toString().trim()
         val newPhone = etPhone.text.toString().trim()
         val newRole = spinnerRole.selectedItem.toString()
-        val newSucursal = spinnerSucursal.selectedItem.toString()
+        val newSucursal = sucursales[spinnerSucursal.selectedItemPosition]
         val newIsActive = switchActive.isChecked
 
         if (newName.isEmpty() || newEmail.isEmpty()) {
-            Toast.makeText(this, "El nombre y el email son obligatorios.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Nombre y email obligatorios.", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // 1. Crear la copia del usuario con los datos actualizados
         val updatedUser = user.copy(
-            name = newName,
+            fullName = newName,
             email = newEmail,
             phoneNumber = newPhone,
             role = newRole,
-            sucursal = newSucursal,
+            sucursal = newSucursal,     // <--- ✔ ENVÍO OBJETO COMPLETO
             isActive = newIsActive
         )
 
-        // 2. 🏆 LLAMADA A RETROFIT (PUT)
-        RetrofitClient.apiService.updateLogisticUser(updatedUser.id, updatedUser).enqueue(object : Callback<LogisticUser> {
-            override fun onResponse(call: Call<LogisticUser>, response: Response<LogisticUser>) {
-                if (response.isSuccessful) {
-                    Toast.makeText(this@EditLogisticUserActivity, "Usuario ${newName} actualizado con éxito.", Toast.LENGTH_LONG).show()
-                    setResult(RESULT_OK) // Notificar a la Activity anterior para refrescar
-                    finish()
-                } else {
-                    Toast.makeText(this@EditLogisticUserActivity, "Error al guardar los cambios: ${response.code()}", Toast.LENGTH_LONG).show()
+        RetrofitClient.apiService.updateLogisticUser(updatedUser.id, updatedUser)
+            .enqueue(object : Callback<LogisticUser> {
+                override fun onResponse(
+                    call: Call<LogisticUser>,
+                    response: Response<LogisticUser>
+                ) {
+                    if (response.isSuccessful) {
+                        Toast.makeText(this@EditLogisticUserActivity, "Actualizado con éxito.", Toast.LENGTH_LONG).show()
+                        finish()
+                    } else {
+                        Toast.makeText(this@EditLogisticUserActivity, "Error: ${response.code()}", Toast.LENGTH_LONG).show()
+                    }
                 }
-            }
 
-            override fun onFailure(call: Call<LogisticUser>, t: Throwable) {
-                Toast.makeText(this@EditLogisticUserActivity, "Fallo de red al actualizar usuario.", Toast.LENGTH_LONG).show()
-            }
-        })
+                override fun onFailure(call: Call<LogisticUser>, t: Throwable) {
+                    Toast.makeText(this@EditLogisticUserActivity, "Fallo de red.", Toast.LENGTH_LONG).show()
+                }
+            })
     }
 }

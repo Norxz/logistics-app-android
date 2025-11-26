@@ -44,13 +44,13 @@ class LogisticUserAdapter(
 
         fun bind(user: LogisticUser, onEditClick: (LogisticUser) -> Unit, onDeleteClick: (LogisticUser) -> Unit) {
 
-            tvUserName.text = user.name
+            tvUserName.text = user.fullName
 
             // Construir texto de Rol y Zona (Sucursal)
-            val roleZoneText = if (user.sucursal.isNullOrEmpty() || user.sucursal == "N/A") {
+            val roleZoneText = if (user.sucursal?.nombre.isNullOrEmpty()) {
                 user.role
             } else {
-                "${user.role} | Zona: ${user.sucursal}"
+                "${user.role} - ${user.sucursal?.nombre}"
             }
             tvUserRoleZone.text = roleZoneText
 

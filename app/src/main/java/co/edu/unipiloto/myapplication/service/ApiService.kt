@@ -62,9 +62,6 @@ interface ApiService {
         @Body user: LogisticUser
     ): Call<LogisticUser>
 
-    @GET("api/v1/logistic-users")
-    fun getAllLogisticUsers(): Call<List<LogisticUser>>
-
     @DELETE("api/v1/logistic-users/{userId}")
     fun deleteLogisticUser(@Path("userId") userId: Long): Call<Void>
 
@@ -106,4 +103,10 @@ interface ApiService {
     fun getAvailableDriverBySucursal(
         @Path("sucursalId") sucursalId: Long
     ): Call<LogisticUser>
+
+    @GET("api/v1/users/logistic")
+    fun getAllLogisticUsers(): Call<List<LogisticUser>>
+
+    @GET("sucursales")
+    fun getAllSucursales(): Call<List<Sucursal>>
 }

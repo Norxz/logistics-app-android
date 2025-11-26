@@ -117,7 +117,7 @@ class RequestDetailActivity : AppCompatActivity() {
                     driverOptionsList = response.body()!!
 
                     // 1. Llenar la lista de nombres para el Spinner
-                    driverOptionsList.forEach { driverNames.add(it.name) }
+                    driverOptionsList.forEach { driverNames.add(it.fullName) }
 
                     val adapter = ArrayAdapter(
                         this@RequestDetailActivity,
@@ -234,7 +234,7 @@ class RequestDetailActivity : AppCompatActivity() {
 
     private fun updateUIOnSuccess() {
         // 🏆 CORRECCIÓN CRÍTICA: Actualizar la Request con el nombre del conductor seleccionado.
-        val newDriverName = driverOptionsList.find { it.id == selectedDriverId }?.name
+        val newDriverName = driverOptionsList.find { it.id == selectedDriverId }?.fullName
 
         currentRequest = currentRequest.copy(
             assignedRecolectorId = selectedDriverId,
