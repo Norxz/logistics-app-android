@@ -82,7 +82,7 @@ interface ApiService {
 
     // En ApiService.kt
     @GET("api/v1/solicitudes/all")
-    fun getAllRequests(): Call<List<Request>>
+    fun getAllRequests(): Call<List<Solicitud>>
 
     @GET("api/v1/guia/download/{id}")
     @Streaming

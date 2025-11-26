@@ -11,10 +11,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.model.Request
+import co.edu.unipiloto.myapplication.model.Solicitud
 import com.google.android.material.button.MaterialButton
 import co.edu.unipiloto.myapplication.model.LogisticUser
-import co.edu.unipiloto.myapplication.model.Solicitud
 import co.edu.unipiloto.myapplication.rest.RetrofitClient
 import retrofit2.Call
 import retrofit2.Callback
@@ -24,7 +23,7 @@ import java.util.Locale
 
 class RequestDetailActivity : AppCompatActivity() {
 
-    private lateinit var currentRequest: Request
+    private lateinit var currentSolicitud: Solicitud
 
     // Vistas
     private lateinit var tvDetailGuiaID: TextView
@@ -52,8 +51,8 @@ class RequestDetailActivity : AppCompatActivity() {
 
         // 1. Cargar el objeto Request
         val requestData = intent.getSerializableExtra("REQUEST_DATA")
-        if (requestData is Request) {
-            currentRequest = requestData
+        if (requestData is Solicitud) {
+            currentSolicitud = requestData
         } else {
             Toast.makeText(this, "Error: No se encontró la solicitud.", Toast.LENGTH_LONG).show()
             finish()
@@ -84,18 +83,18 @@ class RequestDetailActivity : AppCompatActivity() {
     }
 
     private fun displayRequestDetails() {
-        tvDetailGuiaID.text = "Guía: #${currentRequest.guiaId}"
-        tvDetailStatus.text = "Estado Actual: ${currentRequest.status}"
+        tvDetailGuiaID.text = "Guía: #${currentSolicitud.guiaId}"
+        tvDetailStatus.text = "Estado Actual: ${currentSolicitud.status}"
 
-        val driverName = currentRequest.assignedRecolectorName ?: "(Aún no asignado)"
+        val driverName = currentSolicitud.assignedRecolectorName ?: "(Aún no asignado)"
         tvAssignedDriver.text = "Asignado a: $driverName"
 
-        tvDetailAddress.text = "Dirección: ${currentRequest.address}"
+        tvDetailAddress.text = "Dirección: ${currentSolicitud.address}"
 
-        val clientInfo = "${currentRequest.clientName} (${currentRequest.clientPhone ?: "N/A"})"
+        val clientInfo = "${currentSolicitud.clientName} (${currentSolicitud.clientPhone ?: "N/A"})"
         tvDetailClient.text = "Cliente: $clientInfo"
 
-        tvDetailCreated.text = formatTimestamp(currentRequest.creationTimestamp)
+        tvDetailCreated.text = formatTimestamp(currentSolicitud.creationTimestamp)
 
         // Sincronizar spinners con el estado actual
         setupStatusSpinner()
@@ -140,7 +139,7 @@ class RequestDetailActivity : AppCompatActivity() {
     }
 
     private fun selectCurrentDriver(adapter: ArrayAdapter<String>) {
-        val currentDriverId = currentRequest.assignedRecolectorId
+        val currentDriverId = currentSolicitud.assignedRecolectorId
         if (currentDriverId != null) {
             // 🚨 CORRECCIÓN: Buscar en la lista REST cargada (driverOptionsList)
             val index = driverOptionsList.indexOfFirst { it.id == currentDriverId }
@@ -177,7 +176,7 @@ class RequestDetailActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             // 🏆 LLAMADA REST para Asignación
-            updateRequestAssignment(currentRequest.id, selectedDriverId!!)
+            updateRequestAssignment(currentSolicitud.id, selectedDriverId!!)
         }
     }
 
@@ -194,10 +193,10 @@ class RequestDetailActivity : AppCompatActivity() {
         spinnerStatus.adapter = adapter
 
         // Seleccionar estado actual
-        val currentIndex = statusOptions.indexOf(currentRequest.status)
+        val currentIndex = statusOptions.indexOf(currentSolicitud.status)
         if (currentIndex != -1) {
             spinnerStatus.setSelection(currentIndex)
-            selectedStatus = currentRequest.status
+            selectedStatus = currentSolicitud.status
         }
 
         setupStatusSpinnerListener()
@@ -217,13 +216,13 @@ class RequestDetailActivity : AppCompatActivity() {
 
     private fun setupStatusListener() {
         btnSaveStatus.setOnClickListener {
-            if (selectedStatus == null || selectedStatus == currentRequest.status) {
+            if (selectedStatus == null || selectedStatus == currentSolicitud.status) {
                 Toast.makeText(this, "Seleccione un estado diferente para actualizar.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             // 🏆 LLAMADA REST para Actualización de Estado
-            updateRequestStatus(currentRequest.id, selectedStatus!!)
+            updateRequestStatus(currentSolicitud.id, selectedStatus!!)
         }
     }
 
@@ -236,10 +235,10 @@ class RequestDetailActivity : AppCompatActivity() {
         // 🏆 CORRECCIÓN CRÍTICA: Actualizar la Request con el nombre del conductor seleccionado.
         val newDriverName = driverOptionsList.find { it.id == selectedDriverId }?.fullName
 
-        currentRequest = currentRequest.copy(
+        currentSolicitud = currentSolicitud.copy(
             assignedRecolectorId = selectedDriverId,
             assignedRecolectorName = newDriverName,
-            status = selectedStatus ?: currentRequest.status
+            status = selectedStatus ?: currentSolicitud.status
         )
         displayRequestDetails()
 
