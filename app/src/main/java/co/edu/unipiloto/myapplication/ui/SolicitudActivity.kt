@@ -250,11 +250,11 @@ class SolicitudActivity : AppCompatActivity() {
             val timeSlot = spFranja.selectedItem.toString()
             val fechaRecoleccion = "2025-01-01"
 
-            val zona = when (city) {
-                "Zona Norte" -> "ZN"
-                "Zona Sur" -> "ZS"
-                "Zona Centro" -> "ZC"
-                else -> "ND"
+            val sucursalIdSeleccionada: Long = when (city) {
+                "Zona Norte" -> 1L   // Asumiendo que la sucursal Norte tiene ID 1 en la BD
+                "Zona Sur" -> 2L     // Asumiendo que la sucursal Sur tiene ID 2
+                "Zona Centro" -> 3L  // Asumiendo que la sucursal Centro tiene ID 3
+                else -> 1L           // Un valor por defecto seguro (ID 1)
             }
 
             // 1. VALIDATION
@@ -322,7 +322,8 @@ class SolicitudActivity : AppCompatActivity() {
                     contenido = etPackageContent.text.toString().trim()
                 ),
                 fechaRecoleccion = fechaRecoleccion,
-                franjaHoraria = spFranja.selectedItem.toString()
+                franjaHoraria = spFranja.selectedItem.toString(),
+                sucursalId = sucursalIdSeleccionada
             )
 
 
