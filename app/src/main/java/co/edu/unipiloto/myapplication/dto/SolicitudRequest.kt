@@ -27,8 +27,11 @@ data class SolicitudRequest(
     @SerializedName("receptor")
     val receptor: ClienteRequest,
 
-    @SerializedName("direccion")
-    val direccion: DireccionRequest,
+    @SerializedName("direccionRecoleccion")
+    val direccionRecoleccion: DireccionRequest?,
+
+    @SerializedName("direccionEntrega")
+    val direccionEntrega: DireccionRequest,
 
     @SerializedName("paquete")
     val paquete: PaqueteRequest,

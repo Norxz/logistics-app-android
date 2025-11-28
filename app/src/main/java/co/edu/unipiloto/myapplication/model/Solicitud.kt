@@ -28,8 +28,11 @@ data class Solicitud(
     @SerializedName("sucursal")
     val sucursal: Sucursal, // Asumiendo que tienes el modelo Sucursal definido
 
-    @SerializedName("direccion")
-    val direccion: Direccion, // Ya definimos este modelo
+    @SerializedName("direccionRecoleccion")
+    val direccionRecoleccion: Direccion? = null,
+
+    @SerializedName("direccionEntrega")
+    val direccionEntrega: Direccion,
 
     @SerializedName("paquete")
     val paquete: Paquete, // Asumiendo que tienes el modelo Paquete definido
