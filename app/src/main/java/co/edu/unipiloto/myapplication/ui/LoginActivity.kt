@@ -6,167 +6,208 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import co.edu.unipiloto.myapplication.R
+import androidx.lifecycle.ViewModelProvider
+import co.edu.unipiloto.myapplication.databinding.ActivityLoginBinding // ⬅️ Importar el View Binding
+import co.edu.unipiloto.myapplication.dto.LoginRequest
+import co.edu.unipiloto.myapplication.dto.UserResponse
+import co.edu.unipiloto.myapplication.repository.AuthRepository
+import co.edu.unipiloto.myapplication.dto.RetrofitClient
 import co.edu.unipiloto.myapplication.storage.SessionManager
-import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
-import com.google.android.material.button.MaterialButton
-import co.edu.unipiloto.myapplication.rest.RetrofitClient // Cliente Retrofit
-import co.edu.unipiloto.myapplication.rest.LoginRequest // DTO de Request
-import co.edu.unipiloto.myapplication.model.User // DTO de Response
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import co.edu.unipiloto.myapplication.viewmodel.AuthState
+import co.edu.unipiloto.myapplication.viewmodel.AuthViewModel
+import co.edu.unipiloto.myapplication.viewmodel.AuthViewModelFactory
+import co.edu.unipiloto.myapplication.R // Para acceder a tus recursos de strings
 
 /**
- * Activity principal para el inicio de sesión.
- * Maneja la autenticación segura de Clientes y Personal Logístico.
+ * 🔑 Activity de inicio de sesión, implementada siguiendo el patrón MVVM.
+ * Utiliza el AuthViewModel para manejar la lógica de autenticación y Retrofit/Repository.
  */
 class LoginActivity : AppCompatActivity() {
 
-    // Vistas
-    private lateinit var btnBack: MaterialButton
-    private lateinit var tilEmail: TextInputLayout
-    private lateinit var etEmail: TextInputEditText
-    private lateinit var tilPassword: TextInputLayout
-    private lateinit var etPassword: TextInputEditText
-    private lateinit var btnLogin: MaterialButton
-    private lateinit var btnGoRegister: MaterialButton
-    private lateinit var btnForgotPassword: MaterialButton
+    // Vistas y ViewModel
+    private lateinit var binding: ActivityLoginBinding // Objeto de View Binding
+    private lateinit var authViewModel: AuthViewModel
 
-    private var targetRole: String = "CLIENTE"
-
-    // Repositorios y Gestores
+    // Gestores
     private lateinit var sessionManager: SessionManager
+
+    // Rol de destino requerido (ej. "CONDUCTOR", "FUNCIONARIO")
+    private var requiredRole: String = "CLIENTE"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_login)
 
-        // 1. Inicializar componentes
+        // 1. Inicializar View Binding
+        binding = ActivityLoginBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        // 2. Inicializar utilidades y obtener el rol
         sessionManager = SessionManager(this)
+        requiredRole = intent.getStringExtra(MainActivity.EXTRA_TARGET_ROLE)?.uppercase() ?: "CLIENTE"
 
-        initViews()
-        setupBackButtonNavigation()
+        // 3. Inicializar ViewModel (Inyección manual de dependencias)
+        initViewModel()
 
-        // 3. Verificar sesión activa (Si ya está logueado, ir al dashboard)
+        // 4. Configurar UI y Listeners
+        configureUIByRole()
+        setupListeners()
+        setupObservers()
+
+        // 5. Verificar sesión activa (Si ya está logueado, ir al dashboard)
         if (sessionManager.isLoggedIn()) {
             navigateToDashboard(sessionManager.getRole())
-            return
         }
-
-        targetRole = intent.getStringExtra("TARGET_ROLE") ?: "CLIENTE"
-
-        configureRegisterButton()
-
-        // 4. Configurar Listeners
-        setupListeners()
     }
 
-    private fun initViews() {
-        // Inicializar el botón de regreso explícito
-        btnBack = findViewById(R.id.btnBack)
-        tilEmail = findViewById(R.id.tilEmail)
-        etEmail = findViewById(R.id.etEmail)
-        tilPassword = findViewById(R.id.tilPassword)
-        etPassword = findViewById(R.id.etPassword)
-        btnLogin = findViewById(R.id.btnLogin)
-        btnGoRegister = findViewById(R.id.btnGoRegister)
-        btnForgotPassword = findViewById(R.id.btnForgotPassword)
+    private fun initViewModel() {
+        val authApi = RetrofitClient.getAuthApi() // Asume que tienes un getter para AuthApi
+        val authRepository = AuthRepository(authApi)
+        val factory = AuthViewModelFactory(authRepository)
+        authViewModel = ViewModelProvider(this, factory)[AuthViewModel::class.java]
     }
 
-    private fun setupBackButtonNavigation() {
-        btnBack.setOnClickListener {
-            onBackPressedDispatcher.onBackPressed()
+    // --- Configuración de UI y Listeners ---
+
+    private fun configureUIByRole() {
+        // Ocultar botón de Registro si el acceso no es para Cliente
+        if (requiredRole != "CLIENTE") {
+            binding.btnGoRegister.visibility = View.GONE
         }
+        // TODO: Actualizar tvLoginTitle (se recomienda manejar esto en strings.xml)
     }
 
     private fun setupListeners() {
-        btnLogin.setOnClickListener {
-            performLogin()
-        }
+        binding.btnBack.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
+        binding.btnLogin.setOnClickListener { performLogin() }
 
-        btnGoRegister.setOnClickListener {
+        binding.btnGoRegister.setOnClickListener {
+            // Navegar a la Activity de Registro
             startActivity(Intent(this, RegisterActivity::class.java))
         }
 
-        btnForgotPassword.setOnClickListener {
-            Toast.makeText(
-                this,
-                "Funcionalidad de Recuperación de Contraseña no implementada.",
-                Toast.LENGTH_SHORT
-            ).show()
+        binding.btnForgotPassword.setOnClickListener {
+            Toast.makeText(this, R.string.not_implemented_yet, Toast.LENGTH_SHORT).show()
         }
     }
 
-    /**
-     * Realiza la validación de campos y llama al servicio REST para autenticar.
-     */
-    private fun performLogin() {
-        tilEmail.error = null
-        tilPassword.error = null
+    // --- Lógica de Login MVVM ---
 
-        val emailOrUsername = etEmail.text.toString().trim()
-        val password = etPassword.text.toString()
+    private fun performLogin() {
+        // Limpiar errores (Usando View Binding)
+        binding.tilEmail.error = null
+        binding.tilPassword.error = null
+
+        val emailOrUsername = binding.etEmail.text.toString().trim()
+        val password = binding.etPassword.text.toString()
 
         if (emailOrUsername.isEmpty()) {
-            tilEmail.error = getString(R.string.error_required_field)
+            binding.tilEmail.error = getString(R.string.error_required_field)
             return
         }
         if (password.isEmpty()) {
-            tilPassword.error = getString(R.string.error_required_field)
+            binding.tilPassword.error = getString(R.string.error_required_field)
             return
         }
 
         val loginRequest = LoginRequest(emailOrUsername, password)
 
-        // 2. Llamar al servicio REST (Backend)
-        RetrofitClient.apiService.login(loginRequest).enqueue(object : Callback<User> {
-            override fun onResponse(call: Call<User>, response: Response<User>) {
-                // setLoadingState(false) // Si tuvieras un loading
+        // 🚨 Llamada al ViewModel, no al Retrofit directo
+        authViewModel.login(loginRequest)
+    }
 
-                if (response.isSuccessful && response.body() != null) {
-                    val userData = response.body()!!
+    // --- Observadores ---
 
-                    sessionManager.createLoginSession(
-                        userId = userData.id,
-                        role = userData.role,
-                        zona = userData.sucursal?.nombre,
-                        name = userData.fullName,
-                        email = userData.email
-                    )
+    private fun setupObservers() {
+        // Observar estado de carga (opcional: para mostrar ProgressBar)
+        authViewModel.isLoading.observe(this) { isLoading ->
+            binding.btnLogin.isEnabled = !isLoading
+            // Aquí puedes mostrar/ocultar un ProgressBar
+        }
 
-                    navigateToDashboard(userData.role)
-                } else {
-                    // 4. Autenticación fallida (401 Unauthorized, 409 Conflict, etc.)
-                    Toast.makeText(
-                        this@LoginActivity,
-                        "Credenciales incorrectas.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    tilPassword.error = "Email/Contraseña incorrectos."
-                }
+        // 🚨 Observar el resultado de la autenticación
+        authViewModel.authState.observe(this) { state ->
+            when (state) {
+                is AuthState.Success -> handleLoginSuccess(state.user)
+                is AuthState.Error -> handleLoginError(state.message)
+                is AuthState.Idle -> { /* Estado de reposo */ }
             }
+        }
+    }
 
-            override fun onFailure(call: Call<User>, t: Throwable) {
-                // Manejo de fallos de red o servidor no disponible
-                Log.e("Login", "Error de conexión al servidor: ${t.message}")
-                Toast.makeText(this@LoginActivity, "Fallo de red: ${t.message}", Toast.LENGTH_LONG)
-                    .show()
-            }
-        })
+    // --- Manejo de Resultados ---
+
+    /**
+     * Maneja la respuesta exitosa del ViewModel.
+     */
+    private fun handleLoginSuccess(user: UserResponse?) {
+        authViewModel.clearState() // Limpiar el estado para evitar reprocesos
+
+        val userRole = user?.role?.uppercase()
+
+        if (user != null && userRole != null && isRoleAuthorized(userRole, requiredRole)) {
+
+            sessionManager.createLoginSession(
+                userId = user.id,
+                role = user.role,
+                sucursal = user.sucursal?.nombre,
+                name = user.fullName,
+                email = user.email
+            )
+            Toast.makeText(this, "Acceso exitoso como ${user.role}", Toast.LENGTH_LONG).show()
+
+            navigateToDashboard(user.role)
+
+        } else if (user != null && userRole != null) {
+            // Rol no autorizado para esta entrada
+            val msg = "Acceso denegado. Tu rol ($userRole) no está autorizado para esta sección."
+            Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+            binding.tilPassword.error = "Rol no autorizado."
+            binding.etPassword.text?.clear()
+        } else {
+            // Error genérico
+            handleLoginError("Error en datos de usuario tras login exitoso.")
+        }
     }
 
     /**
-     * Redirige al usuario a la pantalla principal correspondiente a su rol.
-     * (Función movida fuera del Callback de Retrofit)
+     * Maneja la respuesta de error del ViewModel (incluye errores de red/servidor).
      */
+    private fun handleLoginError(errorMessage: String) {
+        authViewModel.clearState()
+        Toast.makeText(this, "Error de Login: $errorMessage", Toast.LENGTH_LONG).show()
+        Log.e("LOGIN_ERROR", errorMessage)
+        binding.tilPassword.error = errorMessage
+        binding.etPassword.text?.clear()
+    }
+
+    // --- Lógica de Roles Agrupados ---
+
+    /**
+     * 🔑 Verifica si el rol real del usuario logueado es válido para el rol de acceso requerido.
+     */
+    private fun isRoleAuthorized(userRole: String, requiredRole: String): Boolean {
+        val upperUserRole = userRole.uppercase()
+        val upperRequiredRole = requiredRole.uppercase()
+
+        return when (upperRequiredRole) {
+            // Botón "Soy Conductor" (Acepta CONDUCTOR o GESTOR)
+            "CONDUCTOR" -> upperUserRole == "CONDUCTOR" || upperUserRole == "GESTOR"
+
+            // Botón "Soy Funcionario" (Acepta FUNCIONARIO o ANALISTA)
+            "FUNCIONARIO" -> upperUserRole == "FUNCIONARIO" || upperUserRole == "ANALISTA"
+
+            // El resto debe coincidir exactamente (CLIENTE, ADMIN)
+            else -> upperUserRole == upperRequiredRole
+        }
+    }
+
+    // --- Navegación ---
+
     private fun navigateToDashboard(role: String) {
         val intent = when (role.uppercase()) {
             "CLIENTE" -> Intent(this, ClientDashboardActivity::class.java)
             "CONDUCTOR" -> Intent(this, DriverDashboardActivity::class.java)
-            "GESTOR" -> Intent(this, ManagerDashboardActivity::class.java)
-            "FUNCIONARIO", "ANALISTA" -> Intent(this, BranchDashboardActivity::class.java)
+            "GESTOR", "ANALISTA", "FUNCIONARIO" -> Intent(this, ManagerDashboardActivity::class.java) // Agrupados
             "ADMIN" -> Intent(this, AdminPanelActivity::class.java)
             else -> {
                 sessionManager.logoutUser()
@@ -178,13 +219,4 @@ class LoginActivity : AppCompatActivity() {
         startActivity(intent)
         finish()
     }
-
-    private fun configureRegisterButton() {
-        if (targetRole.uppercase() == "CLIENTE") {
-            btnGoRegister.visibility = View.VISIBLE
-        } else {
-            btnGoRegister.visibility = View.GONE
-        }
-    }
-
 }

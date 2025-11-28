@@ -1,7 +1,6 @@
 package co.edu.unipiloto.myapplication.ui
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,8 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter
-import co.edu.unipiloto.myapplication.rest.RetrofitClient
+import co.edu.unipiloto.myapplication.dto.RetrofitClient
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import retrofit2.Call
 import retrofit2.Callback

@@ -16,8 +16,8 @@ import co.edu.unipiloto.myapplication.storage.SessionManager
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import co.edu.unipiloto.myapplication.rest.RetrofitClient
-import co.edu.unipiloto.myapplication.rest.RegisterRequest
+import co.edu.unipiloto.myapplication.dto.RetrofitClient
+import co.edu.unipiloto.myapplication.dto.RegisterRequest
 import co.edu.unipiloto.myapplication.model.User
 import co.edu.unipiloto.myapplication.model.Sucursal
 import retrofit2.Call

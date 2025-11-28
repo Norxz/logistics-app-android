@@ -1,7 +1,6 @@
 // co.edu.unipiloto.myapplication.dto.SolicitudResponse.kt
 package co.edu.unipiloto.myapplication.dto
 
-import co.edu.unipiloto.myapplication.rest.GuiaResponse
 import com.google.gson.annotations.SerializedName
 import java.io.Serializable
 

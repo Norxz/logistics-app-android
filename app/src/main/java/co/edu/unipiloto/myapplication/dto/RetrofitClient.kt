@@ -1,5 +1,5 @@
 // co.edu.unipiloto.myapplication.rest.RetrofitClient.kt
-package co.edu.unipiloto.myapplication.rest
+package co.edu.unipiloto.myapplication.dto
 
 import co.edu.unipiloto.myapplication.api.* // Importa las 5 interfaces: AuthApi, SolicitudApi, etc.
 import retrofit2.Retrofit

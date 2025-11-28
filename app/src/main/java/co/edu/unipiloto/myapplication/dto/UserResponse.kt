@@ -34,7 +34,6 @@ data class UserResponse(
     val role: String,
 
     @SerializedName("sucursal")
-    // Usamos el DTO de respuesta simplificado que ya definimos.
     val sucursal: SucursalResponse?,
 
     @SerializedName("isActive")

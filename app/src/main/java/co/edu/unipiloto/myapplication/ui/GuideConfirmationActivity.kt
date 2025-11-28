@@ -9,7 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.rest.RetrofitClient
+import co.edu.unipiloto.myapplication.dto.RetrofitClient
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import co.edu.unipiloto.myapplication.utils.FileUtils
 import co.edu.unipiloto.myapplication.utils.NotificationHelper

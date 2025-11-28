@@ -1,5 +1,5 @@
 // co.edu.unipiloto.myapplication.rest.GuiaResponse.kt
-package co.edu.unipiloto.myapplication.rest
+package co.edu.unipiloto.myapplication.dto
 
 import com.google.gson.annotations.SerializedName
 import java.io.Serializable

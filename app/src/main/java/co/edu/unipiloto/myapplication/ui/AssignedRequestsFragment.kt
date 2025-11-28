@@ -10,9 +10,8 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter
 import co.edu.unipiloto.myapplication.storage.SessionManager
-import co.edu.unipiloto.myapplication.rest.RetrofitClient // 👈 NUEVO: Cliente REST
+import co.edu.unipiloto.myapplication.dto.RetrofitClient // 👈 NUEVO: Cliente REST
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response

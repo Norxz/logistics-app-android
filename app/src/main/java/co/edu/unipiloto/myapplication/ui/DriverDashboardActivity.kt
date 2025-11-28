@@ -12,8 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import com.google.android.material.button.MaterialButton
-import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter
-import co.edu.unipiloto.myapplication.rest.RetrofitClient // 👈 Cliente REST
+import co.edu.unipiloto.myapplication.dto.RetrofitClient // 👈 Cliente REST
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response

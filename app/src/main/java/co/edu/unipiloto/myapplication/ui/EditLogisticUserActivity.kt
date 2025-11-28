@@ -8,7 +8,7 @@ import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.model.Sucursal
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
-import co.edu.unipiloto.myapplication.rest.RetrofitClient // 👈 NUEVO: Cliente REST
+import co.edu.unipiloto.myapplication.dto.RetrofitClient // 👈 NUEVO: Cliente REST
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response

@@ -18,12 +18,12 @@ import java.util.Locale
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.rest.ClienteRequest
+import co.edu.unipiloto.myapplication.dto.ClienteRequest
 // 🌟 IMPORTS FOR API SUBMISSION
-import co.edu.unipiloto.myapplication.rest.DireccionRequest
-import co.edu.unipiloto.myapplication.rest.PaqueteRequest
-import co.edu.unipiloto.myapplication.rest.RetrofitClient
-import co.edu.unipiloto.myapplication.rest.SolicitudRequest
+import co.edu.unipiloto.myapplication.dto.DireccionRequest
+import co.edu.unipiloto.myapplication.dto.PaqueteRequest
+import co.edu.unipiloto.myapplication.dto.RetrofitClient
+import co.edu.unipiloto.myapplication.dto.SolicitudRequest
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import co.edu.unipiloto.myapplication.utils.LocationHelper
 import retrofit2.Call

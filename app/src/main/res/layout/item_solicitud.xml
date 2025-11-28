@@ -2,6 +2,7 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
@@ -26,31 +27,35 @@
             app:tint="@color/primary_color" />
 
         <TextView
-            android:id="@+id/tvShipmentId"
+            android:id="@+id/tvSolicitudId"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="@string/guide_example"
+            tools:text="@string/guide_example"
             android:textSize="14sp"
             android:textColor="@color/on_surface_secondary"
             android:layout_marginStart="8dp"
             app:layout_constraintTop_toTopOf="@+id/ivLocationIcon"
             app:layout_constraintBottom_toBottomOf="@+id/ivLocationIcon"
             app:layout_constraintStart_toEndOf="@+id/ivLocationIcon"
-            app:layout_constraintEnd_toStartOf="@+id/tvEstado" /> <TextView
-        android:id="@+id/tvEstado" android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="PENDIENTE"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        android:textColor="@color/status_pending"
-        app:layout_constraintTop_toTopOf="@+id/ivLocationIcon"
-        app:layout_constraintBottom_toBottomOf="@+id/ivLocationIcon"
-        app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintEnd_toStartOf="@+id/tvEstado" />
 
         <TextView
-            android:id="@+id/tvDireccion" android:layout_width="0dp"
+            android:id="@+id/tvEstado"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Calle Falsa 123, Springfield, USA"
+            tools:text="PENDIENTE"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/status_pending"
+            app:layout_constraintTop_toTopOf="@+id/ivLocationIcon"
+            app:layout_constraintBottom_toBottomOf="@+id/ivLocationIcon"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <TextView
+            android:id="@+id/tvDireccion"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            tools:text="Calle Falsa 123, Springfield, USA"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@color/on_surface"
@@ -60,9 +65,10 @@
             app:layout_constraintEnd_toEndOf="parent" />
 
         <TextView
-            android:id="@+id/tvFecha" android:layout_width="0dp"
+            android:id="@+id/tvFranjaHoraria"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Fecha: 2025-10-01 10:00 - 12:00"
+            tools:text="Fecha: 2025-10-01 10:00 - 12:00"
             android:textSize="14sp"
             android:textColor="@color/on_surface_secondary"
             android:layout_marginTop="4dp"
@@ -71,17 +77,19 @@
             app:layout_constraintEnd_toEndOf="parent" />
 
         <TextView
-            android:id="@+id/tvCreado" android:layout_width="0dp"
+            android:id="@+id/tvCreado"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Creado: 2025-09-30 18:30"
+            tools:text="Creado: 2025-09-30 18:30"
             android:textSize="12sp"
             android:textColor="@color/on_surface_secondary"
             android:layout_marginTop="4dp"
-            app:layout_constraintTop_toBottomOf="@+id/tvFecha"
+            app:layout_constraintTop_toBottomOf="@+id/tvFranjaHoraria"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
         <LinearLayout
+            android:id="@+id/llActions"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -92,47 +100,57 @@
             app:layout_constraintEnd_toEndOf="parent">
 
             <Button
-                android:id="@+id/btnAceptar" android:layout_width="wrap_content"
+                android:id="@+id/btnCancelClient"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:text="Aceptar"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:visibility="gone" />
-
-            <Button
-                android:id="@+id/btnCancelar" android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="Cancelar"
+                android:text="@string/action_cancel"
                 style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:textColor="@color/status_error"
-                android:visibility="gone" />
+                android:visibility="gone"
+                tools:visibility="visible"/>
 
             <Button
-                android:id="@+id/btnEnCamino" android:layout_width="wrap_content"
+                android:id="@+id/btnAcceptDriver"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:text="En Camino"
+                android:text="@string/action_accept"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:visibility="gone" />
+                android:visibility="gone"
+                tools:visibility="visible"/>
 
             <Button
-                android:id="@+id/btnEntregado" android:layout_width="wrap_content"
+                android:id="@+id/btnStartRouteDriver"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:text="Entregado"
+                android:text="@string/action_on_route"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:visibility="gone"
+                tools:visibility="visible"/>
+
+            <Button
+                android:id="@+id/btnDeliverDriver"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="@string/action_deliver"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:backgroundTint="@color/status_success"
-                android:visibility="gone" />
+                android:visibility="gone"
+                tools:visibility="visible"/>
 
             <Button
-                android:id="@+id/btnConfirmar" android:layout_width="wrap_content"
+                android:id="@+id/btnConfirmDelivery"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:text="Confirmar"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:text="@string/action_confirm"
+                style="@style/Widget.MaterialComponents.Button"
                 android:backgroundTint="@color/primary_color"
-                android:visibility="gone" />
+                android:visibility="gone"
+                tools:visibility="visible"/>
 
         </LinearLayout>
 

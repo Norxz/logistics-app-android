@@ -2,40 +2,42 @@ package co.edu.unipiloto.myapplication.ui
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.storage.SessionManager
-import com.google.android.material.button.MaterialButton
-import android.widget.Toast
 import android.util.Log
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import co.edu.unipiloto.myapplication.databinding.ActivityMainBinding
+import co.edu.unipiloto.myapplication.storage.SessionManager
 
 /**
- * Activity Principal (Hub de Bienvenida).
- * Esta pantalla sirve como el punto de entrada, manejando la navegación inicial
- * y la verificación de sesiones activas.
+ * 🏠 Activity Principal (Hub de Bienvenida).
+ * Punto de entrada que maneja la navegación inicial y verifica sesiones activas.
  */
 class MainActivity : AppCompatActivity() {
 
-    // --- VISTAS ---
-    private lateinit var btnCheckStatus: MaterialButton
-    private lateinit var btnRequestShipping: MaterialButton
-    private lateinit var btnOfficials: MaterialButton
-    private lateinit var btnDrivers: MaterialButton
-    private lateinit var btnAdmin: MaterialButton
+    // 1. Reemplazamos las variables de vistas individuales por el objeto de Binding
+    private lateinit var binding: ActivityMainBinding
 
-    // --- UTILIDADES ---
+    // Utilidad para gestionar la sesión del usuario
     private lateinit var sessionManager: SessionManager
+
+    // Constante para definir el rol de destino en la LoginActivity
+    companion object {
+        const val EXTRA_TARGET_ROLE = "TARGET_ROLE"
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+
+        // 2. Inicializar el View Binding y establecer la vista
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         supportActionBar?.hide()
 
         sessionManager = SessionManager(this)
 
-        initViews()
+        // 3. Ya no necesitamos initViews()
         setupListeners()
     }
 
@@ -44,85 +46,78 @@ class MainActivity : AppCompatActivity() {
         // 🏆 VERIFICACIÓN CRÍTICA: Si ya está logueado, saltar el Hub de Bienvenida.
         if (sessionManager.isLoggedIn()) {
             val role = sessionManager.getRole()
-            Log.d("MainActivity", "Session found. Redirecting role: $role")
+            Log.d("MainActivity", "Sesión activa encontrada. Redirigiendo al Dashboard. Rol: $role")
             navigateToDashboard(role)
         }
     }
 
-
-    private fun initViews() {
-        btnCheckStatus = findViewById(R.id.btnCheckStatus)
-        btnRequestShipping = findViewById(R.id.btnRequestShipping)
-        btnOfficials = findViewById(R.id.btnOfficials)
-        btnDrivers = findViewById(R.id.btnDrivers)
-        btnAdmin = findViewById(R.id.btnAdmin)
-    }
-
+    /**
+     * Configura los listeners para los botones de la pantalla principal,
+     * utilizando el objeto 'binding' para acceder a las vistas.
+     */
     private fun setupListeners() {
 
-        // 1. CONSULTAR ESTADO (Tracking Activity)
-        btnCheckStatus.setOnClickListener {
-            // 🚨 DEBES CREAR TrackingActivity.kt (Para seguimiento de guías sin login)
+        // 1. CONSULTAR ESTADO (Tracking Activity - No requiere login)
+        binding.btnCheckStatus.setOnClickListener {
+            // TODO: Iniciar TrackShippingActivity.kt
             startActivity(Intent(this, TrackShippingActivity::class.java))
         }
 
-        // 2. SOLICITAR ENVÍO (Requiere Login/Registro)
-        btnRequestShipping.setOnClickListener {
-            // Lleva al Login. La LoginActivity debe manejar la redirección a RegisterActivity.
-            startActivity(Intent(this, LoginActivity::class.java).apply {
-                // Puedes pasar un extra para que Login sepa que el objetivo es un Envío (opcional)
-                putExtra("TARGET_ROLE", "CLIENTE")
-            })
+        // 2. SOLICITAR ENVÍO (Acceso CLIENTE)
+        binding.btnRequestShipping.setOnClickListener {
+            navigateToLogin("CLIENTE")
         }
 
-        // 3. ACCESO PERSONAL LOGÍSTICO (Oficiales/Funcionarios)
-        btnOfficials.setOnClickListener {
-            startActivity(Intent(this, LoginActivity::class.java).apply {
-                // Indicamos que el acceso es para Funcionarios
-                putExtra("TARGET_ROLE", "FUNCIONARIO")
-            })
+        // 3. ACCESO FUNCIONARIO (Target: FUNCIONARIO / ANALISTA)
+        binding.btnOfficials.setOnClickListener {
+            navigateToLogin("FUNCIONARIO")
         }
 
-        // 4. ACCESO CONDUCTORES
-        btnDrivers.setOnClickListener {
-            startActivity(Intent(this, LoginActivity::class.java).apply {
-                // Indicamos que el acceso es para Conductores
-                putExtra("TARGET_ROLE", "CONDUCTOR")
-            })
+        // 4. ACCESO CONDUCTORES (Target: CONDUCTOR / GESTOR)
+        binding.btnDrivers.setOnClickListener {
+            navigateToLogin("CONDUCTOR")
         }
 
         // 5. ACCESO ADMINISTRADOR
-        btnAdmin.setOnClickListener {
-            startActivity(Intent(this, LoginActivity::class.java).apply {
-                // Indicamos que el acceso es para el Admin
-                putExtra("TARGET_ROLE", "ADMIN")
-            })
+        binding.btnAdmin.setOnClickListener {
+            navigateToLogin("ADMIN")
         }
     }
 
     /**
-     * Navega al dashboard correspondiente al rol.
-     * Esta función es la que te permite saltar el Hub de Bienvenida al iniciar la app.
+     * Inicia la LoginActivity, pasando el rol de acceso requerido.
+     */
+    private fun navigateToLogin(role: String) {
+        val intent = Intent(this, LoginActivity::class.java).apply {
+            putExtra(EXTRA_TARGET_ROLE, role)
+        }
+        startActivity(intent)
+    }
+
+    /**
+     * 🧠 Navega al dashboard correspondiente al rol REAL del usuario.
+     * Aquí se asegura que roles como GESTOR y ANALISTA vayan al mismo panel de gestión.
      */
     private fun navigateToDashboard(role: String) {
         val intent = when (role.uppercase()) {
-            "CLIENTE" -> Intent(
-                this,
-                ClientDashboardActivity::class.java
-            ) // ⚠️ Renombrado para no confundir con este hub
+            "CLIENTE" -> Intent(this, ClientDashboardActivity::class.java)
+
+            // CONDUCTOR va a su propio dashboard
             "CONDUCTOR" -> Intent(this, DriverDashboardActivity::class.java)
-            "GESTOR" -> Intent(this, ManagerDashboardActivity::class.java)
-            "FUNCIONARIO" -> Intent(this, BranchDashboardActivity::class.java)
-            "ADMIN" -> Intent(this, AdminPanelActivity::class.java) // 🚨 Asumimos la existencia
+
+            // 🚨 GESTOR y ANALISTA van al Dashboard de Manager/Funcionario
+            "GESTOR", "FUNCIONARIO", "ANALISTA" -> Intent(this, ManagerDashboardActivity::class.java)
+
+            "ADMIN" -> Intent(this, AdminPanelActivity::class.java)
             else -> {
-                Toast.makeText(this, "Rol no reconocido. Cerrando sesión.", Toast.LENGTH_LONG)
-                    .show()
+                // Rol desconocido o inválido, forzar cierre de sesión
+                Toast.makeText(this, "Rol desconocido ($role). Cerrando sesión.", Toast.LENGTH_LONG).show()
                 sessionManager.logoutUser()
-                Intent(this, MainActivity::class.java) // Vuelve al Hub
+                Intent(this, MainActivity::class.java)
             }
         }
 
-        // Estas flags son CRÍTICAS: eliminan el historial de navegación para que el usuario no pueda "regresar" al Login/Hub
+        // Flags críticas para eliminar el historial de navegación
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()

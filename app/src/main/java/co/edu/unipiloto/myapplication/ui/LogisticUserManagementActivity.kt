@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.adapters.LogisticUserAdapter
-import co.edu.unipiloto.myapplication.rest.RetrofitClient
+import co.edu.unipiloto.myapplication.dto.RetrofitClient
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
 import retrofit2.Call

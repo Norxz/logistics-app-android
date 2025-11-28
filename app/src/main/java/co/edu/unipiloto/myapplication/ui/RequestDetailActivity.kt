@@ -13,7 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.model.Request
 import com.google.android.material.button.MaterialButton
-import co.edu.unipiloto.myapplication.rest.RetrofitClient
+import co.edu.unipiloto.myapplication.dto.RetrofitClient
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response

@@ -11,10 +11,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
 // Importamos el adaptador genérico que hemos desarrollado
-import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter
 // Importamos el modelo de datos para la inferencia de tipo
 import co.edu.unipiloto.myapplication.storage.SessionManager
-import co.edu.unipiloto.myapplication.rest.RetrofitClient // 👈 NUEVO
+import co.edu.unipiloto.myapplication.dto.RetrofitClient // 👈 NUEVO
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
