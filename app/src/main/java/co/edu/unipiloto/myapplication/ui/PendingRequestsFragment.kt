@@ -12,8 +12,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter
-import co.edu.unipiloto.myapplication.model.Solicitud
-import co.edu.unipiloto.myapplication.model.LogisticUser
 import co.edu.unipiloto.myapplication.rest.RetrofitClient
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import retrofit2.Call
@@ -144,7 +142,7 @@ class BranchPendingFragment : Fragment() {
             })
     }
 
-    private fun assignRequest(solicitudId: Long, recolector: LogisticUser) {
+    private fun assignRequest(solicitudId: Long, recolector: User) {
 
         val body = mapOf("recolectorId" to recolector.id.toString())
 

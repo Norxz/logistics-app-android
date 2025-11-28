@@ -18,7 +18,6 @@ import java.util.Locale
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.model.Solicitud
 import co.edu.unipiloto.myapplication.rest.ClienteRequest
 // 🌟 IMPORTS FOR API SUBMISSION
 import co.edu.unipiloto.myapplication.rest.DireccionRequest
@@ -250,11 +249,11 @@ class SolicitudActivity : AppCompatActivity() {
             val timeSlot = spFranja.selectedItem.toString()
             val fechaRecoleccion = "2025-01-01"
 
-            val sucursalIdSeleccionada: Long = when (city) {
-                "Zona Norte" -> 1L   // Asumiendo que la sucursal Norte tiene ID 1 en la BD
-                "Zona Sur" -> 2L     // Asumiendo que la sucursal Sur tiene ID 2
-                "Zona Centro" -> 3L  // Asumiendo que la sucursal Centro tiene ID 3
-                else -> 1L           // Un valor por defecto seguro (ID 1)
+            val zona = when (city) {
+                "Zona Norte" -> "ZN"
+                "Zona Sur" -> "ZS"
+                "Zona Centro" -> "ZC"
+                else -> "ND"
             }
 
             // 1. VALIDATION
@@ -322,8 +321,7 @@ class SolicitudActivity : AppCompatActivity() {
                     contenido = etPackageContent.text.toString().trim()
                 ),
                 fechaRecoleccion = fechaRecoleccion,
-                franjaHoraria = spFranja.selectedItem.toString(),
-                sucursalId = sucursalIdSeleccionada
+                franjaHoraria = spFranja.selectedItem.toString()
             )
 
 

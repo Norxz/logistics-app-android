@@ -14,7 +14,6 @@ import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import com.google.android.material.button.MaterialButton
 import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter
-import co.edu.unipiloto.myapplication.model.Solicitud
 import co.edu.unipiloto.myapplication.rest.RetrofitClient
 import retrofit2.Call
 import retrofit2.Callback

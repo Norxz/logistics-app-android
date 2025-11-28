@@ -11,7 +11,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.adapters.LogisticUserAdapter
-import co.edu.unipiloto.myapplication.model.LogisticUser
 import co.edu.unipiloto.myapplication.rest.RetrofitClient // 👈 Cliente REST
 import com.google.android.material.button.MaterialButton
 import retrofit2.Call
@@ -99,7 +98,7 @@ class ViewLogisticUsersActivity : AppCompatActivity() {
         })
     }
 
-    private fun handleEditUserClick(user: LogisticUser) {
+    private fun handleEditUserClick(user: User) {
         val intent = Intent(this, EditLogisticUserActivity::class.java)
         intent.putExtra("RECOLECTOR_ID", user.id)
         startActivity(intent)
@@ -108,7 +107,7 @@ class ViewLogisticUsersActivity : AppCompatActivity() {
     /**
      * Shows confirmation dialog and calls the REST endpoint to delete the user.
      */
-    private fun handleDeleteUserClick(user: LogisticUser) {
+    private fun handleDeleteUserClick(user: User) {
         AlertDialog.Builder(this)
             .setTitle("Confirmar Eliminación")
             .setMessage("¿Estás seguro de que deseas eliminar a ${user.fullName}? Esta acción es permanente y eliminará también el usuario asociado.")

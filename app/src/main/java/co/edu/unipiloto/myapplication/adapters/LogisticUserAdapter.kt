@@ -10,7 +10,6 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.model.LogisticUser // Asegúrate de que este modelo exista
 
 /**
  * Adaptador para mostrar la lista de usuarios logísticos en el RecyclerView.
@@ -18,10 +17,10 @@ import co.edu.unipiloto.myapplication.model.LogisticUser // Asegúrate de que es
  * @param onEditClick Callback que se ejecuta al presionar el botón de editar.
  * @param onDeleteClick Callback que se ejecuta al presionar el botón de eliminar.
  */
-class LogisticUserAdapter(
-    private val onEditClick: (LogisticUser) -> Unit,
-    private val onDeleteClick: (LogisticUser) -> Unit
-) : ListAdapter<LogisticUser, LogisticUserAdapter.UserViewHolder>(UserDiffCallback()) {
+class UserAdapter(
+    private val onEditClick: (User) -> Unit,
+    private val onDeleteClick: (User) -> Unit
+) : ListAdapter<User, UserAdapter.UserViewHolder>(UserDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -42,7 +41,7 @@ class LogisticUserAdapter(
         private val btnEdit: ImageButton = itemView.findViewById(R.id.btnEdit)
         private val btnDelete: ImageButton = itemView.findViewById(R.id.btnDelete)
 
-        fun bind(user: LogisticUser, onEditClick: (LogisticUser) -> Unit, onDeleteClick: (LogisticUser) -> Unit) {
+        fun bind(user: User, onEditClick: (User) -> Unit, onDeleteClick: (User) -> Unit) {
 
             tvUserName.text = user.fullName
 
@@ -82,12 +81,12 @@ class LogisticUserAdapter(
     /**
      * Define cómo el ListAdapter debe comparar los ítems para animar los cambios.
      */
-    private class UserDiffCallback : DiffUtil.ItemCallback<LogisticUser>() {
-        override fun areItemsTheSame(oldItem: LogisticUser, newItem: LogisticUser): Boolean {
+    private class UserDiffCallback : DiffUtil.ItemCallback<User>() {
+        override fun areItemsTheSame(oldItem: User, newItem: User): Boolean {
             return oldItem.id == newItem.id
         }
 
-        override fun areContentsTheSame(oldItem: LogisticUser, newItem: LogisticUser): Boolean {
+        override fun areContentsTheSame(oldItem: User, newItem: User): Boolean {
             return oldItem == newItem
         }
     }

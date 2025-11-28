@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.adapters.LogisticUserAdapter
-import co.edu.unipiloto.myapplication.model.LogisticUser
 import co.edu.unipiloto.myapplication.rest.RetrofitClient
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
@@ -29,7 +28,7 @@ class LogisticUserManagementActivity : AppCompatActivity() {
     private lateinit var userAdapter: LogisticUserAdapter
 
     // Lista de trabajo para la búsqueda
-    private var allUsers: List<LogisticUser> = emptyList()
+    private var allUsers: List<User> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,8 +70,8 @@ class LogisticUserManagementActivity : AppCompatActivity() {
      */
     private fun loadUsers() {
         // 🏆 LLAMADA A RETROFIT (GET: Asumimos endpoint /api/v1/logistic-users)
-        RetrofitClient.apiService.getAllLogisticUsers().enqueue(object : Callback<List<LogisticUser>> {
-            override fun onResponse(call: Call<List<LogisticUser>>, response: Response<List<LogisticUser>>) {
+        RetrofitClient.apiService.getAllLogisticUsers().enqueue(object : Callback<List<User>> {
+            override fun onResponse(call: Call<List<User>>, response: Response<List<User>>) {
                 if (response.isSuccessful && response.body() != null) {
                     allUsers = response.body()!!
                     userAdapter.submitList(allUsers)
@@ -116,7 +115,7 @@ class LogisticUserManagementActivity : AppCompatActivity() {
         userAdapter.submitList(filteredList)
     }
 
-    private fun navigateToEditUser(user: LogisticUser) {
+    private fun navigateToEditUser(user: User) {
         val intent = Intent(this, EditLogisticUserActivity::class.java)
         intent.putExtra("RECOLECTOR_ID", user.id) // Usar el ID del recolector
         startActivity(intent)
@@ -125,7 +124,7 @@ class LogisticUserManagementActivity : AppCompatActivity() {
     /**
      * Muestra diálogo de confirmación y llama al servicio REST para eliminar.
      */
-    private fun confirmAndDeleteUser(user: LogisticUser) {
+    private fun confirmAndDeleteUser(user: User) {
         AlertDialog.Builder(this)
             .setTitle("Confirmar Eliminación")
             .setMessage("¿Estás seguro de que deseas eliminar a ${user.fullName}? Esta acción es permanente.")

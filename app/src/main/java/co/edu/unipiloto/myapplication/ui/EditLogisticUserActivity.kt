@@ -5,7 +5,6 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import co.edu.unipiloto.myapplication.R
 // ❌ ELIMINAR: import co.edu.unipiloto.myapplication.db.UserRepository
-import co.edu.unipiloto.myapplication.model.LogisticUser // Modelo de datos
 import co.edu.unipiloto.myapplication.model.Sucursal
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
@@ -18,7 +17,7 @@ class EditLogisticUserActivity : AppCompatActivity() {
 
     // ❌ ELIMINADA: private lateinit var userRepository: UserRepository
     private var recolectorId: Long = -1L
-    private var currentUser: LogisticUser? = null
+    private var currentUser: User? = null
 
     // Vistas (se mantienen)
     private lateinit var tvTitle: TextView
@@ -67,8 +66,8 @@ class EditLogisticUserActivity : AppCompatActivity() {
 
     private fun loadUserData() {
         RetrofitClient.apiService.getLogisticUserById(recolectorId)
-            .enqueue(object : Callback<LogisticUser> {
-                override fun onResponse(call: Call<LogisticUser>, response: Response<LogisticUser>) {
+            .enqueue(object : Callback<User> {
+                override fun onResponse(call: Call<User>, response: Response<User>) {
                     if (response.isSuccessful && response.body() != null) {
                         currentUser = response.body()
                         displayUserData()
@@ -80,7 +79,7 @@ class EditLogisticUserActivity : AppCompatActivity() {
                     }
                 }
 
-                override fun onFailure(call: Call<LogisticUser>, t: Throwable) {
+                override fun onFailure(call: Call<User>, t: Throwable) {
                     Toast.makeText(this@EditLogisticUserActivity, "Fallo de red al cargar usuario.", Toast.LENGTH_LONG).show()
                     finish()
                 }
@@ -187,10 +186,10 @@ class EditLogisticUserActivity : AppCompatActivity() {
         )
 
         RetrofitClient.apiService.updateLogisticUser(updatedUser.id, updatedUser)
-            .enqueue(object : Callback<LogisticUser> {
+            .enqueue(object : Callback<User> {
                 override fun onResponse(
-                    call: Call<LogisticUser>,
-                    response: Response<LogisticUser>
+                    call: Call<User>,
+                    response: Response<User>
                 ) {
                     if (response.isSuccessful) {
                         Toast.makeText(this@EditLogisticUserActivity, "Actualizado con éxito.", Toast.LENGTH_LONG).show()
@@ -200,7 +199,7 @@ class EditLogisticUserActivity : AppCompatActivity() {
                     }
                 }
 
-                override fun onFailure(call: Call<LogisticUser>, t: Throwable) {
+                override fun onFailure(call: Call<User>, t: Throwable) {
                     Toast.makeText(this@EditLogisticUserActivity, "Fallo de red.", Toast.LENGTH_LONG).show()
                 }
             })

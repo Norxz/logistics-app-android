@@ -1,7 +1,23 @@
+// co.edu.unipiloto.myapplication.model.Sucursal.kt
 package co.edu.unipiloto.myapplication.model
 
+import com.google.gson.annotations.SerializedName
+import java.io.Serializable
+
+/**
+ * Representa una Sucursal de la empresa, mapeando los datos recibidos del API REST.
+ * La dirección es un campo obligatorio en el backend.
+ */
 data class Sucursal(
-    val id: Long,
+    @SerializedName("id")
+    val id: Long? = null,
+
+    @SerializedName("nombre")
     val nombre: String,
-    val direccion: Direccion? = null
-)
+
+    @SerializedName("direccion")
+    // Se elimina la nulabilidad (?) para reflejar la restricción del backend (nullable = false)
+    val direccion: Direccion,
+
+    // NO incluimos la lista 'solicitudes'
+) : Serializable

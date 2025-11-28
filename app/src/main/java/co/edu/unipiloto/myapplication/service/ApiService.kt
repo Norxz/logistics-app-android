@@ -54,13 +54,13 @@ interface ApiService {
     fun getDriverRoutes(@Path("driverId") driverId: Long): Call<List<Solicitud>>
 
     @GET("api/v1/logistic-users/{recolectorId}")
-    fun getLogisticUserById(@Path("recolectorId") recolectorId: Long): Call<LogisticUser>
+    fun getLogisticUserById(@Path("recolectorId") recolectorId: Long): Call<User>
 
     @PUT("api/v1/logistic-users/{recolectorId}")
     fun updateLogisticUser(
         @Path("recolectorId") recolectorId: Long,
-        @Body user: LogisticUser
-    ): Call<LogisticUser>
+        @Body user: User
+    ): Call<User>
 
     @DELETE("api/v1/logistic-users/{userId}")
     fun deleteLogisticUser(@Path("userId") userId: Long): Call<Void>
@@ -69,7 +69,7 @@ interface ApiService {
     fun getPendingSolicitudesByZone(@Path("zona") zona: String): Call<List<Solicitud>>
 
     @GET("api/v1/logistic-users/available/{zona}")
-    fun getAvailableDriverByZone(@Path("zona") zona: String): Call<LogisticUser>
+    fun getAvailableDriverByZone(@Path("zona") zona: String): Call<User>
 
     @PUT("api/v1/solicitudes/{solicitudId}/assign")
     fun assignRequest(
@@ -78,7 +78,7 @@ interface ApiService {
     ): Call<Solicitud>
 
     @GET("api/v1/logistic-users/drivers") // Endpoint para obtener lista de conductores activos
-    fun getDriversForAssignment(): Call<List<LogisticUser>>
+    fun getDriversForAssignment(): Call<List<User>>
 
     // En ApiService.kt
     @GET("api/v1/solicitudes/all")
@@ -102,10 +102,10 @@ interface ApiService {
     @GET("users/recolectores/disponible/{sucursalId}")
     fun getAvailableDriverBySucursal(
         @Path("sucursalId") sucursalId: Long
-    ): Call<LogisticUser>
+    ): Call<User>
 
     @GET("api/v1/users/logistic")
-    fun getAllLogisticUsers(): Call<List<LogisticUser>>
+    fun getAllLogisticUsers(): Call<List<User>>
 
     @GET("sucursales")
     fun getAllSucursales(): Call<List<Sucursal>>
