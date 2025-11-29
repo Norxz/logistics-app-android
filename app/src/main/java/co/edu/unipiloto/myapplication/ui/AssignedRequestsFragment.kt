@@ -12,6 +12,8 @@ import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import co.edu.unipiloto.myapplication.dto.RetrofitClient // 👈 NUEVO: Cliente REST
+import co.edu.unipiloto.myapplication.model.Solicitud
+import co.edu.unipiloto.myapplication.ui.adapter.SolicitudAdapter
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response

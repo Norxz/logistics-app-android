@@ -164,6 +164,7 @@
     <string name="dialog_positive_cancel">Sí, Cancelar</string>
     <string name="dialog_negative_cancel">No, Mantener</string>
     <string name="solicitud_id_format">ID Solicitud: #%1$d</string>
+    <string name="delivery_pickup_adress_label">Dirección de Recolección:</string>
 
     <string-array name="logistic_roles">
         <item>CONDUCTOR</item>

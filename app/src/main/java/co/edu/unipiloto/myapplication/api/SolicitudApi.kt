@@ -3,7 +3,7 @@ package co.edu.unipiloto.myapplication.api
 
 import co.edu.unipiloto.myapplication.dto.SolicitudRequest
 import co.edu.unipiloto.myapplication.dto.SolicitudResponse
-import co.edu.unipiloto.myapplication.model.Solicitud
+import retrofit2.Call
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.*
@@ -21,7 +21,7 @@ interface SolicitudApi {
      * Crea una nueva solicitud. El backend retorna el DTO de respuesta simplificado.
      */
     @POST("solicitudes")
-    suspend fun crearSolicitud(@Body request: SolicitudRequest): Response<SolicitudResponse>
+    fun crearSolicitud(@Body request: SolicitudRequest): Call<SolicitudResponse>
 
     /**
      * Mapea a: GET /api/v1/solicitudes/client/{clientId}

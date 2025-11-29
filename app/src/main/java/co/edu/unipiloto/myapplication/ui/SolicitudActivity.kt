@@ -1,94 +1,69 @@
 package co.edu.unipiloto.myapplication.ui
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.widget.*
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-// 🌟 IMPORTS FOR GEOCODING
-import android.location.Geocoder
-import android.os.Handler
-import android.os.Looper
-import java.util.Locale
-// -----------------------------
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.dto.ClienteRequest
-// 🌟 IMPORTS FOR API SUBMISSION
 import co.edu.unipiloto.myapplication.dto.DireccionRequest
 import co.edu.unipiloto.myapplication.dto.PaqueteRequest
 import co.edu.unipiloto.myapplication.dto.RetrofitClient
 import co.edu.unipiloto.myapplication.dto.SolicitudRequest
+import co.edu.unipiloto.myapplication.dto.SolicitudResponse
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import co.edu.unipiloto.myapplication.utils.LocationHelper
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-// -----------------------------
 import com.google.android.gms.maps.MapView
 
 class SolicitudActivity : AppCompatActivity() {
 
-    // Remitente
+    // ... (Variables de Vistas - No requieren cambios)
     private lateinit var etSenderName: TextInputEditText
     private lateinit var etSenderID: TextInputEditText
     private lateinit var etSenderPhone: TextInputEditText
     private lateinit var spIDType: Spinner
     private lateinit var spSenderCountryCode: Spinner
-
-    // Paquete
     private lateinit var etPackageHeight: TextInputEditText
     private lateinit var etPackageWidth: TextInputEditText
     private lateinit var etPackageLength: TextInputEditText
     private lateinit var etPackageWeight: TextInputEditText
     private lateinit var etPackageContent: TextInputEditText
-
-    // Destinatario
     private lateinit var spReceiverIDType: Spinner
     private lateinit var etReceiverID: TextInputEditText
     private lateinit var etReceiverName: TextInputEditText
     private lateinit var etReceiverPhone: TextInputEditText
     private lateinit var etReceiverAddress: TextInputEditText
     private lateinit var spReceiverCountryCode: Spinner
-
-    // TextInputLayouts
     private lateinit var tilReceiverID: TextInputLayout
-    private lateinit var tilReceiverAddress: TextInputLayout
-
-    // Otros
-    private lateinit var spCiudad: Spinner
+    private lateinit var btnReceiverGps: ImageButton
+    private lateinit var tvRecolectionAddress: TextView
     private lateinit var spFranja: Spinner
     private lateinit var etPrice: TextInputEditText
     private lateinit var btnSend: View
-    private lateinit var btnUseGps: ImageButton
+    private var recoleccionAddress: String? = null
+    private var recoleccionLat: Double? = null
+    private var recoleccionLon: Double? = null
+    private var entregaLat: Double? = null
+    private var entregaLon: Double? = null
     private lateinit var sessionManager: SessionManager
-
-    private var selectedLat: Double? = null
-    private var selectedLon: Double? = null
-
     private lateinit var locationHelper: LocationHelper
+    // -------------------------------------------------------------------
 
-    private val mapActivityResultLauncher: ActivityResultLauncher<Intent> =
-        registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                val data: Intent? = result.data
-
-                selectedLat = data?.getDoubleExtra("lat", 0.0)
-                selectedLon = data?.getDoubleExtra("lon", 0.0)
-                val address = data?.getStringExtra("address") ?: ""
-
-                etReceiverAddress.setText(address)
-
-                Toast.makeText(this, "Ubicación seleccionada", Toast.LENGTH_SHORT).show()
-            }
-        }
+    // 🌟 Nueva instancia de Handler para Debounce
+    private val handler = Handler(Looper.getMainLooper())
+    private var priceUpdateRunnable: Runnable? = null
+    // -------------------------------------------------------------------
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -99,31 +74,30 @@ class SolicitudActivity : AppCompatActivity() {
         initViews()
         setupSpinners()
         setupEndIcons()
-        setupListeners()
+        processRecolectionIntent(intent)
 
-        val mapView = findViewById<MapView>(R.id.mapView)
+        // CONFIGURACIÓN DEL MAPA Y GEOLOCALIZACIÓN PARA ENTREGA
+        val mapView = findViewById<MapView>(R.id.mapViewReceiver)
         mapView.onCreate(null)
-
-        etReceiverAddress.setText("")
 
         locationHelper = LocationHelper(
             this,
             mapView
         ) { address, lat, lon ->
             etReceiverAddress.setText(address)
-            selectedLat = lat
-            selectedLon = lon
+            entregaLat = lat
+            entregaLon = lon
+            calculatePrice() // Llamada al cálculo de precio al fijar la ubicación
         }
 
-        btnUseGps.setOnClickListener {
+        btnReceiverGps.setOnClickListener {
             locationHelper.getCurrentLocation { address, lat, lon ->
                 etReceiverAddress.setText(address)
-                selectedLat = lat
-                selectedLon = lon
+                entregaLat = lat
+                entregaLon = lon
+                calculatePrice() // Llamada al cálculo de precio al usar GPS
             }
         }
-
-
 
         etReceiverAddress.setOnEditorActionListener { _, actionId, event ->
             val isEnter = actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH ||
@@ -136,78 +110,69 @@ class SolicitudActivity : AppCompatActivity() {
                 true
             } else false
         }
+
+        // 🌟 LLAMADA A LISTENERS DESPUÉS DE LA CONFIGURACIÓN BÁSICA
+        setupListeners()
     }
 
-    override fun onResume() {
-        super.onResume()
-        findViewById<MapView>(R.id.mapView).onResume()
+    // ... (Métodos de ciclo de vida para MapView - No requieren cambios)
+    override fun onResume() { super.onResume(); findViewById<MapView>(R.id.mapViewReceiver).onResume() }
+    override fun onPause() { super.onPause(); findViewById<MapView>(R.id.mapViewReceiver).onPause() }
+    override fun onDestroy() { super.onDestroy(); findViewById<MapView>(R.id.mapViewReceiver).onDestroy() }
+    override fun onLowMemory() { super.onLowMemory(); findViewById<MapView>(R.id.mapViewReceiver).onLowMemory() }
+    // ---------------------------------------------
+
+
+    private fun processRecolectionIntent(intent: Intent) {
+        recoleccionAddress = intent.getStringExtra("RECOLECTION_ADDRESS")
+        recoleccionLat = intent.getDoubleExtra("RECOLECTION_LATITUDE", 0.0).takeIf { it != 0.0 }
+        recoleccionLon = intent.getDoubleExtra("RECOLECTION_LONGITUDE", 0.0).takeIf { it != 0.0 }
+
+        tvRecolectionAddress.text = recoleccionAddress ?: "Dirección de Recolección no definida"
+
+        if (recoleccionAddress == null || recoleccionLat == null || recoleccionLon == null) {
+            Toast.makeText(this, "Error: Datos de Recolección incompletos.", Toast.LENGTH_LONG).show()
+        }
     }
 
-    override fun onPause() {
-        super.onPause()
-        findViewById<MapView>(R.id.mapView).onPause()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        findViewById<MapView>(R.id.mapView).onDestroy()
-    }
-
-    override fun onLowMemory() {
-        super.onLowMemory()
-        findViewById<MapView>(R.id.mapView).onLowMemory()
-    }
 
     private fun initViews() {
-
+        // ... (Asignación de Vistas - No requieren cambios)
         etSenderName = findViewById(R.id.etSenderName)
         etSenderID = findViewById(R.id.etSenderID)
         etSenderPhone = findViewById(R.id.etSenderPhone)
-        spIDType = findViewById(R.id.spIDType)
+        spIDType = findViewById(R.id.spSenderIDType)
         spSenderCountryCode = findViewById(R.id.spSenderCountryCode)
-
-        // Paquete
         etPackageHeight = findViewById(R.id.etPackageHeight)
         etPackageWidth = findViewById(R.id.etPackageWidth)
         etPackageLength = findViewById(R.id.etPackageLength)
         etPackageWeight = findViewById(R.id.etPackageWeight)
         etPackageContent = findViewById(R.id.etPackageContent)
-
-        // Destinatario
         spReceiverIDType = findViewById(R.id.spReceiverIDType)
         etReceiverID = findViewById(R.id.etReceiverID)
         etReceiverName = findViewById(R.id.etReceiverName)
         etReceiverPhone = findViewById(R.id.etReceiverPhone)
         spReceiverCountryCode = findViewById(R.id.spReceiverCountryCode)
-        etReceiverAddress = findViewById(R.id.etAddress)
-
+        etReceiverAddress = findViewById(R.id.etReceiverAddress)
         tilReceiverID = findViewById(R.id.tilReceiverID)
-        tilReceiverAddress = findViewById(R.id.tilReceiverAddress)
-
-        // Otros
-        spCiudad = findViewById(R.id.spCity)
+        btnReceiverGps = findViewById(R.id.btnReceiverGps)
+        tvRecolectionAddress = findViewById(R.id.tvRecolectionAddress)
         spFranja = findViewById(R.id.spTimeSlot)
         etPrice = findViewById(R.id.etPrice)
         btnSend = findViewById(R.id.btnSend)
-        btnUseGps = findViewById(R.id.btnUseGps)
     }
 
     private fun setupSpinners() {
+        // ... (Configuración de Spinners - No requieren cambios)
         val idTypes = listOf("CC", "TI", "CE", "Pasaporte")
         val adapterId = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, idTypes)
         spIDType.adapter = adapterId
         spReceiverIDType.adapter = adapterId
-
         val countryCodes = listOf("+57", "+1", "+52", "+593")
         val adapterCode =
             ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, countryCodes)
         spSenderCountryCode.adapter = adapterCode
         spReceiverCountryCode.adapter = adapterCode
-
-        val ciudades = listOf("Zona Norte", "Zona Sur", "Zona Centro")
-        spCiudad.adapter =
-            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, ciudades)
-
         val franjas = listOf("Mañana (8-12)", "Tarde (12-6)", "Noche (6-10)")
         spFranja.adapter =
             ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, franjas)
@@ -218,7 +183,7 @@ class SolicitudActivity : AppCompatActivity() {
             Toast.makeText(this, "Buscar ID: ${etReceiverID.text}", Toast.LENGTH_SHORT).show()
         }
 
-        tilReceiverAddress.setEndIconOnClickListener {
+        findViewById<TextInputLayout>(R.id.tilReceiverAddress).setEndIconOnClickListener {
             val addressText = etReceiverAddress.text.toString().trim()
             if (addressText.isNotEmpty()) {
                 locationHelper.searchAddress(addressText)
@@ -226,64 +191,57 @@ class SolicitudActivity : AppCompatActivity() {
         }
     }
 
+    private fun calculatePrice() {
+        // Validación básica para evitar errores antes de calcular
+        if (recoleccionLat == null || entregaLat == null) {
+            etPrice.setText("0")
+            return
+        }
+
+        val peso = etPackageWeight.text.toString().toDoubleOrNull() ?: 0.0
+        val precioSimulado = 5000 + (peso * 1500)
+        etPrice.setText(String.format("%.0f", precioSimulado))
+        // TODO: En un caso real, realizar la llamada Retrofit para obtener el precio real
+    }
+
     private fun setupListeners() {
+
+        // 🌟 CORRECCIÓN: Usar una clase anónima TextWatcher
+        val priceChangeWatcher = object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                // Limpiar cualquier ejecución anterior
+                priceUpdateRunnable?.let { handler.removeCallbacks(it) }
+
+                // Crear un nuevo Runnable
+                priceUpdateRunnable = Runnable {
+                    calculatePrice()
+                }
+
+                // Programar el cálculo 500ms después de la última pulsación (Debounce)
+                handler.postDelayed(priceUpdateRunnable!!, 500)
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        }
+
+        // 🌟 Asignación del TextWatcher (ahora es del tipo correcto)
+        etPackageHeight.addTextChangedListener(priceChangeWatcher)
+        etPackageWidth.addTextChangedListener(priceChangeWatcher)
+        etPackageLength.addTextChangedListener(priceChangeWatcher)
+        etPackageWeight.addTextChangedListener(priceChangeWatcher)
+        // -------------------------------------------------------------------
+
 
         btnSend.setOnClickListener {
 
-            val senderName = etSenderName.text.toString().trim()
-            val senderId = etSenderID.text.toString().trim()
-            val senderPhone = etSenderPhone.text.toString().trim()
+            if (!validateInputs()) return@setOnClickListener
 
-            val height = etPackageHeight.text.toString().toDoubleOrNull()
-            val width = etPackageWidth.text.toString().toDoubleOrNull()
-            val length = etPackageLength.text.toString().toDoubleOrNull()
-            val weight = etPackageWeight.text.toString().toDoubleOrNull()
-            val price = etPrice.text.toString().toDoubleOrNull()
-
-            val receiverId = etReceiverID.text.toString().trim()
-            val receiverPhone = etReceiverPhone.text.toString().trim()
-            val receiverAddress = etReceiverAddress.text.toString().trim()
-            val receiverName = etReceiverName.text.toString()
-
-            val city = spCiudad.selectedItem.toString()
-            val timeSlot = spFranja.selectedItem.toString()
-            val fechaRecoleccion = "2025-01-01"
-
-            val zona = when (city) {
-                "Zona Norte" -> "ZN"
-                "Zona Sur" -> "ZS"
-                "Zona Centro" -> "ZC"
-                else -> "ND"
-            }
-
-            // 1. VALIDATION
-            if (height == null || width == null || length == null || weight == null || price == null) {
-                Toast.makeText(
-                    this,
-                    "Por favor llena todos los valores numéricos",
-                    Toast.LENGTH_SHORT
-                ).show()
-                return@setOnClickListener
-            }
-            if (selectedLat == null || selectedLon == null) {
-                Toast.makeText(
-                    this,
-                    "Por favor busca una dirección válida para fijar la ubicación.",
-                    Toast.LENGTH_LONG
-                ).show()
-                return@setOnClickListener
-            }
-
-            // Get logged-in client ID (Crucial for API submission)
             val clientId = sessionManager.getUserId() ?: run {
-                Toast.makeText(
-                    this,
-                    "Error: Usuario no logueado. Cierre sesión y vuelva a iniciar.",
-                    Toast.LENGTH_LONG
-                ).show()
+                Toast.makeText(this, "Error: Usuario no logueado.", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
 
+            // DTOs de Clientes
             val remitente = ClienteRequest(
                 nombre = etSenderName.text.toString().trim(),
                 tipoId = spIDType.selectedItem.toString(),
@@ -291,7 +249,6 @@ class SolicitudActivity : AppCompatActivity() {
                 telefono = etSenderPhone.text.toString().trim(),
                 codigoPais = spSenderCountryCode.selectedItem.toString()
             )
-
             val receptor = ClienteRequest(
                 nombre = etReceiverName.text.toString().trim(),
                 tipoId = spReceiverIDType.selectedItem.toString(),
@@ -300,116 +257,112 @@ class SolicitudActivity : AppCompatActivity() {
                 codigoPais = spReceiverCountryCode.selectedItem.toString()
             )
 
+            // DTO de Direcciones
+            val direccionRecoleccionDto = DireccionRequest(
+                direccionCompleta = recoleccionAddress!!,
+                ciudad = "Bogota", // Esto debería ser dinámico
+                latitud = recoleccionLat,
+                longitud = recoleccionLon,
+                pisoApto = null,
+                notasEntrega = null
+            )
+            val direccionEntregaDto = DireccionRequest(
+                direccionCompleta = etReceiverAddress.text.toString().trim(),
+                ciudad = "Bogota", // Esto debería ser dinámico
+                latitud = entregaLat,
+                longitud = entregaLon,
+                pisoApto = null,
+                notasEntrega = null
+            )
 
+            // DTO de Paquete
+            val paqueteDto = PaqueteRequest(
+                peso = etPackageWeight.text.toString().toDouble(),
+                alto = etPackageHeight.text.toString().toDouble(),
+                ancho = etPackageWidth.text.toString().toDouble(),
+                largo = etPackageLength.text.toString().toDouble(),
+                contenido = etPackageContent.text.toString().trim()
+            )
+
+            // DTO FINAL SolicitudRequest
             val requestDto = SolicitudRequest(
                 clientId = clientId,
                 remitente = remitente,
                 receptor = receptor,
-                direccion = DireccionRequest(
-                    direccionCompleta = etReceiverAddress.text.toString().trim(),
-                    ciudad = spCiudad.selectedItem.toString(),
-                    latitud = selectedLat,
-                    longitud = selectedLon,
-                    pisoApto = null,
-                    notasEntrega = null
-                ),
-                paquete = PaqueteRequest(
-                    peso = etPackageWeight.text.toString().toDouble(),
-                    alto = etPackageHeight.text.toString().toDouble(),
-                    ancho = etPackageWidth.text.toString().toDouble(),
-                    largo = etPackageLength.text.toString().toDouble(),
-                    contenido = etPackageContent.text.toString().trim()
-                ),
-                fechaRecoleccion = fechaRecoleccion,
-                franjaHoraria = spFranja.selectedItem.toString()
+                direccionRecoleccion = direccionRecoleccionDto,
+                direccionEntrega = direccionEntregaDto,
+                paquete = paqueteDto,
+                fechaRecoleccion = "2025-01-01",
+                franjaHoraria = spFranja.selectedItem.toString(),
+                sucursalId = 1 // Hardcodeado
             )
 
 
             // 3. 🚀 API CALL
-            RetrofitClient.apiService.crearSolicitud(requestDto)
-                .enqueue(object : Callback<Solicitud> {
-                    override fun onResponse(call: Call<Solicitud>, response: Response<Solicitud>) {
+            // 🌟 CORRECCIÓN: Acceder a la interfaz de servicio REST
+            RetrofitClient.solicitudService.crearSolicitud(requestDto).enqueue(object : Callback<SolicitudResponse> {
+
+                    override fun onResponse(call: Call<SolicitudResponse>, response: Response<SolicitudResponse>) {
                         if (response.isSuccessful) {
+                            // El cuerpo de la respuesta ahora es SolicitudResponse
+                            val solicitudId = response.body()?.id
+
                             Toast.makeText(
                                 this@SolicitudActivity,
-                                "¡Solicitud enviada (Guía #${response.body()?.id})!",
+                                "¡Solicitud enviada (Guía #$solicitudId)!",
                                 Toast.LENGTH_LONG
                             ).show()
 
-                            val usuarioEmail = sessionManager.getUserEmail()
-                            if (usuarioEmail.isNullOrEmpty()) {
-                                Toast.makeText(
-                                    this@SolicitudActivity,
-                                    "No hay email en sesión. Por favor inicia sesión primero.",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                                return
-                            }
-
-                            val intent = Intent(
-                                this@SolicitudActivity,
-                                GuideConfirmationActivity::class.java
-                            )
-                            intent.putExtra("solicitudId", response.body()?.id)
-                            intent.putExtra("usuarioEmail", usuarioEmail)
+                            val intent = Intent(this@SolicitudActivity, GuideConfirmationActivity::class.java)
+                            intent.putExtra("solicitudId", solicitudId)
+                            intent.putExtra("usuarioEmail", sessionManager.getUserEmail())
                             startActivity(intent)
-
-
                             finish()
                         } else {
                             val errorBody = response.errorBody()?.string()
                             Log.e("API_CALL", "Error ${response.code()}: $errorBody")
                             Toast.makeText(
                                 this@SolicitudActivity,
-                                "Error ${response.code()} al enviar: ${response.message()}",
+                                "Error ${response.code()} al enviar: ${response.message()}. Revise logs.",
                                 Toast.LENGTH_LONG
                             ).show()
                         }
                     }
 
-                    override fun onFailure(call: Call<Solicitud>, t: Throwable) {
+                    override fun onFailure(call: Call<SolicitudResponse>, t: Throwable) {
                         Log.e("API_CALL", "Fallo de red: ${t.message}")
                         Toast.makeText(
                             this@SolicitudActivity,
-                            "Fallo de conexión. Verifique el servidor.",
+                            "Fallo de conexión. Verifique el servidor y la red.",
                             Toast.LENGTH_LONG
                         ).show()
                     }
                 })
-
-            // Original Log.d removed, as API call is now primary action
         }
     }
 
-    private fun Double.format(digits: Int) = "%.${digits}f".format(this)
-
-    fun geocodeAddress(
-        address: String,
-        onResult: (lat: Double, lon: Double, formattedAddress: String) -> Unit
-    ) {
-        Thread {
-            try {
-                val geocoder = Geocoder(this, Locale.getDefault())
-                val addresses = geocoder.getFromLocationName(address, 1)
-                if (addresses != null && addresses.isNotEmpty()) {
-                    val firstAddress = addresses[0]
-                    val lat = firstAddress.latitude
-                    val lon = firstAddress.longitude
-                    val formatted = firstAddress.getAddressLine(0) ?: address
-                    Handler(Looper.getMainLooper()).post {
-                        onResult(lat, lon, formatted)
-                    }
-                } else {
-                    Handler(Looper.getMainLooper()).post {
-                        Toast.makeText(this, "Dirección no encontrada", Toast.LENGTH_LONG).show()
-                    }
-                }
-            } catch (e: Exception) {
-                Handler(Looper.getMainLooper()).post {
-                    Toast.makeText(this, "Error al geocodificar", Toast.LENGTH_LONG).show()
-                    Log.e("SolicitudActivity", e.message ?: "Geocode error")
-                }
-            }
-        }.start()
+    private fun validateInputs(): Boolean {
+        // ... (Lógica de Validación - No requiere cambios)
+        if (recoleccionLat == null || recoleccionLon == null || recoleccionAddress.isNullOrEmpty()) {
+            Toast.makeText(this, "Falta la dirección de Recolección (vuelva a la pantalla anterior).", Toast.LENGTH_LONG).show()
+            return false
+        }
+        if (entregaLat == null || entregaLon == null || etReceiverAddress.text.isNullOrEmpty()) {
+            Toast.makeText(this, "Fije la Ubicación de Entrega usando el GPS o la búsqueda.", Toast.LENGTH_LONG).show()
+            return false
+        }
+        if (etPackageHeight.text.toString().toDoubleOrNull() == null ||
+            etPackageWidth.text.toString().toDoubleOrNull() == null ||
+            etPackageLength.text.toString().toDoubleOrNull() == null ||
+            etPackageWeight.text.toString().toDoubleOrNull() == null) {
+            Toast.makeText(this, "Por favor llena todos los valores numéricos del paquete.", Toast.LENGTH_SHORT).show()
+            return false
+        }
+        if (etSenderName.text.isNullOrEmpty() || etSenderID.text.isNullOrEmpty() ||
+            etReceiverName.text.isNullOrEmpty() || etReceiverID.text.isNullOrEmpty()) {
+            Toast.makeText(this, "Complete todos los campos de Remitente y Destinatario.", Toast.LENGTH_SHORT).show()
+            return false
+        }
+        return true
     }
 }

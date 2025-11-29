@@ -31,7 +31,7 @@ class SolicitudAdapter(
         fun bind(solicitud: Solicitud) {
             // 🚨 Aquí va la lógica para mostrar los datos de la Solicitud
             binding.tvSolicitudId.text = itemView.context.getString(R.string.solicitud_id_format, solicitud.id ?: 0L)
-            binding.tvDireccion.text = solicitud.direccion.direccionCompleta
+            binding.tvDireccion.text = solicitud.direccionEntrega.direccionCompleta
             binding.tvEstado.text = solicitud.estado
 
 

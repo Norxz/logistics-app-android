@@ -92,14 +92,13 @@ fun SolicitudResponse.toModel(): Solicitud {
         fechaRecoleccion = this.fechaRecoleccion,
         franjaHoraria = this.franjaHoraria,
         estado = this.estado,
-        createdAt = "N/A", // Timestamp
-
-        // Relaciones Obligatorias (Placeholders y Modelos creados arriba)
+        createdAt = "N/A",
         client = defaultPlaceholderUser,
         remitente = defaultPlaceholderCliente,
         receptor = defaultPlaceholderCliente,
         sucursal = defaultPlaceholderSucursal,
-        direccion = defaultPlaceholderDireccion,
+        direccionRecoleccion = defaultPlaceholderDireccion,
+        direccionEntrega = defaultPlaceholderDireccion,
         paquete = defaultPlaceholderPaquete,
         guia = modelGuia,
 

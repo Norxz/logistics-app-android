@@ -6,37 +6,78 @@
     android:layout_height="match_parent"
     android:background="@color/background_surface">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:padding="24dp">
 
         <TextView
+            android:id="@+id/tvMainTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
             android:text="@string/delivery_title_text"
             android:textColor="@color/primary_color"
             android:textSize="28sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginBottom="24dp"/>
 
-        <!-- REMITENTE -->
         <TextView
+            android:id="@+id/tvPickupTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:text="@string/delivery_send_text"
+            android:layout_marginTop="24dp"
+            android:text="@string/delivery_pickup_details"
             android:textColor="@color/on_surface"
             android:textSize="20sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvMainTitle" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        <TextView
+            android:id="@+id/tvPickupAddressLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/delivery_pickup_adress_label"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvPickupTitle" />
+
+        <TextView
+            android:id="@+id/tvRecolectionAddress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:hint="@string/delivery_send_text_name">
+            android:textStyle="bold"
+            android:textColor="@color/on_surface"
+            android:textSize="16sp"
+            tools:text="Cl. 12 # 34-56, Bogotá D.C."
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvPickupAddressLabel" />
+
+
+        <TextView
+            android:id="@+id/tvSenderTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/delivery_send_text"
+            android:textColor="@color/on_surface"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvRecolectionAddress" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilSenderName"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="@string/delivery_send_text_name"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvSenderTitle">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etSenderName"
@@ -46,17 +87,20 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <LinearLayout
+            android:id="@+id/llSenderID"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/tilSenderName">
 
             <Spinner
-                android:id="@+id/spIDType"
+                android:id="@+id/spSenderIDType"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:minHeight="48dp" />
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -74,17 +118,21 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/llSenderPhone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp"
             android:layout_marginBottom="32dp"
-            android:orientation="horizontal">
+            app:layout_constraintTop_toBottomOf="@id/llSenderID">
 
             <Spinner
                 android:id="@+id/spSenderCountryCode"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:minHeight="48dp" />
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -101,32 +149,36 @@
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
-        <!-- PAQUETE -->
+
         <TextView
+            android:id="@+id/tvPackageTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:text="Detalles del Paquete"
             android:textColor="@color/on_surface"
             android:textSize="20sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/llSenderPhone" />
 
-        <GridLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/clPackageDims"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:alignmentMode="alignMargins"
-            android:columnCount="2"
-            android:rowCount="2"
-            android:rowOrderPreserved="false"
-            android:useDefaultMargins="true">
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/tvPackageTitle">
 
-            <!-- Alto -->
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilPackageHeight"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_columnWeight="1"
-                android:hint="Alto (cm)">
+                android:layout_marginEnd="8dp"
+                android:hint="Alto (cm)"
+                app:layout_constraintEnd_toStartOf="@+id/tilPackageWidth"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etPackageHeight"
@@ -135,13 +187,15 @@
                     android:inputType="numberDecimal" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Ancho -->
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilPackageWidth"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_columnWeight="1"
-                android:hint="Ancho (cm)">
+                android:hint="Ancho (cm)"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/tilPackageHeight"
+                app:layout_constraintTop_toTopOf="parent">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etPackageWidth"
@@ -150,13 +204,17 @@
                     android:inputType="numberDecimal" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Largo -->
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilPackageLength"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_columnWeight="1"
-                android:hint="Largo (cm)">
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="8dp"
+                android:hint="Largo (cm)"
+                app:layout_constraintEnd_toStartOf="@+id/tilPackageWeight"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tilPackageHeight">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etPackageLength"
@@ -165,13 +223,16 @@
                     android:inputType="numberDecimal" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Peso -->
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilPackageWeight"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_columnWeight="1"
-                android:hint="Peso (kg)">
+                android:layout_marginTop="16dp"
+                android:hint="Peso (kg)"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/tilPackageLength"
+                app:layout_constraintTop_toBottomOf="@+id/tilPackageWidth">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etPackageWeight"
@@ -179,15 +240,17 @@
                     android:layout_height="wrap_content"
                     android:inputType="numberDecimal" />
             </com.google.android.material.textfield.TextInputLayout>
-
-        </GridLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilPackageContent"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:layout_marginBottom="24dp"
-            android:hint="Contenido del paquete">
+            android:hint="Contenido del paquete"
+            app:layout_constraintTop_toBottomOf="@id/clPackageDims">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPackageContent"
@@ -196,28 +259,34 @@
                 android:inputType="text" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- DESTINATARIO -->
+
         <TextView
+            android:id="@+id/tvReceiverTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:text="@string/delivery_destination_title"
             android:textColor="@color/on_surface"
             android:textSize="20sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tilPackageContent" />
 
         <LinearLayout
+            android:id="@+id/llReceiverID"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/tvReceiverTitle">
 
             <Spinner
                 android:id="@+id/spReceiverIDType"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:minHeight="48dp" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilReceiverID"
@@ -238,11 +307,13 @@
         </LinearLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilReceiverName"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="@string/delivery_destination_name">
+            android:layout_marginTop="16dp"
+            android:hint="@string/delivery_destination_name"
+            app:layout_constraintTop_toBottomOf="@id/llReceiverID">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etReceiverName"
@@ -252,17 +323,20 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <LinearLayout
+            android:id="@+id/llReceiverPhone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/tilReceiverName">
 
             <Spinner
                 android:id="@+id/spReceiverCountryCode"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:minHeight="48dp" />
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -280,10 +354,11 @@
         </LinearLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/clReceiverAddressContainer"
+            android:id="@+id/clReceiverAddressInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/llReceiverPhone">
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilReceiverAddress"
@@ -295,17 +370,17 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/btnUseGps">
+                app:layout_constraintEnd_toStartOf="@+id/btnReceiverGps">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etAddress"
+                    android:id="@+id/etReceiverAddress"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textPostalAddress" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <ImageButton
-                android:id="@+id/btnUseGps"
+                android:id="@+id/btnReceiverGps"
                 android:layout_width="56dp"
                 android:layout_height="0dp"
                 android:background="?attr/selectableItemBackground"
@@ -321,43 +396,36 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
 
-        <!-- MAPA -->
         <com.google.android.gms.maps.MapView
-            android:id="@+id/mapView"
+            android:id="@+id/mapViewReceiver"
             android:layout_width="match_parent"
-            android:layout_height="200dp" />
+            android:layout_height="200dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            app:layout_constraintTop_toBottomOf="@id/clReceiverAddressInput" />
 
 
-        <!-- SECCIÓN RECOGIDA Y PRECIO -->
         <TextView
+            android:id="@+id/tvScheduleTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="16dp"
             android:layout_marginBottom="16dp"
-            android:text="@string/delivery_pickup_details"
+            android:text="Programación y Costo"
             android:textColor="@color/on_surface"
             android:textSize="20sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/mapViewReceiver" />
 
         <TextView
+            android:id="@+id/tvTimeSlotLabel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="4dp"
-            android:text="@string/delivery_pickup_zone_label" />
-
-        <Spinner
-            android:id="@+id/spCity"
-            style="@style/Widget.AppCompat.Spinner.Underlined"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:minHeight="48dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
-            android:text="@string/delivery_time_slot_label" />
+            android:text="@string/delivery_time_slot_label"
+            app:layout_constraintTop_toBottomOf="@id/tvScheduleTitle"
+            android:layout_marginTop="16dp"/>
 
         <Spinner
             android:id="@+id/spTimeSlot"
@@ -365,24 +433,30 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="32dp"
-            android:minHeight="48dp" />
+            android:minHeight="48dp"
+            app:layout_constraintTop_toBottomOf="@id/tvTimeSlotLabel"/>
 
         <TextView
+            android:id="@+id/tvPriceLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:text="@string/delivery_price"
             android:textColor="@color/on_surface"
             android:textSize="20sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/spTimeSlot"
+            app:layout_constraintStart_toStartOf="parent" />
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilPrice"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="40dp"
             android:hint="@string/delivery_total_price"
-            app:boxStrokeColor="@color/primary_color">
+            app:boxStrokeColor="@color/primary_color"
+            app:layout_constraintTop_toBottomOf="@id/tvPriceLabel">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPrice"
@@ -390,7 +464,11 @@
                 android:layout_height="wrap_content"
                 android:inputType="numberDecimal"
                 android:textSize="20sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:enabled="false"
+                android:focusable="false"
+                android:clickable="false"
+                tools:text="15.500 COP" />
         </com.google.android.material.textfield.TextInputLayout>
 
 
@@ -403,7 +481,8 @@
             android:paddingVertical="14dp"
             android:text="@string/send_guide"
             android:textSize="18sp"
-            app:cornerRadius="12dp" />
+            app:cornerRadius="12dp"
+            app:layout_constraintTop_toBottomOf="@id/tilPrice" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogout"
@@ -413,7 +492,10 @@
             android:layout_gravity="center_horizontal"
             android:paddingVertical="14dp"
             android:text="@string/logout"
-            android:textColor="@color/on_surface_secondary" />
+            android:textColor="@color/on_surface_secondary"
+            app:layout_constraintTop_toBottomOf="@id/btnSend"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>
