@@ -12,4 +12,14 @@
     <dimen name="button_padding_vertical">14dp</dimen>
 
     <dimen name="button_corner_radius">12dp</dimen>
+    <dimen name="spinner_height">32dp</dimen>
+    <dimen name="padding_large">32dp</dimen>
+    <dimen name="margin_extra_large">32dp</dimen>
+    <dimen name="margin_x_small">4dp</dimen>
+    <dimen name="margin_medium">16dp</dimen>
+    <dimen name="margin_small">8dp</dimen>
+    <dimen name="padding_medium">16dp</dimen>
+    <dimen name="padding_small">8dp</dimen>
+    <dimen name="corner_radius_medium">8dp</dimen>
+    <dimen name="component_height_standard">56dp</dimen>
 </resources>

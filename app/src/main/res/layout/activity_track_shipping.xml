@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_surface"
+    android:background="?attr/colorSurface"
     android:padding="24dp"
     tools:context=".ui.TrackShippingActivity">
 
@@ -15,7 +15,7 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="Regresar a la pantalla anterior"
         android:src="@drawable/ic_arrow_back"
-        app:tint="@color/on_surface"
+        app:tint="?attr/colorOnSurface"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -25,57 +25,61 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="Rastrea tu Envío 📦"
-        android:textColor="@color/on_surface"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="28sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btnBack" /> <com.google.android.material.textfield.TextInputLayout
-    android:id="@+id/tilGuideCode"
-    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-    android:layout_width="0dp"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="32dp"
-    android:hint="Ingresa el ID de la Solicitud"
-    app:boxStrokeColor="@color/primary_color"
-    app:hintTextColor="@color/primary_color"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/tvTitle"> <com.google.android.material.textfield.TextInputEditText
-    android:id="@+id/etGuideCode"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:inputType="number"
-    android:maxLength="12"
-    android:maxLines="1"
-    android:singleLine="true"
-    android:textColor="@color/on_surface" />
-</com.google.android.material.textfield.TextInputLayout>
+        app:layout_constraintTop_toBottomOf="@id/btnBack" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilGuideCode"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:hint="Ingresa el ID de la Solicitud"
+        app:boxStrokeColor="@color/primary_color"
+        app:hintTextColor="@color/primary_color"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvTitle">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etGuideCode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textCapCharacters|textNoSuggestions"
+            android:maxLength="10" android:maxLines="1"
+            android:singleLine="true"
+            android:textColor="?attr/colorOnSurface" />
+
+    </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSearch"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:backgroundTint="@color/accent_orange"
         android:paddingVertical="14dp"
         android:text="Buscar Envío"
-        android:textColor="@color/md_white"
+        android:textColor="?attr/colorOnPrimary"
         android:textSize="18sp"
         android:textStyle="bold"
+        app:backgroundTint="@color/accent_orange"
         app:cornerRadius="12dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tilGuideCode" />
 
-    <androidx.cardview.widget.CardView
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/cvResults"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
         android:visibility="gone"
-        app:cardBackgroundColor="@color/md_white"
-        app:cardCornerRadius="12dp"
+        app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+        app:cardCornerRadius="16dp"
         app:cardElevation="4dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -91,8 +95,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="ESTADO ACTUAL"
-                android:textColor="@color/on_surface_secondary"
-                android:textSize="14sp" />
+                android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                android:textColor="?attr/colorOnSurfaceVariant" />
 
             <TextView
                 android:id="@+id/tvCurrentStatus"
@@ -104,67 +108,82 @@
                 android:textStyle="bold"
                 tools:text="EN CAMINO" />
 
-            <TextView
-                android:layout_width="wrap_content"
+            <androidx.gridlayout.widget.GridLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="ID de Solicitud:"
-                android:textColor="@color/on_surface_secondary"
-                android:textSize="14sp" />
-            <TextView
-                android:id="@+id/tvGuideNumber"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:textColor="@color/on_surface"
-                android:textSize="16sp"
-                tools:text="1234567890" />
+                app:columnCount="2"
+                app:rowCount="4">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Dirección de Destino:"
-                android:textColor="@color/on_surface_secondary"
-                android:textSize="14sp" />
-            <TextView
-                android:id="@+id/tvDeliveryAddress"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:textColor="@color/on_surface"
-                android:textSize="16sp"
-                tools:text="Calle 123 #45-67, Bogotá" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ID de Solicitud:"
+                    android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    app:layout_columnWeight="1" />
+                <TextView
+                    android:id="@+id/tvGuideNumber"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp"
+                    app:layout_columnWeight="1"
+                    tools:text="1234567890" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Fecha Estimada:"
-                android:textColor="@color/on_surface_secondary"
-                android:textSize="14sp" />
-            <TextView
-                android:id="@+id/tvDeliveryDate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:textColor="@color/on_surface"
-                android:textSize="16sp"
-                tools:text="2025-10-20" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Dirección de Destino:"
+                    android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    app:layout_columnWeight="1" />
+                <TextView
+                    android:id="@+id/tvDeliveryAddress"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp"
+                    app:layout_columnWeight="1"
+                    tools:text="Calle 123 #45-67, Bogotá" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Franja Horaria:"
-                android:textColor="@color/on_surface_secondary"
-                android:textSize="14sp" />
-            <TextView
-                android:id="@+id/tvDeliveryFranja"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/on_surface"
-                android:textSize="16sp"
-                tools:text="PM" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Fecha Estimada:"
+                    android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    app:layout_columnWeight="1" />
+                <TextView
+                    android:id="@+id/tvDeliveryDate"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp"
+                    app:layout_columnWeight="1"
+                    tools:text="2025-10-20" />
 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Franja Horaria:"
+                    android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    app:layout_columnWeight="1" />
+                <TextView
+                    android:id="@+id/tvDeliveryFranja"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp"
+                    app:layout_columnWeight="1"
+                    tools:text="PM" />
+
+            </androidx.gridlayout.widget.GridLayout>
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
+    </com.google.android.material.card.MaterialCardView>
 
     <TextView
         android:id="@+id/tvErrorMessage"
@@ -179,5 +198,18 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/btnSearch"
         tools:text="⚠️ Error: La guía no fue encontrada o es inválida."/>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnSearch"
+        app:layout_constraintVertical_bias="0.1"
+        android:indeterminateTint="@color/accent_orange"/>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

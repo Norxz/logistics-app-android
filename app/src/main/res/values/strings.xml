@@ -165,6 +165,27 @@
     <string name="dialog_negative_cancel">No, Mantener</string>
     <string name="solicitud_id_format">ID Solicitud: #%1$d</string>
     <string name="delivery_pickup_adress_label">Dirección de Recolección:</string>
+    <string name="error_no_branch_id">Error de Sesión: No se pudo obtener el ID de la sucursal. Por favor, inicie sesión de nuevo.</string>
+    <string name="empty_state_no_pending_requests">No hay solicitudes pendientes de asignación en este momento.</string>
+    <string name="no_requests_in_this_status">No hay solicitudes con este estado para mostrar.</string>
+    <string name="no_history_for_tracking">No se encontró historial de seguimiento para esta guía.</string>
+    <string name="no_pending_requests_branch">No hay solicitudes pendientes en esta sucursal.</string>
+    <string name="no_collectors_available">No hay recolectores disponibles en esta sucursal o zona.</string>
+    <string name="request_assigned_success">Solicitud asignada correctamente al conductor.</string>
+    <string name="error_network_fail">Fallo de red: No se pudo conectar al servidor.</string>
+    <string name="error_server_code">Error del servidor: Código %d.</string>
+    <string name="error_network_driver_search">Error de red al buscar conductor disponible.</string>
+    <string name="error_assignment_failed">Fallo al asignar la solicitud. Intente de nuevo.</string>
+    <string name="error_network_assignment">Fallo de red al intentar asignar la solicitud.</string>
+    <string name="cd_user_role_icon">Icono que representa el rol del usuario.</string>
+    <string name="cd_edit_user">Modificar usuario</string>
+    <string name="cd_delete_user">Eliminar usuario</string>
+    <string name="recolector_assigned_format">Formato para mostrar el conductor.</string>
+    <string name="action_assign">Texto del botón Asignar (Gestor).</string>
+    <string name="action_start">Texto del botón Iniciar Recolección (Conductor).</string>
+    <string name="action_finish">Texto del botón Finalizar Recolección (Conductor).</string>
+    <string name="branch_origin_format">Sucursal de Origen: %1$s</string>
+
 
     <string-array name="logistic_roles">
         <item>CONDUCTOR</item>

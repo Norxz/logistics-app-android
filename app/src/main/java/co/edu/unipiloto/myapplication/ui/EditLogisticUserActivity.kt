@@ -4,18 +4,17 @@ import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import co.edu.unipiloto.myapplication.R
-// ❌ ELIMINAR: import co.edu.unipiloto.myapplication.db.UserRepository
 import co.edu.unipiloto.myapplication.model.Sucursal
+import co.edu.unipiloto.myapplication.model.User // ✅ CORRECCIÓN 1: Importar la clase User
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
-import co.edu.unipiloto.myapplication.dto.RetrofitClient // 👈 NUEVO: Cliente REST
+import co.edu.unipiloto.myapplication.dto.RetrofitClient
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
 class EditLogisticUserActivity : AppCompatActivity() {
 
-    // ❌ ELIMINADA: private lateinit var userRepository: UserRepository
     private var recolectorId: Long = -1L
     private var currentUser: User? = null
 
@@ -65,7 +64,8 @@ class EditLogisticUserActivity : AppCompatActivity() {
     }
 
     private fun loadUserData() {
-        RetrofitClient.apiService.getLogisticUserById(recolectorId)
+        // 🚨 CORRECCIÓN 2: Usar getUserApi() en lugar de apiService (asumiendo que existe)
+        RetrofitClient.getUserApi().getLogisticUserById(recolectorId)
             .enqueue(object : Callback<User> {
                 override fun onResponse(call: Call<User>, response: Response<User>) {
                     if (response.isSuccessful && response.body() != null) {
@@ -90,7 +90,8 @@ class EditLogisticUserActivity : AppCompatActivity() {
      * Carga los datos del usuario desde el backend REST.
      */
     private fun loadSucursales() {
-        RetrofitClient.apiService.getAllSucursales()
+        // 🚨 CORRECCIÓN 2: Usar getUserApi() en lugar de apiService (asumiendo que existe)
+        RetrofitClient.getUserApi().getAllSucursales()
             .enqueue(object : Callback<List<Sucursal>> {
                 override fun onResponse(call: Call<List<Sucursal>>, response: Response<List<Sucursal>>) {
                     if (response.isSuccessful && response.body() != null) {
@@ -111,6 +112,7 @@ class EditLogisticUserActivity : AppCompatActivity() {
     private fun displayUserData() {
         val user = currentUser ?: return
 
+        // Propiedades de User resueltas por la importación:
         tvTitle.text = "Editar: ${user.fullName}"
         etName.setText(user.fullName)
         etEmail.setText(user.email)
@@ -129,6 +131,7 @@ class EditLogisticUserActivity : AppCompatActivity() {
         // -------- ROLES --------
         val roleAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, roles)
         spinnerRole.adapter = roleAdapter
+        // Propiedad resuelta:
         spinnerRole.setSelection(roles.indexOf(user.role))
 
         // -------- SUCURSALES --------
@@ -136,6 +139,7 @@ class EditLogisticUserActivity : AppCompatActivity() {
         val sucursalAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, sucursalNames)
         spinnerSucursal.adapter = sucursalAdapter
 
+        // Propiedad resuelta:
         val indexFound = sucursales.indexOfFirst { it.id == user.sucursal?.id }
         val safeIndex = if (indexFound != -1) indexFound else 0
 
@@ -176,16 +180,18 @@ class EditLogisticUserActivity : AppCompatActivity() {
             return
         }
 
+        // 🚨 Propiedades de User resueltas, incluyendo 'copy' (asumiendo que User es data class)
         val updatedUser = user.copy(
             fullName = newName,
             email = newEmail,
             phoneNumber = newPhone,
             role = newRole,
-            sucursal = newSucursal,     // <--- ✔ ENVÍO OBJETO COMPLETO
+            sucursal = newSucursal,
             isActive = newIsActive
         )
 
-        RetrofitClient.apiService.updateLogisticUser(updatedUser.id, updatedUser)
+        // 🚨 CORRECCIÓN 2: Usar getUserApi() en lugar de apiService (asumiendo que existe)
+        RetrofitClient.getUserApi().updateLogisticUser(updatedUser.id!!, updatedUser)
             .enqueue(object : Callback<User> {
                 override fun onResponse(
                     call: Call<User>,

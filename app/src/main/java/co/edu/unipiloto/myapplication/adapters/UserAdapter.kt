@@ -12,8 +12,10 @@ import co.edu.unipiloto.myapplication.model.User
 
 /**
  * Adaptador para mostrar la lista de usuarios logísticos en el RecyclerView.
+ * Utiliza RecyclerView.Adapter con actualización manual (updateList).
  */
 class UserAdapter(
+    // MutableList es necesario para usar .clear() y .addAll()
     private var userList: MutableList<User>,
     private val onEditClick: (User) -> Unit,
     private val onDeleteClick: (User) -> Unit
@@ -21,9 +23,7 @@ class UserAdapter(
 
     inner class UserViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val tvUserName: TextView = itemView.findViewById(R.id.tvUserName)
-        // ID CAMBIADO
         val tvUserRoleZone: TextView = itemView.findViewById(R.id.tvUserRoleZone)
-        // ID NUEVO
         val tvIsActive: TextView = itemView.findViewById(R.id.tvIsActive)
         val btnEdit: ImageButton = itemView.findViewById(R.id.btnEdit)
         val btnDelete: ImageButton = itemView.findViewById(R.id.btnDelete)
@@ -31,6 +31,7 @@ class UserAdapter(
         fun bind(user: User) {
             tvUserName.text = user.fullName
 
+            // Muestra el rol y la zona/sucursal si existe
             val roleSucursal = if (user.sucursal == null) {
                 user.role
             } else {
@@ -45,8 +46,8 @@ class UserAdapter(
                 tvIsActive.background = ContextCompat.getDrawable(context, R.drawable.bg_status_active)
             } else {
                 tvIsActive.text = "INACTIVO"
-                tvIsActive.background = ContextCompat.getDrawable(context, R.drawable.bg_status_inactive)
                 // Asumo que tienes un drawable bg_status_inactive
+                tvIsActive.background = ContextCompat.getDrawable(context, R.drawable.bg_status_inactive)
             }
 
             // Manejo de eventos de clic
@@ -67,6 +68,10 @@ class UserAdapter(
 
     override fun getItemCount(): Int = userList.size
 
+    /**
+     * 🔄 Método para actualizar la lista de forma manual.
+     * Reemplaza el contenido de la lista interna y notifica al RecyclerView.
+     */
     fun updateList(newList: List<User>) {
         userList.clear()
         userList.addAll(newList)

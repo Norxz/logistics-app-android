@@ -11,15 +11,21 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import co.edu.unipiloto.myapplication.api.SucursalApi
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import co.edu.unipiloto.myapplication.dto.RetrofitClient
+import co.edu.unipiloto.myapplication.dto.RetrofitClient // 💡 Importación del objeto RetrofitClient
 import co.edu.unipiloto.myapplication.dto.RegisterRequest
 import co.edu.unipiloto.myapplication.model.User
 import co.edu.unipiloto.myapplication.model.Sucursal
+// Importamos la clase SucursalResponse para el mapeo
+import co.edu.unipiloto.myapplication.dto.SucursalResponse // 👈 ASUMIDO: Necesitas importar esta clase DTO
+
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -36,7 +42,7 @@ class RegisterActivity : AppCompatActivity() {
         const val ROL_ADMIN = "ADMIN"
     }
 
-    // --- VISTAS (se mantienen) ---
+    // --- VISTAS ---
     private lateinit var etFullName: TextInputEditText
     private lateinit var etPhoneNumber: TextInputEditText
     private lateinit var etEmail: TextInputEditText
@@ -48,24 +54,37 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var tilPassword: TextInputLayout
     private lateinit var tilPassword2: TextInputLayout
     private lateinit var spRol: Spinner
-    private lateinit var spZona: Spinner
+    private lateinit var spSucursal: Spinner
     private lateinit var tvRolLabel: TextView
-    private lateinit var tvZonaLabel: TextView
+    private lateinit var tvSucursalLabel: TextView
     private lateinit var btnGoRegister: MaterialButton
     private lateinit var progressBar: ProgressBar
 
     // --- DATOS Y UTILIDADES ---
     private lateinit var sessionManager: SessionManager
 
-    // Roles que requieren selección de Zona
+    // Roles que requieren selección de Sucursal (anteriormente Zona)
     private val ROLES_LOGISTICOS = listOf("CONDUCTOR", "GESTOR", "FUNCIONARIO", "ANALISTA")
     private val ADMIN_REGISTERABLE_ROLES = listOf(ROL_CLIENTE) + ROLES_LOGISTICOS.distinct()
-    private lateinit var sucursalesList: List<Sucursal>
+
+    // 💡 Inicialización segura para la lista de sucursales
+    private var sucursalesList: List<Sucursal> = emptyList()
+
     private val PASSWORD_BLACKLIST =
         listOf("password", "123456", "qwerty", "admin", "unipiloto", "piloto")
 
     // --- ESTADO ---
     private var isAdminRegister = false
+
+    // 💡 Propiedad computada para obtener el rol seleccionado (del fragmento anterior)
+    private val selectedRole: String
+        get() {
+            return if (isAdminRegister) {
+                spRol.selectedItem.toString().uppercase()
+            } else {
+                ROL_CLIENTE
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -95,9 +114,9 @@ class RegisterActivity : AppCompatActivity() {
         tilPassword = findViewById(R.id.tilPassword)
         tilPassword2 = findViewById(R.id.tilPassword2)
         spRol = findViewById(R.id.spRol)
-        spZona = findViewById(R.id.spZona)
+        spSucursal = findViewById(R.id.spZona)       // 👈 Mantiene el ID del XML, usa nuevo nombre
         tvRolLabel = findViewById(R.id.tvRolLabel)
-        tvZonaLabel = findViewById(R.id.tvZonaLabel)
+        tvSucursalLabel = findViewById(R.id.tvZonaLabel) // 👈 Mantiene el ID del XML, usa nuevo nombre
         btnGoRegister = findViewById(R.id.btnGoRegister)
         progressBar = findViewById(R.id.progress)
     }
@@ -106,15 +125,17 @@ class RegisterActivity : AppCompatActivity() {
         if (!isAdminRegister) {
             tvRolLabel.visibility = View.GONE
             spRol.visibility = View.GONE
-            tvZonaLabel.visibility = View.GONE
-            spZona.visibility = View.GONE
+            tvSucursalLabel.visibility = View.GONE // 👈 Actualizado
+            spSucursal.visibility = View.GONE      // 👈 Actualizado
         } else {
             val initialRole = ADMIN_REGISTERABLE_ROLES.firstOrNull() ?: ROL_CLIENTE
             val isLogistic = ROLES_LOGISTICOS.contains(initialRole)
-            tvZonaLabel.visibility = if (isLogistic) View.VISIBLE else View.GONE
-            spZona.visibility = if (isLogistic) View.VISIBLE else View.GONE
-            tilFullName.visibility = View.VISIBLE // Mantenemos visible para logísticos también
-            tilPhoneNumber.visibility = View.VISIBLE // Mantenemos visible
+
+            tvSucursalLabel.visibility = if (isLogistic) View.VISIBLE else View.GONE // 👈 Actualizado
+            spSucursal.visibility = if (isLogistic) View.VISIBLE else View.GONE      // 👈 Actualizado
+
+            tilFullName.visibility = View.VISIBLE
+            tilPhoneNumber.visibility = View.VISIBLE
         }
     }
 
@@ -124,9 +145,10 @@ class RegisterActivity : AppCompatActivity() {
         rolAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spRol.adapter = rolAdapter
 
-        val emptyAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, arrayListOf<String>())
+        // Usamos spSucursal
+        val emptyAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, arrayListOf("Cargando Sucursales..."))
         emptyAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spZona.adapter = emptyAdapter
+        spSucursal.adapter = emptyAdapter // 👈 Actualizado
 
         loadSucursalesFromServer()
 
@@ -135,11 +157,11 @@ class RegisterActivity : AppCompatActivity() {
                 override fun onItemSelected(
                     parent: AdapterView<*>?, view: View?, position: Int, id: Long
                 ) {
-                    val selectedRole = parent?.getItemAtPosition(position).toString().uppercase()
-                    val isLogistic = ROLES_LOGISTICOS.contains(selectedRole)
+                    val role = parent?.getItemAtPosition(position).toString().uppercase()
+                    val isLogistic = ROLES_LOGISTICOS.contains(role)
 
-                    tvZonaLabel.visibility = if (isLogistic) View.VISIBLE else View.GONE
-                    spZona.visibility = if (isLogistic) View.VISIBLE else View.GONE
+                    tvSucursalLabel.visibility = if (isLogistic) View.VISIBLE else View.GONE // 👈 Actualizado
+                    spSucursal.visibility = if (isLogistic) View.VISIBLE else View.GONE      // 👈 Actualizado
 
                     val hintResource = if (isLogistic) R.string.full_name_logistic_hint else R.string.full_name_client_hint
                     val phoneHintResource = if (isLogistic) R.string.phone_number_logistic_hint else R.string.phone_number_client_hint
@@ -180,14 +202,24 @@ class RegisterActivity : AppCompatActivity() {
         val password = etPassword.text.toString()
         val password2 = etPassword2.text.toString()
 
-        val role = if (isAdminRegister) spRol.selectedItem.toString().uppercase() else ROL_CLIENTE
-        val zona = if (spZona.visibility == View.VISIBLE) spZona.selectedItem.toString() else null
+        val role = selectedRole // Usa la propiedad computada
+
+        // 💡 Obtenemos el nombre de la sucursal (anteriormente zona)
+        val sucursalName = if (spSucursal.visibility == View.VISIBLE && spSucursal.selectedItem != null) {
+            spSucursal.selectedItem.toString()
+        } else null
 
         // 1. VALIDACIÓN
-        if (!validateFieldsAndPassword(fullName, phoneNumber, email, password, password2, role, zona)) return
+        if (!validateFieldsAndPassword(fullName, phoneNumber, email, password, password2, role, sucursalName)) return // 👈 sucursalName
 
-        val sucursalId = if (spZona.visibility == View.VISIBLE) {
-            sucursalesList[spZona.selectedItemPosition].id
+        // 💡 CORRECCIÓN CRÍTICA: Obtener el ID de la sucursal de forma segura
+        val sucursalId = if (ROLES_LOGISTICOS.contains(role)) {
+            if (sucursalesList.isNotEmpty() && spSucursal.selectedItemPosition >= 0) {
+                sucursalesList[spSucursal.selectedItemPosition].id // 👈 spSucursal
+            } else {
+                Toast.makeText(this, "Error: Debe seleccionar una sucursal válida.", Toast.LENGTH_LONG).show() // 👈 Texto actualizado
+                return
+            }
         } else null
 
         // 2. 🌟 CREAR REQUEST DTO para el Backend 🌟
@@ -197,15 +229,18 @@ class RegisterActivity : AppCompatActivity() {
             password = password,
             phoneNumber = phoneNumber,
             role = role,
-            sucursalId = sucursalId,  // ✔ AHORA SÍ COINCIDE CON EL BACKEND
+            sucursalId = sucursalId,
             isActive = true
         )
 
-        // 3. INTENTO DE REGISTRO REST
+        // 3. INTENTO DE REGISTRO REST USANDO CORRUTINAS (Suspend function)
         setLoadingState(true)
 
-        RetrofitClient.apiService.register(registerRequest).enqueue(object : Callback<User> {
-            override fun onResponse(call: Call<User>, response: Response<User>) {
+        lifecycleScope.launch { // 👈 Inicia una corrutina en el scope de la Activity
+            try {
+                // 🎯 CORRECCIÓN: Usar la función getter RetrofitClient.getAuthApi()
+                val response = RetrofitClient.getAuthApi().register(registerRequest)
+
                 setLoadingState(false)
 
                 if (response.isSuccessful && response.body() != null) {
@@ -217,11 +252,10 @@ class RegisterActivity : AppCompatActivity() {
                         Toast.LENGTH_LONG
                     ).show()
 
-                    // Redirección
                     handleSuccessfulRegistration(isAdminRegister)
 
                 } else {
-                    // Manejo de errores 409 (Conflict) u otros errores del servidor
+                    // Manejo de errores
                     val errorBody = response.errorBody()?.string()
 
                     if (response.code() == 409) { // 409 CONFLICT: Email ya registrado
@@ -232,20 +266,18 @@ class RegisterActivity : AppCompatActivity() {
                         Toast.makeText(this@RegisterActivity, "Error al registrar. Intente de nuevo.", Toast.LENGTH_LONG).show()
                     }
                 }
-            }
-
-            override fun onFailure(call: Call<User>, t: Throwable) {
+            } catch (e: Exception) {
                 setLoadingState(false)
-                Log.e("Register", "Fallo de red: ${t.message}")
+                Log.e("Register", "Fallo de red/excepción: ${e.message}")
                 Toast.makeText(this@RegisterActivity, "Fallo de red. Verifique el servidor.", Toast.LENGTH_LONG).show()
             }
-        })
+        }
     }
 
     // 🏆 Nuevo método que centraliza la validación (ayuda a la limpieza)
     private fun validateFieldsAndPassword(
         fullName: String, phoneNumber: String, email: String,
-        password: String, password2: String, role: String, zona: String?
+        password: String, password2: String, role: String, sucursalName: String? // 👈 sucursalName
     ): Boolean {
         // VALIDACIÓN DE CAMPOS GENERALES
         if (email.isEmpty() || password.isEmpty() || password2.isEmpty() || fullName.isEmpty() || phoneNumber.isEmpty()) {
@@ -261,10 +293,18 @@ class RegisterActivity : AppCompatActivity() {
         if (passwordValidationResult != null) { tilPassword.error = passwordValidationResult; return false }
         if (password != password2) { tilPassword2.error = "Las contraseñas no coinciden."; return false }
 
-        // VALIDACIÓN CONDICIONAL DE ROL/ZONA
-        if (ROLES_LOGISTICOS.contains(role) && zona.isNullOrEmpty()) {
-            Toast.makeText(this, "Debe seleccionar una zona para el rol ${role}.", Toast.LENGTH_SHORT).show()
-            return false
+        // VALIDACIÓN CONDICIONAL DE ROL/SUCURSAL
+        if (ROLES_LOGISTICOS.contains(role)) {
+            if (sucursalName.isNullOrEmpty()) { // 👈 sucursalName
+                Toast.makeText(this, "Debe seleccionar una sucursal para el rol ${role}.", Toast.LENGTH_SHORT).show() // 👈 Texto actualizado
+                return false
+            }
+            // Aunque sucursalesList.isEmpty() se maneja en loadSucursalesFromServer,
+            // si la lista está vacía aquí, el index puede fallar.
+            if (sucursalesList.isEmpty()) {
+                Toast.makeText(this, "Las sucursales no han cargado correctamente. Intente de nuevo.", Toast.LENGTH_LONG).show()
+                return false
+            }
         }
         return true
     }
@@ -297,7 +337,7 @@ class RegisterActivity : AppCompatActivity() {
         etPassword.isEnabled = !isLoading
         etPassword2.isEnabled = !isLoading
         spRol.isEnabled = !isLoading
-        spZona.isEnabled = !isLoading
+        spSucursal.isEnabled = !isLoading // 👈 Actualizado
     }
 
     // --- FUNCIONES DE SEGURIDAD Y VALIDACIÓN (Mantenidas) ---
@@ -320,14 +360,21 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun loadSucursalesFromServer() {
-        RetrofitClient.apiService.getSucursales().enqueue(object : Callback<List<Sucursal>> {
-            override fun onResponse(
-                call: Call<List<Sucursal>>,
-                response: Response<List<Sucursal>>
-            ) {
+        lifecycleScope.launch {
+            try {
+                // 🎯 CORRECCIÓN: Usar la función getter RetrofitClient.getSucursalApi()
+                val response = RetrofitClient.getSucursalApi().listarSucursales()
+
                 if (response.isSuccessful && response.body() != null) {
 
-                    sucursalesList = response.body()!!
+                    // response.body() es List<SucursalResponse>
+                    sucursalesList = response.body()!!.map { sucursalDto ->
+                        Sucursal(
+                            sucursalDto.id,
+                            sucursalDto.nombre,
+                            sucursalDto.direccion
+                        )
+                    }
 
                     // Construimos "Ciudad - Nombre"
                     val sucursales = sucursalesList.map { s ->
@@ -341,13 +388,15 @@ class RegisterActivity : AppCompatActivity() {
                     )
 
                     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                    spZona.adapter = adapter
+                    spSucursal.adapter = adapter
+                } else {
+                    Log.e("Sucursal", "Error al cargar: ${response.code()}")
+                    Toast.makeText(this@RegisterActivity, "Error al cargar sucursales", Toast.LENGTH_SHORT).show()
                 }
+            } catch (e: Exception) {
+                Log.e("Sucursal", "Fallo de red/excepción: ${e.message}")
+                Toast.makeText(this@RegisterActivity, "Fallo de red al cargar sucursales", Toast.LENGTH_SHORT).show()
             }
-
-            override fun onFailure(call: Call<List<Sucursal>>, t: Throwable) {
-                Toast.makeText(this@RegisterActivity, "Error al cargar sucursales", Toast.LENGTH_SHORT).show()
-            }
-        })
+        }
     }
 }

@@ -1,34 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_surface">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="32dp">
+        android:padding="@dimen/padding_screen_horizontal">
 
         <TextView
-            android:layout_width="wrap_content"
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/create_account"
-            android:textSize="28sp"
+            android:textSize="@dimen/text_size_headline"
             android:textStyle="bold"
             android:textColor="@color/primary_color"
-            android:layout_marginBottom="40dp" />
+            android:layout_marginBottom="@dimen/spacing_large"
+
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilFullName"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:hint="@string/full_name"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             app:boxStrokeColor="@color/primary_color"
             app:hintTextColor="@color/on_surface_secondary"
-            android:layout_marginBottom="16dp">
+            android:layout_marginTop="@dimen/spacing_small"
+
+            app:layout_constraintTop_toBottomOf="@+id/tvTitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etFullName"
@@ -40,13 +49,17 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilPhoneNumber"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:hint="@string/phone_number"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             app:boxStrokeColor="@color/primary_color"
             app:hintTextColor="@color/on_surface_secondary"
-            android:layout_marginBottom="16dp">
+            android:layout_marginTop="@dimen/spacing_small"
+
+            app:layout_constraintTop_toBottomOf="@+id/tilFullName"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPhoneNumber"
@@ -59,13 +72,17 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilEmail"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:hint="@string/email"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             app:boxStrokeColor="@color/primary_color"
             app:hintTextColor="@color/on_surface_secondary"
-            android:layout_marginBottom="16dp">
+            android:layout_marginTop="@dimen/spacing_small"
+
+            app:layout_constraintTop_toBottomOf="@+id/tilPhoneNumber"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etEmail"
@@ -77,14 +94,18 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilPassword"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:hint="@string/password"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             app:endIconMode="password_toggle"
             app:boxStrokeColor="@color/primary_color"
             app:hintTextColor="@color/on_surface_secondary"
-            android:layout_marginBottom="16dp">
+            android:layout_marginTop="@dimen/spacing_small"
+
+            app:layout_constraintTop_toBottomOf="@+id/tilEmail"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPassword"
@@ -96,14 +117,19 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilPassword2"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:hint="@string/repeat_password"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             app:endIconMode="password_toggle"
             app:boxStrokeColor="@color/primary_color"
             app:hintTextColor="@color/on_surface_secondary"
-            android:layout_marginBottom="24dp">
+            android:layout_marginTop="@dimen/spacing_small"
+            android:layout_marginBottom="@dimen/spacing_medium"
+
+            app:layout_constraintTop_toBottomOf="@+id/tilPassword"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPassword2"
@@ -113,55 +139,63 @@
                 android:textColor="@color/on_surface" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <LinearLayout
-            android:id="@+id/llRoleAndZoneSelection"
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/tvRolLabel"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:text="@string/choose_role"
+            android:textColor="@color/on_surface"
+            android:textSize="@dimen/text_size_body"
+            android:layout_marginBottom="@dimen/spacing_tiny"
 
-            <TextView
-                android:id="@+id/tvRolLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/choose_role"
-                android:textColor="@color/on_surface"
-                android:textSize="16sp"
-                android:layout_marginBottom="8dp" />
+            app:layout_constraintTop_toBottomOf="@+id/tilPassword2"
+            app:layout_constraintStart_toStartOf="parent" />
 
-            <Spinner
-                android:id="@+id/spRol"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:background="@drawable/bg_spinner_border"
-                android:overlapAnchor="false"
-                android:dropDownVerticalOffset="56dp"
-                android:layout_marginBottom="24dp" />
+        <Spinner
+            android:id="@+id/spRol"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/spinner_height"
+            android:paddingStart="@dimen/spacing_small"
+            android:paddingEnd="@dimen/spacing_small"
+            android:background="@drawable/bg_spinner_border"
+            android:overlapAnchor="false"
+            android:dropDownVerticalOffset="@dimen/spinner_height"
+            android:layout_marginTop="@dimen/spacing_tiny"
+            android:layout_marginBottom="@dimen/spacing_medium"
 
-            <TextView
-                android:id="@+id/tvZonaLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/choose_zone"
-                android:textColor="@color/on_surface"
-                android:textSize="16sp"
-                android:layout_marginBottom="8dp"
-                android:visibility="gone"/>
+            app:layout_constraintTop_toBottomOf="@+id/tvRolLabel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-            <Spinner
-                android:id="@+id/spZona"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:background="@drawable/bg_spinner_border"
-                android:overlapAnchor="false"
-                android:dropDownVerticalOffset="56dp"
-                android:layout_marginBottom="24dp"
-                android:visibility="gone" />
+        <TextView
+            android:id="@+id/tvZonaLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/choose_zone"
+            android:textColor="@color/on_surface"
+            android:textSize="@dimen/text_size_body"
+            android:layout_marginBottom="@dimen/spacing_tiny"
+            android:visibility="gone"
 
-        </LinearLayout>
+            app:layout_constraintTop_toBottomOf="@+id/spRol"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <Spinner
+            android:id="@+id/spZona"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/spinner_height"
+            android:paddingStart="@dimen/spacing_small"
+            android:paddingEnd="@dimen/spacing_small"
+            android:background="@drawable/bg_spinner_border"
+            android:overlapAnchor="false"
+            android:dropDownVerticalOffset="@dimen/spinner_height"
+            android:layout_marginTop="@dimen/spacing_tiny"
+            android:layout_marginBottom="@dimen/spacing_medium"
+            android:visibility="gone"
+
+            app:layout_constraintTop_toBottomOf="@+id/tvZonaLabel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <ProgressBar
             android:id="@+id/progress"
@@ -170,30 +204,43 @@
             android:layout_height="wrap_content"
             android:indeterminateTint="@color/primary_color"
             android:visibility="gone"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginTop="@dimen/spacing_small"
+            android:layout_marginBottom="@dimen/spacing_small"
+
+            app:layout_constraintTop_toBottomOf="@+id/spZona"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnGoRegister"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/make_register"
             android:backgroundTint="@color/primary_color"
-            android:paddingVertical="14dp"
-            android:textSize="18sp"
-            app:cornerRadius="12dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="8dp" />
+            android:paddingVertical="@dimen/button_padding_vertical"
+            android:textSize="@dimen/text_size_button"
+            app:cornerRadius="@dimen/button_corner_radius"
+            android:layout_marginTop="@dimen/spacing_medium"
+            android:layout_marginBottom="@dimen/spacing_tiny"
+
+            app:layout_constraintTop_toBottomOf="@+id/progress"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnGoLogin"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/back"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:textColor="@color/primary_color"
-            android:paddingVertical="14dp" />
+            android:paddingVertical="@dimen/button_padding_vertical"
+            android:layout_marginTop="@dimen/spacing_tiny"
 
-    </LinearLayout>
+            app:layout_constraintTop_toBottomOf="@+id/btnGoRegister"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

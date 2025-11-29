@@ -1,75 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
-    app:cardCornerRadius="8dp"
+    android:layout_marginBottom="@dimen/margin_small"
+    app:cardCornerRadius="@dimen/corner_radius_medium"
     app:cardElevation="2dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="@dimen/padding_medium">
 
         <TextView
             android:id="@+id/tvSolicitudID"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textStyle="bold"
-            android:textSize="18sp"
             android:text="Guía #123456"
-            android:textColor="@color/primary_color" />
+            android:textColor="@color/primary_color"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            tools:text="Guía #123456" />
 
         <TextView
             android:id="@+id/tvDestination"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textSize="14sp"
+            android:layout_marginTop="@dimen/margin_x_small"
             android:text="Destino: Calle 10 # 5-20, Ciudad"
-            android:textColor="@color/on_surface" />
+            android:textColor="@color/on_surface"
+            android:textSize="14sp"
+            tools:text="Destino: Calle 10 # 5-20, Ciudad" />
 
         <TextView
             android:id="@+id/tvSender"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="14sp"
             android:text="Remitente: Nombre del Cliente"
-            android:textColor="@color/on_surface_secondary" />
+            android:textColor="@color/on_surface_secondary"
+            android:textSize="14sp"
+            tools:text="Remitente: Nombre del Cliente" />
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="@color/on_surface_secondary"
-            android:alpha="0.1"
-            android:layout_marginTop="12dp"
-            android:layout_marginBottom="12dp" />
+            android:layout_marginTop="@dimen/margin_medium"
+            android:layout_marginBottom="@dimen/margin_medium"
+            android:alpha="0.2"
+            android:background="@color/on_surface_secondary" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <Spinner
                 android:id="@+id/spConductor"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="16dp"
                 style="@style/Widget.AppCompat.Spinner.Underlined"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/component_height_standard"
+                android:layout_marginEnd="@dimen/padding_medium"
+                android:layout_weight="1"
                 android:prompt="@string/select_driver_prompt" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAssign"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:backgroundTint="@color/status_pending"
+                android:minHeight="0dp"
+                android:paddingVertical="@dimen/padding_small"
                 android:text="@string/assign"
-                android:paddingVertical="10dp"
-                app:cornerRadius="8dp"
-                android:backgroundTint="@color/status_pending" />
+                app:cornerRadius="@dimen/corner_radius_medium" />
 
         </LinearLayout>
     </LinearLayout>

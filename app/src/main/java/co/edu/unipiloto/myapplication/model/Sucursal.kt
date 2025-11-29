@@ -18,6 +18,4 @@ data class Sucursal(
     @SerializedName("direccion")
     // Se elimina la nulabilidad (?) para reflejar la restricción del backend (nullable = false)
     val direccion: Direccion,
-
-    // NO incluimos la lista 'solicitudes'
 ) : Serializable

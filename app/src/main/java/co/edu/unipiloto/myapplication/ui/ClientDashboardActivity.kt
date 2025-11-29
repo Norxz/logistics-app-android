@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import co.edu.unipiloto.myapplication.R
+import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter
 import co.edu.unipiloto.myapplication.databinding.ActivityClientDashboardBinding
 import co.edu.unipiloto.myapplication.repository.SolicitudRepository
 import co.edu.unipiloto.myapplication.dto.RetrofitClient
@@ -17,7 +18,6 @@ import co.edu.unipiloto.myapplication.model.Solicitud
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import co.edu.unipiloto.myapplication.viewmodel.SolicitudViewModel
 import co.edu.unipiloto.myapplication.viewmodel.SolicitudViewModelFactory
-import co.edu.unipiloto.myapplication.ui.adapter.SolicitudAdapter
 
 /**
  * 👨‍💻 Activity principal que actúa como el panel de control (Dashboard) para los usuarios con rol CLIENTE.

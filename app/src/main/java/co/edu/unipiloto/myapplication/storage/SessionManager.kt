@@ -4,6 +4,16 @@ import android.content.Context
 import android.content.SharedPreferences
 
 /**
+ * Extensión para SharedPreferences.Editor que permite agrupar transacciones de put/apply.
+ * Evita llamar a .edit() y .apply() manualmente para cada cambio.
+ */
+inline fun SharedPreferences.edit(operation: (SharedPreferences.Editor) -> Unit) {
+    val editor = edit()
+    operation(editor)
+    editor.apply()
+}
+
+/**
  * 💾 Gestor de Sesión del Usuario.
  * Utiliza SharedPreferences para almacenar de forma persistente
  * los datos de la sesión (ID, rol, sucursal, etc.) del usuario logueado.
@@ -19,34 +29,40 @@ class SessionManager(context: Context) {
     private val KEY_NAME = "name"
     private val KEY_EMAIL = "USER_EMAIL"
 
-    // Claves específicas de personal logístico (usamos SUCURSAL)
+    // Claves específicas de personal logístico (SOLO SUCURSAL)
     private val KEY_SUCURSAL = "sucursal_name" // (Nombre de la sucursal)
     private val KEY_SUCURSAL_ID = "sucursal_id" // (ID numérico de la sucursal)
 
+    // Solo se necesita la instancia de SharedPreferences
     private val pref: SharedPreferences =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-    private val editor: SharedPreferences.Editor = pref.edit()
 
     /**
      * Crea y guarda una sesión de usuario después de un inicio de sesión exitoso.
-     *
-     * @param userId El ID único del usuario (Long).
-     * @param role El rol del usuario (String, ej. "CLIENTE", "CONDUCTOR").
-     * @param sucursal El nombre de la sucursal asignada (String?, puede ser null para Clientes).
-     * @param name El nombre visible del usuario (String).
-     * @param email El correo electrónico del usuario (String).
+     * * 💡 MEJORA: Se añade sucursalId como parámetro opcional para guardar todo en una transacción.
      */
-    fun createLoginSession(userId: Long, role: String, sucursal: String?, name: String, email: String) {
-        editor.putBoolean(KEY_IS_LOGGED_IN, true)
-        editor.putLong(KEY_USER_ID, userId)
-        editor.putString(KEY_ROLE, role)
+    fun createLoginSession(
+        userId: Long,
+        role: String,
+        sucursal: String?,
+        sucursalId: Long?, // 💡 Nuevo parámetro
+        name: String,
+        email: String
+    ) {
+        pref.edit { editor ->
+            editor.putBoolean(KEY_IS_LOGGED_IN, true)
+            editor.putLong(KEY_USER_ID, userId)
+            editor.putString(KEY_ROLE, role)
+            editor.putString(KEY_SUCURSAL, sucursal)
 
-        // 🚨 CAMBIO CLAVE: Guardamos el nombre de la sucursal usando KEY_SUCURSAL
-        editor.putString(KEY_SUCURSAL, sucursal)
+            // 💡 Guardar el ID de la sucursal en la misma transacción si está disponible
+            if (sucursalId != null) {
+                editor.putLong(KEY_SUCURSAL_ID, sucursalId)
+            }
 
-        editor.putString(KEY_NAME, name)
-        editor.putString(KEY_EMAIL, email)
-        editor.apply()
+            editor.putString(KEY_NAME, name)
+            editor.putString(KEY_EMAIL, email)
+        }
     }
 
     // --- Getters de Sesión ---
@@ -83,7 +99,6 @@ class SessionManager(context: Context) {
      * Obtiene el nombre de la sucursal asignada al usuario.
      */
     fun getSucursal(): String? {
-        // 🚨 CAMBIO CLAVE: Usa la constante KEY_SUCURSAL
         return pref.getString(KEY_SUCURSAL, null)
     }
 
@@ -98,6 +113,7 @@ class SessionManager(context: Context) {
 
     /**
      * Guarda el ID de la sucursal del usuario (útil para el personal logístico).
+     * 💡 NOTA: Este método ahora es redundante si se usa createLoginSession con sucursalId.
      */
     fun saveSucursalId(id: Long) {
         pref.edit().putLong(KEY_SUCURSAL_ID, id).apply()
@@ -109,7 +125,6 @@ class SessionManager(context: Context) {
      */
     fun getSucursalId(): Long? {
         val id = pref.getLong(KEY_SUCURSAL_ID, -1L)
-        // Devuelve null si el valor es el default (-1L)
         return id.takeIf { it != -1L }
     }
 
@@ -119,7 +134,6 @@ class SessionManager(context: Context) {
      * Cierra la sesión del usuario actual, eliminando todos los datos guardados.
      */
     fun logoutUser() {
-        editor.clear()
-        editor.apply()
+        pref.edit().clear().apply() // 💡 Uso simple de .edit().clear().apply()
     }
 }

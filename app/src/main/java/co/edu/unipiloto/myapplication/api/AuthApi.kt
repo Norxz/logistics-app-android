@@ -4,7 +4,7 @@ package co.edu.unipiloto.myapplication.api
 import co.edu.unipiloto.myapplication.dto.LoginRequest
 import co.edu.unipiloto.myapplication.dto.RegisterRequest
 import co.edu.unipiloto.myapplication.dto.UserResponse
-import retrofit2.Response // <-- 1. ¡IMPORTAR ESTO!
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
 

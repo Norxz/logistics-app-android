@@ -10,23 +10,24 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
-// Importamos el adaptador genérico que hemos desarrollado
-// Importamos el modelo de datos para la inferencia de tipo
+import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter
 import co.edu.unipiloto.myapplication.storage.SessionManager
-import co.edu.unipiloto.myapplication.dto.RetrofitClient // 👈 NUEVO
+import co.edu.unipiloto.myapplication.dto.RetrofitClient
+import co.edu.unipiloto.myapplication.dto.SolicitudResponse
+import co.edu.unipiloto.myapplication.dto.toModel // 💡 IMPORTAR la función de mapeo
+import co.edu.unipiloto.myapplication.model.Solicitud
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
 /**
  * Fragmento que muestra un historial de solicitudes completadas (ENTREGADA/CANCELADA)
- * dentro de la zona logística del Gestor/Funcionario.
+ * dentro de la sucursal logística del Gestor/Funcionario.
  */
 class BranchCompletedFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var tvEmpty: TextView
-    // ❌ ELIMINADA: private lateinit var solicitudRepository: SolicitudRepository
     private lateinit var sessionManager: SessionManager
 
     private lateinit var adapter: SolicitudAdapter
@@ -41,15 +42,11 @@ class BranchCompletedFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Inicializar gestores
-        // ❌ ELIMINADA: solicitudRepository = SolicitudRepository(requireContext())
         sessionManager = SessionManager(requireContext())
 
-        // Mapear vistas
         recyclerView = view.findViewById(R.id.recyclerViewBranchList)
         tvEmpty = view.findViewById(R.id.tvBranchEmpty)
 
-        // Configurar RecyclerView
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
         adapter = SolicitudAdapter(
@@ -74,23 +71,30 @@ class BranchCompletedFragment : Fragment() {
      * Carga las solicitudes de historial (ENTREGADA/CANCELADA/FINALIZADA) usando el servicio REST.
      */
     private fun loadCompletedRequests() {
-        val zona = sessionManager.getZona() ?: run {
+        val sucursalId = sessionManager.getSucursalId() ?: run {
             tvEmpty.visibility = View.VISIBLE
-            tvEmpty.text = getString(R.string.error_no_zone)
+            tvEmpty.text = getString(R.string.error_no_branch_id)
             recyclerView.visibility = View.GONE
             return
         }
 
-        // 🏆 LLAMADA A RETROFIT: Usamos el endpoint para solicitudes finalizadas por zona.
-        RetrofitClient.apiService.getCompletedSolicitudesByZone(zona).enqueue(object : Callback<List<Solicitud>> {
-            override fun onResponse(call: Call<List<Solicitud>>, response: Response<List<Solicitud>>) {
-                val completedItems = response.body() ?: emptyList()
+        // 🏆 CORRECCIÓN DE TIPO: El Callback debe manejar List<SolicitudResponse>
+        RetrofitClient.getSolicitudApi().getCompletedSolicitudesBySucursal(sucursalId).enqueue(object : Callback<List<SolicitudResponse>> {
+
+            // 🚨 CORRECCIÓN: Los parámetros onResponse deben usar List<SolicitudResponse>
+            override fun onResponse(call: Call<List<SolicitudResponse>>, response: Response<List<SolicitudResponse>>) {
+
+                val assignedResponses = response.body() ?: emptyList()
 
                 if (response.isSuccessful) {
+
+                    // 💡 PASO CLAVE: Mapear DTO a Modelo local (Solicitud)
+                    val completedItems = assignedResponses.map { it.toModel() }
+
                     if (completedItems.isNotEmpty()) {
                         tvEmpty.visibility = View.GONE
                         recyclerView.visibility = View.VISIBLE
-                        adapter.updateData(completedItems) // Actualiza el adaptador
+                        adapter.updateData(completedItems) // Actualiza el adaptador con el modelo Solicitud
                     } else {
                         recyclerView.visibility = View.GONE
                         tvEmpty.visibility = View.VISIBLE
@@ -103,7 +107,8 @@ class BranchCompletedFragment : Fragment() {
                 }
             }
 
-            override fun onFailure(call: Call<List<Solicitud>>, t: Throwable) {
+            // 🚨 CORRECCIÓN: Los parámetros onFailure deben usar List<SolicitudResponse>
+            override fun onFailure(call: Call<List<SolicitudResponse>>, t: Throwable) {
                 Log.e("CompletedFrag", "Fallo de red: ${t.message}")
                 tvEmpty.visibility = View.VISIBLE
                 tvEmpty.text = "Fallo de red. Verifique el servidor."

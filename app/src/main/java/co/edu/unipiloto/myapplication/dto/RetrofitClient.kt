@@ -1,11 +1,12 @@
 // Archivo: co.edu.unipiloto.myapplication.rest.RetrofitClient.kt
 package co.edu.unipiloto.myapplication.dto
 
-import co.edu.unipiloto.myapplication.api.* // Importa las 5 interfaces: AuthApi, SolicitudApi, etc.
+import co.edu.unipiloto.myapplication.api.*
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import kotlin.jvm.java
 
 /**
  * 🔌 Objeto Singleton de Retrofit.

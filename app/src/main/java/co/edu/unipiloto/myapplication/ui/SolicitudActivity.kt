@@ -18,12 +18,12 @@ import co.edu.unipiloto.myapplication.dto.DireccionRequest
 import co.edu.unipiloto.myapplication.dto.PaqueteRequest
 import co.edu.unipiloto.myapplication.dto.RetrofitClient
 import co.edu.unipiloto.myapplication.dto.SolicitudRequest
-import co.edu.unipiloto.myapplication.dto.SolicitudResponse
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import co.edu.unipiloto.myapplication.utils.LocationHelper
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.google.android.gms.maps.MapView
 
 class SolicitudActivity : AppCompatActivity() {
@@ -300,44 +300,48 @@ class SolicitudActivity : AppCompatActivity() {
 
             // 3. 🚀 API CALL
             // 🌟 CORRECCIÓN: Acceder a la interfaz de servicio REST
-            RetrofitClient.solicitudService.crearSolicitud(requestDto).enqueue(object : Callback<SolicitudResponse> {
-
-                    override fun onResponse(call: Call<SolicitudResponse>, response: Response<SolicitudResponse>) {
-                        if (response.isSuccessful) {
-                            // El cuerpo de la respuesta ahora es SolicitudResponse
-                            val solicitudId = response.body()?.id
-
-                            Toast.makeText(
-                                this@SolicitudActivity,
-                                "¡Solicitud enviada (Guía #$solicitudId)!",
-                                Toast.LENGTH_LONG
-                            ).show()
-
-                            val intent = Intent(this@SolicitudActivity, GuideConfirmationActivity::class.java)
-                            intent.putExtra("solicitudId", solicitudId)
-                            intent.putExtra("usuarioEmail", sessionManager.getUserEmail())
-                            startActivity(intent)
-                            finish()
-                        } else {
-                            val errorBody = response.errorBody()?.string()
-                            Log.e("API_CALL", "Error ${response.code()}: $errorBody")
-                            Toast.makeText(
-                                this@SolicitudActivity,
-                                "Error ${response.code()} al enviar: ${response.message()}. Revise logs.",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
+            lifecycleScope.launch { // Inicia un Coroutine Scope
+                try {
+                    // Ejecuta la función suspend en un hilo de I/O
+                    val response = withContext(Dispatchers.IO) {
+                        // Llama directamente a la función suspend, que devuelve Response<T>
+                        RetrofitClient.solicitudService.crearSolicitud(requestDto)
                     }
 
-                    override fun onFailure(call: Call<SolicitudResponse>, t: Throwable) {
-                        Log.e("API_CALL", "Fallo de red: ${t.message}")
+                    // Manejo de la respuesta (de vuelta en el Main Thread)
+                    if (response.isSuccessful) {
+                        val solicitudId = response.body()?.id
+
                         Toast.makeText(
                             this@SolicitudActivity,
-                            "Fallo de conexión. Verifique el servidor y la red.",
+                            "¡Solicitud enviada (Guía #$solicitudId)!",
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                        val intent = Intent(this@SolicitudActivity, GuideConfirmationActivity::class.java)
+                        intent.putExtra("solicitudId", solicitudId)
+                        intent.putExtra("usuarioEmail", sessionManager.getUserEmail())
+                        startActivity(intent)
+                        finish()
+                    } else {
+                        val errorBody = response.errorBody()?.string()
+                        Log.e("API_CALL", "Error ${response.code()}: $errorBody")
+                        Toast.makeText(
+                            this@SolicitudActivity,
+                            "Error ${response.code()} al enviar: ${response.message()}. Revise logs.",
                             Toast.LENGTH_LONG
                         ).show()
                     }
-                })
+                } catch (t: Throwable) {
+                    // Captura errores de red/conexión
+                    Log.e("API_CALL", "Fallo de red: ${t.message}")
+                    Toast.makeText(
+                        this@SolicitudActivity,
+                        "Fallo de conexión. Verifique el servidor y la red.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
         }
     }
 

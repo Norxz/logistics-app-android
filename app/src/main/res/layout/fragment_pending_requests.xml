@@ -4,15 +4,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingStart="24dp"
-    android:paddingEnd="24dp"
-    android:paddingTop="8dp"
     android:background="@color/background_surface">
-
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewAssigned"
+        android:id="@+id/recyclerViewPending"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:paddingTop="@dimen/padding_small"
+        android:paddingBottom="@dimen/padding_medium"
+        android:paddingStart="@dimen/padding_medium"
+        android:paddingEnd="@dimen/padding_medium"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -20,7 +21,7 @@
         tools:listitem="@layout/item_solicitud_pendiente" />
 
     <TextView
-        android:id="@+id/tvNoPendingRequests"
+        android:id="@+id/tvEmptyStatePending"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/no_pending_deliveries"

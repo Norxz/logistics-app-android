@@ -10,77 +10,79 @@
         android:id="@+id/tvDriverTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/padding_large"
+        android:layout_marginTop="@dimen/margin_extra_large"
         android:text="@string/driver_dashboard_title"
+        android:textColor="@color/primary_color"
         android:textSize="28sp"
         android:textStyle="bold"
-        android:textColor="@color/primary_color"
-        android:paddingStart="24dp"
-        android:layout_marginTop="32dp"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btnLogout"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/btnLogout" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Rutas Asignadas" />
 
     <TextView
         android:id="@+id/tvDriverSubtitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/padding_large"
+        android:layout_marginTop="@dimen/margin_x_small"
         android:text="@string/driver_dashboard_subtitle"
-        android:textSize="16sp"
         android:textColor="@color/on_surface_secondary"
-        android:paddingStart="24dp"
-        android:layout_marginTop="4dp"
-        app:layout_constraintTop_toBottomOf="@+id/tvDriverTitle"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toStartOf="@+id/btnLogout"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/btnLogout" />
+        app:layout_constraintTop_toBottomOf="@+id/tvDriverTitle"
+        tools:text="Gestiona tus entregas pendientes" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnLogout"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/padding_medium"
         android:text="@string/logout"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
         android:textColor="@color/on_surface_secondary"
         app:icon="@drawable/ic_logout"
         app:iconTint="@color/on_surface_secondary"
-        android:layout_marginEnd="16dp"
-        app:layout_constraintTop_toTopOf="@+id/tvDriverTitle"
         app:layout_constraintBottom_toBottomOf="@+id/tvDriverTitle"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/tvDriverTitle" />
 
     <View
         android:id="@+id/separator"
         android:layout_width="match_parent"
         android:layout_height="1dp"
+        android:layout_marginTop="@dimen/margin_medium"
         android:background="@color/separator"
-        android:layout_marginTop="16dp"
+        android:alpha="0.2"
         app:layout_constraintTop_toBottomOf="@+id/tvDriverSubtitle" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewRoutes"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingTop="8dp"
         android:clipToPadding="false"
-        app:layout_constraintTop_toBottomOf="@+id/separator"
+        android:paddingTop="@dimen/padding_small"
+        android:paddingBottom="@dimen/padding_medium"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/separator"
         tools:listitem="@layout/item_solicitud_driver" />
 
     <TextView
         android:id="@+id/tvNoRoutes"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/no_assigned_routes"
-        android:textSize="18sp"
-        android:textColor="@color/on_surface_secondary"
         android:gravity="center"
+        android:text="@string/no_assigned_routes"
+        android:textColor="@color/on_surface_secondary"
+        android:textSize="18sp"
         android:visibility="gone"
-        app:layout_constraintTop_toTopOf="@+id/recyclerViewRoutes"
         app:layout_constraintBottom_toBottomOf="@+id/recyclerViewRoutes"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toTopOf="@+id/recyclerViewRoutes" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

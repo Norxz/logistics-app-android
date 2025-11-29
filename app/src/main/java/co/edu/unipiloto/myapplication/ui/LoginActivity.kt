@@ -146,10 +146,13 @@ class LoginActivity : AppCompatActivity() {
 
         if (user != null && userRole != null && isRoleAuthorized(userRole, requiredRole)) {
 
+            val sucursalId = user.sucursal?.id
+
             sessionManager.createLoginSession(
                 userId = user.id,
                 role = user.role,
                 sucursal = user.sucursal?.nombre,
+                sucursalId = sucursalId,
                 name = user.fullName,
                 email = user.email
             )
@@ -206,8 +209,8 @@ class LoginActivity : AppCompatActivity() {
     private fun navigateToDashboard(role: String) {
         val intent = when (role.uppercase()) {
             "CLIENTE" -> Intent(this, ClientDashboardActivity::class.java)
-            "CONDUCTOR" -> Intent(this, DriverDashboardActivity::class.java)
-            "GESTOR", "ANALISTA", "FUNCIONARIO" -> Intent(this, ManagerDashboardActivity::class.java) // Agrupados
+            "CONDUCTOR","GESTOR" -> Intent(this, DriverDashboardActivity::class.java)
+            "ANALISTA", "FUNCIONARIO" -> Intent(this, ManagerDashboardActivity::class.java)
             "ADMIN" -> Intent(this, AdminPanelActivity::class.java)
             else -> {
                 sessionManager.logoutUser()

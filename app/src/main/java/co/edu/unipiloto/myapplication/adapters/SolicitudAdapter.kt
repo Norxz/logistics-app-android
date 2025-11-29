@@ -1,16 +1,19 @@
 // Archivo: SolicitudAdapter.kt
-package co.edu.unipiloto.myapplication.ui.adapter // <--- Ajusta este paquete si es necesario
+package co.edu.unipiloto.myapplication.adapters
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
-import co.edu.unipiloto.myapplication.R // Asegúrate de que este R sea correcto
-import co.edu.unipiloto.myapplication.databinding.ItemSolicitudBinding // ⬅️ ASUMIENDO ESTE NOMBRE DE BINDING
-import co.edu.unipiloto.myapplication.model.Solicitud // ⬅️ IMPORTAR EL MODELO
+import co.edu.unipiloto.myapplication.R
+import co.edu.unipiloto.myapplication.databinding.ItemSolicitudBinding
+import co.edu.unipiloto.myapplication.model.Solicitud
+import co.edu.unipiloto.myapplication.model.Sucursal
+import co.edu.unipiloto.myapplication.model.User
 
 /**
- * Define el tipo para el listener de clic en las acciones (CANCELAR, CONFIRMAR).
+ * Define el tipo para el listener de clic en las acciones.
  * Recibe el modelo de Solicitud y la acción (String) realizada.
  */
 typealias OnSolicitudActionListener = (Solicitud, String) -> Unit
@@ -18,8 +21,6 @@ typealias OnSolicitudActionListener = (Solicitud, String) -> Unit
 class SolicitudAdapter(
     private var items: List<Solicitud>,
     private val role: String,
-
-    // 2. El listener que usa la Activity
     private val onActionClick: OnSolicitudActionListener
 ) : RecyclerView.Adapter<SolicitudAdapter.SolicitudViewHolder>() {
 
@@ -29,22 +30,122 @@ class SolicitudAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(solicitud: Solicitud) {
-            // 🚨 Aquí va la lógica para mostrar los datos de la Solicitud
-            binding.tvSolicitudId.text = itemView.context.getString(R.string.solicitud_id_format, solicitud.id ?: 0L)
+            val context = itemView.context
+
+            // 1. Mostrar Datos Principales
+            binding.tvSolicitudId.text = context.getString(R.string.solicitud_id_format, solicitud.id ?: 0L)
             binding.tvDireccion.text = solicitud.direccionEntrega.direccionCompleta
             binding.tvEstado.text = solicitud.estado
 
+            // 2. Mostrar Conductor/Sucursal (Información Adicional)
+            val infoExtra = when {
+                // ✅ FIX: Usar 'solicitud.conductor' en lugar de 'solicitud.recolector'
+                solicitud.conductor != null -> context.getString(R.string.recolector_assigned_format, solicitud.conductor.fullName)
+                solicitud.sucursal != null -> context.getString(R.string.branch_origin_format, solicitud.sucursal.nombre)
+                else -> ""
+            }
+            binding.tvInfoExtra.text = infoExtra
+            binding.tvInfoExtra.visibility = if (infoExtra.isNotEmpty()) View.VISIBLE else View.GONE
 
-            // Ejemplo de botón de acción:
-            val esActiva = solicitud.estado.uppercase() !in listOf("ENTREGADA", "FINALIZADA", "CANCELADA")
+            // Si el layout tiene tvFranjaHoraria y tvCreado, es buena práctica vincularlos
+            binding.tvFranjaHoraria.text = solicitud.franjaHoraria // Asumiendo que muestra la franja
+            binding.tvCreado.text = context.getString(R.string.created_at_format, solicitud.createdAt) // Asumiendo que existe created_at_format
 
-            if (role == "CLIENTE" && esActiva) {
+            // 3. Limpiar y Ocultar TODOS los botones de acción para empezar de cero
+            binding.btnCancelClient.visibility = View.GONE
+            binding.btnAcceptDriver.visibility = View.GONE
+            binding.btnStartRouteDriver.visibility = View.GONE
+            binding.btnDeliverDriver.visibility = View.GONE
+            binding.btnConfirmDelivery.visibility = View.GONE
+
+            // 4. Lógica de Acciones según el Rol y Estado
+            when (role) {
+                "CLIENTE" -> handleClientActions(solicitud)
+                "GESTOR" -> handleGestorActions(solicitud)
+                "CONDUCTOR" -> handleConductorActions(solicitud)
+            }
+
+            // 5. Configurar Colores del Estado
+            val estadoColorRes = when (solicitud.estado.uppercase()) {
+                "PENDIENTE" -> R.color.status_pending
+                "ASIGNADA" -> R.color.status_assigned
+                "INICIADA" -> R.color.status_in_progress
+                "ENTREGADA", "FINALIZADA" -> R.color.status_success
+                "CANCELADA" -> R.color.status_error
+                else -> R.color.on_surface_secondary
+            }
+            binding.tvEstado.setTextColor(ContextCompat.getColor(context, estadoColorRes))
+        }
+
+        private fun handleClientActions(solicitud: Solicitud) {
+            val esActiva = solicitud.estado.uppercase() in listOf("PENDIENTE", "ASIGNADA")
+
+            if (esActiva) {
                 binding.btnCancelClient.visibility = View.VISIBLE
                 binding.btnCancelClient.setOnClickListener {
                     onActionClick(solicitud, "CANCELAR_CLIENTE")
                 }
-            } else {
-                binding.btnCancelClient.visibility = View.GONE
+            }
+        }
+
+        private fun handleGestorActions(solicitud: Solicitud) {
+            // El gestor necesita un botón para ASIGNAR.
+            // Usaremos btnAcceptDriver para esta acción si está PENDIENTE.
+            val context = itemView.context
+
+            if (solicitud.estado.uppercase() == "PENDIENTE") {
+                binding.btnAcceptDriver.apply { // Reutilizamos el botón del conductor como botón principal
+                    visibility = View.VISIBLE
+                    text = context.getString(R.string.action_assign) // Usar 'action_assign'
+                    setOnClickListener {
+                        this@SolicitudAdapter.onActionClick(solicitud, "ASIGNAR")
+                    }
+                }
+            }
+        }
+
+        private fun handleConductorActions(solicitud: Solicitud) {
+            val context = itemView.context
+
+            when (solicitud.estado.uppercase()) {
+                "ASIGNADA" -> {
+                    // Botón principal: Aceptar / Iniciar recolección
+                    binding.btnStartRouteDriver.apply { // Usaremos StartRoute para iniciar la recolección
+                        visibility = View.VISIBLE
+                        // Usamos un String más adecuado para INICIAR el proceso de recolección
+                        text = context.getString(R.string.action_start)
+                        setOnClickListener {
+                            this@SolicitudAdapter.onActionClick(solicitud, "INICIAR")
+                        }
+                    }
+                    // Botón secundario: Cancelar (opcional)
+                    binding.btnCancelClient.apply {
+                        visibility = View.VISIBLE
+                        text = context.getString(R.string.action_cancel)
+                        setOnClickListener {
+                            this@SolicitudAdapter.onActionClick(solicitud, "CANCELAR_CONDUCTOR")
+                        }
+                    }
+                }
+                "INICIADA" -> {
+                    // Botón principal: Finalizar recolección/Entrega (depende del flujo)
+                    binding.btnDeliverDriver.apply { // Usaremos DeliverDriver para finalizar
+                        visibility = View.VISIBLE
+                        text = context.getString(R.string.action_finish) // Usar 'action_finish'
+                        setOnClickListener {
+                            this@SolicitudAdapter.onActionClick(solicitud, "FINALIZAR")
+                        }
+                    }
+                    // Botón secundario: Cancelar (opcional)
+                    binding.btnCancelClient.apply {
+                        visibility = View.VISIBLE
+                        text = context.getString(R.string.action_cancel)
+                        setOnClickListener {
+                            this@SolicitudAdapter.onActionClick(solicitud, "CANCELAR_CONDUCTOR")
+                        }
+                    }
+                }
+                // Nota: Los estados "ENTREGADA" o "FINALIZADA" no suelen tener botones de acción.
             }
         }
     }
@@ -66,11 +167,6 @@ class SolicitudAdapter(
 
     override fun getItemCount(): Int = items.size
 
-    // --- Método expuesto al ViewModel para actualizar la lista ---
-
-    /**
-     * Actualiza la lista de solicitudes y notifica al RecyclerView para que se redibuje.
-     */
     fun updateData(newItems: List<Solicitud>) {
         items = newItems
         notifyDataSetChanged()

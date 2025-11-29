@@ -1,51 +1,50 @@
+// co.edu.unipiloto.myapplication.dto.SolicitudResponseMappers.kt
 package co.edu.unipiloto.myapplication.dto
 
 import co.edu.unipiloto.myapplication.model.*
 
 /**
- * Función de extensión que convierte un objeto de respuesta simplificado de la API
- * [SolicitudResponse] al modelo de dominio completo [Solicitud].
- *
- * Esta función es esencial para el desacoplamiento: permite que la capa de red reciba
- * un DTO (Data Transfer Object) simple, mientras que la capa de negocio (ViewModel/UI)
- * trabaja con el modelo de dominio completo, utilizando placeholders cuando es necesario
- * para satisfacer las restricciones de los constructores del modelo.
- *
- * @return Una instancia completa del modelo [Solicitud].
+ * Función de extensión que convierte SolicitudResponse al modelo de dominio Solicitud.
+ * Usa PLACEHOLDERS para las relaciones OBLIGATORIAS que el DTO simplificado no trae.
  */
 fun SolicitudResponse.toModel(): Solicitud {
 
-    // --- 1. CREACIÓN DE PLACEHOLDERS (Para satisfacer las dependencias obligatorias del modelo) ---
+    // 1.0 FUNCIÓN AUXILIAR GENÉRICA PARA CREAR USER PLACEHOLDERS
+    // Utilizamos 'fullName' para el modelo User.
+    val createUserPlaceholder = { id: Long?, name: String, role: String ->
+        User(
+            id = id,
+            fullName = name, // 🚨 CORREGIDO: Usa 'fullName' para el modelo User
+            email = "${name.replace(" ", "")}@mail.com",
+            role = role
+        )
+    }
 
-    /**
-     * Placeholder para el modelo [User].
-     * Se utilizan campos del DTO (clientId) y valores por defecto para satisfacer
-     * los campos obligatorios: fullName, email, y role.
-     */
-    val defaultPlaceholderUser = User(
-        id = this.clientId,
-        fullName = "Cliente ID: ${this.clientId}",
-        email = "cliente${this.clientId}@mail.com",
-        role = "CLIENTE"
+    // --- 1.1 CREACIÓN DE PLACEHOLDERS ESPECÍFICOS Y ASIGNACIÓN DE CONDUCTOR ---
+
+    /** Placeholder para el modelo [User] (Cliente). */
+    val clientUser = createUserPlaceholder(
+        this.clientId,
+        "Cliente ID: ${this.clientId}",
+        "CLIENTE"
     )
 
-    /**
-     * Placeholder para el modelo [Cliente] (usado como remitente/receptor).
-     * Satisface los campos obligatorios: id, nombre, y numeroId.
-     */
-    val defaultPlaceholderCliente = Cliente(
-        id = 0,
-        nombre = "N/A",
-        numeroId = "0"
-    )
+    /** Crea el objeto User para el CONDUCTOR ASIGNADO (si existe). */
+    val conductorUser: User? = if (this.recolectorId != null) {
+        createUserPlaceholder(
+            this.recolectorId,
+            this.recolectorName ?: "Conductor Asignado",
+            "CONDUCTOR"
+        )
+    } else {
+        null
+    }
 
-    /**
-     * Placeholder para el modelo [Direccion].
-     * Mapea los campos esenciales recibidos en el DTO (direccionCompleta)
-     * y usa nulos o "N/A" para el resto de campos obligatorios/opcionales.
-     */
+    // Placeholders para cumplir con las relaciones OBLIGATORIAS del modelo Solicitud:
+
+    // Objeto Direccion: Asumimos que los campos no conocidos son null.
     val defaultPlaceholderDireccion = Direccion(
-        direccionCompleta = this.direccionCompleta, // Mapeo del DTO
+        direccionCompleta = this.direccionCompleta,
         ciudad = "N/A",
         latitud = null,
         longitud = null,
@@ -53,47 +52,46 @@ fun SolicitudResponse.toModel(): Solicitud {
         notasEntrega = null
     )
 
-    /**
-     * Placeholder para el modelo [Paquete].
-     * Satisface el campo obligatorio 'peso' con un valor de 0.0.
-     */
-    val defaultPlaceholderPaquete = Paquete(
-        peso = 0.0
+    /** Cliente Placeholder (para remitente y receptor OBLIGATORIOS). */
+    val defaultPlaceholderCliente = Cliente(
+        id = 0,
+        nombre = "N/A", // 🚨 CORREGIDO: Usamos 'nombre' para el modelo Cliente
+        numeroId = "0"
     )
 
-    /**
-     * Mapeo directo del DTO de [GuiaResponse] anidado al modelo [Guia].
-     * Se utilizan los campos: numeroGuia, trackingNumber, y fechaCreacion,
-     * todos provenientes del DTO anidado (`this.guia`).
-     */
+    /** Paquete Placeholder OBLIGATORIO. */
+    val defaultPlaceholderPaquete = Paquete(
+        peso = 0.0 // 🚨 CORREGIDO: Usamos 'peso' para el modelo Paquete
+    )
+
+    /** Guia Mapeada (OBLIGATORIA). */
+    // 🚨 CORREGIDO: Usamos los nombres de campos del modelo Guia
     val modelGuia = Guia(
         numeroGuia = this.guia.numeroGuia,
         trackingNumber = this.guia.trackingNumber,
-        fechaCreacion = this.guia.fechaCreacion, // Campo opcional que se mapea si existe
-        estadoGuia = "ASIGNADA" // Placeholder para el estado inicial
+        fechaCreacion = this.guia.fechaCreacion,
+        estadoGuia = "ASIGNADA"
     )
 
-    /**
-     * Placeholder para el modelo [Sucursal].
-     * Satisface la dependencia obligatoria de [direccion] utilizando el placeholder
-     * creado previamente.
-     */
+    /** Sucursal Placeholder OBLIGATORIA. */
     val defaultPlaceholderSucursal = Sucursal(
         id = 0,
         nombre = "N/A",
-        direccion = defaultPlaceholderDireccion // Campo obligatorio de Sucursal
+        direccion = defaultPlaceholderDireccion // 🚨 CORREGIDO: Sucursal requiere un objeto 'direccion'
     )
 
     // --- 2. CONSTRUCCIÓN FINAL DEL MODELO SOLICITUD ---
 
     return Solicitud(
-        // Campos directos de SolicitudResponse
+        // Campos directos del DTO
         id = this.id,
         fechaRecoleccion = this.fechaRecoleccion,
         franjaHoraria = this.franjaHoraria,
         estado = this.estado,
-        createdAt = "N/A",
-        client = defaultPlaceholderUser,
+        createdAt = this.createdAt ?: "N/A",
+
+        // Relaciones Obligatorias (Placeholders)
+        client = clientUser,
         remitente = defaultPlaceholderCliente,
         receptor = defaultPlaceholderCliente,
         sucursal = defaultPlaceholderSucursal,
@@ -102,8 +100,10 @@ fun SolicitudResponse.toModel(): Solicitud {
         paquete = defaultPlaceholderPaquete,
         guia = modelGuia,
 
-        // Relaciones Opcionales (Inicializadas a null)
-        conductor = null,
+        // Asignación de Conductor
+        conductor = conductorUser,
+
+        // Opcionales (Inicializados a null)
         gestor = null,
         funcionario = null,
         fechaAsignacionConductor = null,

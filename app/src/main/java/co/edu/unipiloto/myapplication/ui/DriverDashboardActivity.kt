@@ -10,9 +10,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
+import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import com.google.android.material.button.MaterialButton
-import co.edu.unipiloto.myapplication.dto.RetrofitClient // 👈 Cliente REST
+import co.edu.unipiloto.myapplication.dto.RetrofitClient
+import co.edu.unipiloto.myapplication.dto.SolicitudResponse
+import co.edu.unipiloto.myapplication.dto.toModel
+import co.edu.unipiloto.myapplication.model.Solicitud
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -35,7 +39,8 @@ class DriverDashboardActivity : AppCompatActivity() {
 
     // --- DATOS DE SESIÓN ---
     private var driverId: Long = -1L
-    private var driverZona: String? = null
+    // 🚨 CORRECCIÓN 1: Usar nombre de sucursal para el subtítulo
+    private var driverSucursalName: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,18 +59,18 @@ class DriverDashboardActivity : AppCompatActivity() {
 
         // Obtener datos del conductor de la sesión actual
         driverId = sessionManager.getUserId()
-        driverZona = sessionManager.getZona()
+        // 🚨 CORRECCIÓN 1: Usar getSucursal()
+        driverSucursalName = sessionManager.getSucursal()
 
         // Configurar la UI y cargar los datos
         initViews()
         setupListeners()
         setupRecyclerView()
-        loadAssignedRoutes() // 👈 Llamada para cargar rutas
+        loadAssignedRoutes()
     }
 
     override fun onResume() {
         super.onResume()
-        // Asegura que las rutas se recarguen al volver de una acción (ej., marcar recogida).
         loadAssignedRoutes()
     }
 
@@ -78,8 +83,9 @@ class DriverDashboardActivity : AppCompatActivity() {
 
         val driverName = sessionManager.getName().split(" ").firstOrNull() ?: "Conductor"
         tvDriverTitle.text = getString(R.string.driver_dashboard_title, driverName)
+        // 🚨 CORRECCIÓN 1: Usar driverSucursalName
         tvDriverSubtitle.text =
-            getString(R.string.driver_dashboard_subtitle, driverZona ?: "Sin Zona")
+            getString(R.string.driver_dashboard_subtitle, driverSucursalName ?: "Sin Sucursal")
     }
 
     private fun setupListeners() {
@@ -92,14 +98,22 @@ class DriverDashboardActivity : AppCompatActivity() {
         // Inicializamos el adaptador con el rol CONDUCTOR para que muestre los botones correctos
         adapter = SolicitudAdapter(
             items = emptyList<Solicitud>(),
-            role = sessionManager.getRole()
-            // Aquí iría el listener para manejar acciones del conductor (INICIAR, RECOGIDA, ENTREGADA)
-            // onActionClick = { solicitud, action -> handleDriverAction(solicitud, action) }
+            role = sessionManager.getRole(),
+            // 🚨 CORRECCIÓN 2: Se provee el listener onActionClick vacío para cumplir con el constructor
+            onActionClick = { solicitud, action -> handleDriverAction(solicitud, action) }
         )
 
         recyclerViewRoutes.layoutManager = LinearLayoutManager(this)
         recyclerViewRoutes.adapter = adapter
     }
+
+    private fun handleDriverAction(solicitud: Solicitud, action: String) {
+        // Implementación dummy o lógica real para manejar los cambios de estado del conductor
+        Toast.makeText(this, "Acción: $action en ruta ${solicitud.id}", Toast.LENGTH_SHORT).show()
+        Log.d("DriverDash", "Acción: $action en ruta ${solicitud.id}")
+        // Aquí iría la llamada a Retrofit para actualizar el estado
+    }
+
 
     /**
      * Carga las rutas (solicitudes) asignadas al conductor usando el servicio REST.
@@ -110,12 +124,19 @@ class DriverDashboardActivity : AppCompatActivity() {
             return
         }
 
-        // 🏆 LLAMADA A RETROFIT
-        RetrofitClient.apiService.getDriverRoutes(driverId).enqueue(object : Callback<List<Solicitud>> {
-            override fun onResponse(call: Call<List<Solicitud>>, response: Response<List<Solicitud>>) {
-                val assignedSolicitudes = response.body() ?: emptyList()
+        // 🏆 CORRECCIÓN 3: Asumimos que el método para el conductor se llama getRoutesByDriverId
+        val call = RetrofitClient.getSolicitudApi().getRoutesByDriverId(driverId)
+
+        call.enqueue(object : Callback<List<SolicitudResponse>> {
+
+            override fun onResponse(call: Call<List<SolicitudResponse>>, response: Response<List<SolicitudResponse>>) {
+
+                val assignedResponses = response.body() ?: emptyList()
 
                 if (response.isSuccessful) {
+
+                    val assignedSolicitudes = assignedResponses.map { it.toModel() }
+
                     if (assignedSolicitudes.isNotEmpty()) {
                         adapter.updateData(assignedSolicitudes)
                         recyclerViewRoutes.visibility = View.VISIBLE
@@ -123,7 +144,7 @@ class DriverDashboardActivity : AppCompatActivity() {
                     } else {
                         recyclerViewRoutes.visibility = View.GONE
                         tvNoRoutes.visibility = View.VISIBLE
-                        tvNoRoutes.text = getString(R.string.no_routes_assigned) // Asegúrate de tener este string
+                        tvNoRoutes.text = getString(R.string.no_routes_assigned)
                     }
                 } else {
                     Log.e("DriverDash", "Error ${response.code()} al cargar rutas.")
@@ -131,7 +152,7 @@ class DriverDashboardActivity : AppCompatActivity() {
                 }
             }
 
-            override fun onFailure(call: Call<List<Solicitud>>, t: Throwable) {
+            override fun onFailure(call: Call<List<SolicitudResponse>>, t: Throwable) {
                 Log.e("DriverDash", "Fallo de red: ${t.message}")
                 Toast.makeText(this@DriverDashboardActivity, "Fallo de red: No se pudo conectar al backend.", Toast.LENGTH_LONG).show()
             }

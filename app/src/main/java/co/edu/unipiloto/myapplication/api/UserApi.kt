@@ -2,11 +2,16 @@
 package co.edu.unipiloto.myapplication.api
 
 import co.edu.unipiloto.myapplication.dto.UserResponse
+import co.edu.unipiloto.myapplication.model.Sucursal
+import co.edu.unipiloto.myapplication.model.User
+import retrofit2.Call
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.PUT
+import retrofit2.http.Query
 
 /**
  * 👤 Interfaz de Retrofit para la gestión y consulta de usuarios logísticos.
@@ -62,4 +67,31 @@ interface UserApi {
      */
     @GET("users/conductores/sucursal/{sucursalId}")
     suspend fun getConductoresBySucursal(@Path("sucursalId") sucursalId: Long): Response<List<UserResponse>>
+
+    @GET("users/logistic/{id}")
+    fun getLogisticUserById(@Path("id") id: Long): Call<User>
+
+    @GET("sucursales")
+    fun getAllSucursales(): Call<List<Sucursal>>
+
+    @PUT("users/logistic/{id}")
+    fun updateLogisticUser(
+        @Path("id") id: Long,
+        @Body user: User
+    ): Call<User>
+
+    @GET("users/logistic")
+    fun getAllLogisticUsers(): Call<List<User>>
+
+    @DELETE("users/logistic/{id}")
+    fun deleteLogisticUser(@Path("id") id: Long): Call<Void>
+
+    @GET("drivers/available")
+    fun getAvailableDriverBySucursal(@Query("sucursalId") sucursalId: Long): Call<User>
+
+    /**
+     * Obtiene una lista de usuarios con el rol de conductor/recolector disponibles para asignación.
+     */
+    @GET("users/drivers/available") // 🚨 Verifica este endpoint con tu backend
+    fun getDriversForAssignment(): Call<List<User>>
 }

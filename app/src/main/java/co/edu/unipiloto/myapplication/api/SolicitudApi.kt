@@ -3,8 +3,9 @@ package co.edu.unipiloto.myapplication.api
 
 import co.edu.unipiloto.myapplication.dto.SolicitudRequest
 import co.edu.unipiloto.myapplication.dto.SolicitudResponse
-import retrofit2.Call
+import co.edu.unipiloto.myapplication.model.Solicitud
 import okhttp3.ResponseBody
+import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -21,14 +22,23 @@ interface SolicitudApi {
      * Crea una nueva solicitud. El backend retorna el DTO de respuesta simplificado.
      */
     @POST("solicitudes")
-    fun crearSolicitud(@Body request: SolicitudRequest): Call<SolicitudResponse>
-
+    suspend fun crearSolicitud(@Body request: SolicitudRequest): Response<SolicitudResponse>
     /**
      * Mapea a: GET /api/v1/solicitudes/client/{clientId}
      * Obtiene todas las solicitudes de un cliente. El backend retorna la lista de DTOs simplificados.
      */
     @GET("solicitudes/client/{clientId}")
     suspend fun getSolicitudesByClient(@Path("clientId") clientId: Long): Response<List<SolicitudResponse>>
+
+    /**
+     * Mapea a: GET /api/v1/solicitudes/tracking/{trackingNumber}
+     * Obtiene una solicitud de envío utilizando su número de rastreo (trackingNumber) de la guía.
+     *
+     * @param trackingNumber El número de guía único utilizado para el rastreo.
+     * @return El DTO de respuesta simplificado de la solicitud encontrada.
+     */
+    @GET("solicitudes/tracking/{trackingNumber}")
+    suspend fun getSolicitudByTrackingNumber(@Path("trackingNumber") trackingNumber: String): Response<SolicitudResponse>
 
     /**
      * Mapea a: PUT /api/v1/solicitudes/{solicitudId}/estado
@@ -69,8 +79,71 @@ interface SolicitudApi {
     @POST("solicitudes/{solicitudId}/asignar-conductor")
     suspend fun asignarConductor(
         @Path("solicitudId") solicitudId: Long,
-        // Se usan @Query para mapear los @RequestParam del backend
         @Query("gestorId") gestorId: Long,
         @Query("conductorId") conductorId: Long
-    ): Response<SolicitudResponse> // Retorna el DTO de respuesta actualizado
+    ): Response<SolicitudResponse>
+
+    /**
+     * Mapea a: GET /api/v1/solicitudes/branch/{sucursalId}
+     * Obtiene todas las solicitudes de una sucursal para que el Gestor pueda filtrar/asignar.
+     * Retorna la lista de DTOs simplificados.
+     */
+    @GET("solicitudes/branch/{sucursalId}")
+    fun getSolicitudesBySucursal(@Path("sucursalId") sucursalId: Long): retrofit2.Call<List<SolicitudResponse>>
+
+    /**
+     * Mapea a: GET /api/v1/solicitudes/branch/{sucursalId}/assigned
+     * Obtiene todas las solicitudes de una sucursal que ya están ASIGNADAS a un conductor.
+     * Esto soporta la pestaña "Asignadas" del Gestor.
+     */
+    @GET("solicitudes/branch/{sucursalId}/assigned")
+    fun getAssignedSolicitudesBySucursal(@Path("sucursalId") sucursalId: Long): retrofit2.Call<List<SolicitudResponse>>
+
+    /**
+     * Mapea a: PUT /api/v1/solicitudes/{solicitudId}/assign-driver
+     * Asigna o reasigna un conductor a una solicitud.
+     * El cuerpo espera: {"recolectorId": "ID_CONDUCTOR"}
+     */
+    @PUT("solicitudes/{solicitudId}/assign-driver")
+    fun assignRequest(
+        @Path("solicitudId") solicitudId: Long,
+        // Backend espera: {"recolectorId": "ID_CONDUCTOR"}
+        @Body body: Map<String, String>
+    ): retrofit2.Call<SolicitudResponse>
+
+    /**
+     * Mapea a: GET /api/v1/solicitudes/branch/{sucursalId}/completed
+     * Obtiene todas las solicitudes de una sucursal que ya están FINALIZADAS (Entregadas o Canceladas).
+     * Esto soporta la pestaña "Completadas" del Gestor/Funcionario.
+     *
+     * @param sucursalId El ID numérico de la sucursal.
+     * @return Una lista de DTOs simplificados.
+     */
+    @GET("solicitudes/branch/{sucursalId}/completed")
+    fun getCompletedSolicitudesBySucursal(@Path("sucursalId") sucursalId: Long): retrofit2.Call<List<SolicitudResponse>>
+
+    /**
+     * Mapea a: GET /api/v1/solicitudes/driver/{driverId}/routes
+     * Obtiene todas las solicitudes de envío ASIGNADAS a un conductor específico.
+     *
+     * @param driverId El ID del conductor.
+     * @return Una lista de DTOs simplificados (SolicitudResponse).
+     */
+    @GET("solicitudes/driver/{driverId}/routes")
+    fun getRoutesByDriverId(@Path("driverId") driverId: Long): retrofit2.Call<List<SolicitudResponse>>
+
+    /**
+     * Actualiza el estado de una solicitud.
+     * @param requestId El ID de la solicitud a modificar.
+     * @param body Mapa que contiene el nuevo estado (ej: {"estado": "ASIGNADO"}).
+     * @return Retorna Call<Void> si la respuesta es 204 No Content.
+     */
+    @PUT("solicitudes/{id}/status") // 🚨 Verifica este endpoint
+    fun actualizarEstado(@Path("id") requestId: Long, @Body body: Map<String, String>): Call<Void>
+
+    /**
+     * Obtiene todas las solicitudes del sistema (visible para ADMIN).
+     */
+    @GET("solicitudes/all") // 🚨 Verifica este endpoint con tu backend
+    fun getAllSolicitudes(): Call<List<Solicitud>>
 }
