@@ -185,6 +185,7 @@
     <string name="action_start">Texto del botón Iniciar Recolección (Conductor).</string>
     <string name="action_finish">Texto del botón Finalizar Recolección (Conductor).</string>
     <string name="branch_origin_format">Sucursal de Origen: %1$s</string>
+    <string name="branch_id_format">ID: %s</string>
 
 
     <string-array name="logistic_roles">

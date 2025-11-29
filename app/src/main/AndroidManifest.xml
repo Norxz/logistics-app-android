@@ -46,9 +46,6 @@
             android:name=".ui.DriverDashboardActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.BranchDashboardActivity"
-            android:exported="false" />
-        <activity
             android:name=".ui.ManagerDashboardActivity"
             android:exported="false" />
         <activity
@@ -83,6 +80,13 @@
         <activity
             android:name=".ui.LogisticUserManagementActivity"
             android:exported="false" />
+        <activity
+            android:name=".ui.ManageBranchesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.AddBranchActivity"
+            android:exported="false" />
+
 
         <provider
             android:name="androidx.core.content.FileProvider"

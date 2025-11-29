@@ -91,4 +91,21 @@ class SucursalRepository(private val sucursalApi: SucursalApi) {
             Result.failure(Exception("Error de conexión: ${e.message}"))
         }
     }
+
+    // ⬅️ FUNCIÓN REQUERIDA POR AddBranchViewModel
+    /**
+     * Alias para crearSucursal, usado por el ViewModel.
+     */
+    suspend fun saveBranch(request: SucursalRequest): Result<SucursalResponse> {
+        return crearSucursal(request)
+    }
+
+    // ⬅️ FUNCIÓN REQUERIDA POR AddBranchViewModel
+    /**
+     * Alias para actualizarSucursal, usado por el ViewModel.
+     * Nota: El ID en la Activity es Int, pero el API lo espera como Long.
+     */
+    suspend fun updateBranch(id: Int, request: SucursalRequest): Result<SucursalResponse> {
+        return actualizarSucursal(id.toLong(), request) // Convierte el Int a Long
+    }
 }

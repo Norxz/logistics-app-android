@@ -85,4 +85,10 @@ object RetrofitClient {
      * Uso: `RetrofitClient.solicitudService.crearSolicitud(...)`
      */
     val solicitudService: SolicitudApi = retrofit.create(SolicitudApi::class.java)
+
+    /**
+     * Propiedad de acceso alternativa para el dominio de Sucursales.
+     * Uso: `RetrofitClient.sucursalService.listarSucursales(...)`
+     */
+    val sucursalService: SucursalApi = retrofit.create(SucursalApi::class.java)
 }

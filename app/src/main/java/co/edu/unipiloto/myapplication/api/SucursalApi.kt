@@ -1,4 +1,3 @@
-// co.edu.unipiloto.myapplication.api.SucursalApi.kt
 package co.edu.unipiloto.myapplication.api
 
 import co.edu.unipiloto.myapplication.dto.SucursalRequest
@@ -18,7 +17,7 @@ interface SucursalApi {
      * @return Lista de DTOs simplificados (SucursalResponse).
      */
     @GET("sucursales")
-    suspend fun listarSucursales(): Response<List<SucursalResponse>>
+    suspend fun listarSucursales(): Response<List<SucursalResponse>> // ⬅️ Restaurado
 
     /**
      * Mapea a: POST /api/v1/sucursales
@@ -27,16 +26,16 @@ interface SucursalApi {
      * @return DTO de la sucursal creada.
      */
     @POST("sucursales")
-    suspend fun crearSucursal(@Body request: SucursalRequest): Response<SucursalResponse>
+    suspend fun crearSucursal(@Body request: SucursalRequest): Response<SucursalResponse> // ⬅️ Restaurado
 
     /**
      * Mapea a: GET /api/v1/sucursales/{id}
-     * Obtiene una sucursal específica.
+     * Obtiene una sucursal específica por ID.
      * @param id ID de la sucursal.
      * @return DTO de la sucursal.
      */
     @GET("sucursales/{id}")
-    suspend fun obtenerSucursal(@Path("id") id: Long): Response<SucursalResponse>
+    suspend fun obtenerSucursal(@Path("id") id: Long): Response<SucursalResponse> // ⬅️ Restaurado
 
     /**
      * Mapea a: PUT /api/v1/sucursales/{id}
@@ -46,7 +45,7 @@ interface SucursalApi {
      * @return DTO de la sucursal actualizada.
      */
     @PUT("sucursales/{id}")
-    suspend fun actualizarSucursal(
+    suspend fun actualizarSucursal( // ⬅️ Restaurado
         @Path("id") id: Long,
         @Body request: SucursalRequest
     ): Response<SucursalResponse>
@@ -56,5 +55,5 @@ interface SucursalApi {
      * Elimina una sucursal.
      */
     @DELETE("sucursales/{id}")
-    suspend fun eliminarSucursal(@Path("id") id: Long): Response<Void> // Retorna 204 No Content
+    suspend fun eliminarSucursal(@Path("id") id: Long): Response<Void> // ⬅️ Restaurado
 }

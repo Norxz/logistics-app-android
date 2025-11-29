@@ -6,6 +6,7 @@ import android.location.Geocoder
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.LocationServices
@@ -58,18 +59,41 @@ class LocationHelper(
         )
     }
 
+    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     private fun requestCurrentLocation() {
-        if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED
-        ) return
+        if (!hasLocationPermission()) return
 
         fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
             if (loc != null) {
                 val latLng = LatLng(loc.latitude, loc.longitude)
-                updateMarker(latLng)
-                reverseGeocode(latLng)
+                // Llama a la versión asíncrona:
+                reverseGeocodeAsync(latLng)
             }
         }
+    }
+
+    private fun reverseGeocodeAsync(latLng: LatLng) {
+        // 1. Mover el trabajo pesado a un hilo secundario
+        Thread {
+            try {
+                val geocoder = Geocoder(activity, Locale.getDefault())
+                // 🚨 EL BLOQUEO OCURRE AQUÍ, AHORA ESTÁ EN UN THREAD
+                val list = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
+
+                // 2. Regresar al hilo principal para actualizar la UI
+                Handler(Looper.getMainLooper()).post {
+                    if (!list.isNullOrEmpty()) {
+                        val address = list[0].getAddressLine(0)
+                        updateMarker(latLng) // Update Marker (UI change)
+                        onLocationSelected(address, latLng.latitude, latLng.longitude)
+                    }
+                }
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post {
+                    Toast.makeText(activity, "Error obteniendo dirección", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }.start()
     }
 
     private fun updateMarker(latLng: LatLng) {
@@ -141,8 +165,7 @@ class LocationHelper(
         )
 
         googleMap?.setOnMapClickListener { latLng ->
-            updateMarker(latLng)
-            reverseGeocode(latLng)
+            reverseGeocodeAsync(latLng) // ⬅️ Usar la versión asíncrona
         }
     }
 

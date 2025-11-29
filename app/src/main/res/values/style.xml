@@ -7,4 +7,11 @@
         <item name="android:textStyle">bold</item>
         <item name="android:textColor">@color/on_surface</item>
     </style>
+
+    <style name="AdminPanelButton" parent="Widget.MaterialComponents.Button">
+        <item name="android:paddingVertical">18dp</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@color/md_white</item>
+        <item name="cornerRadius">12dp</item>
+    </style>
 </resources>

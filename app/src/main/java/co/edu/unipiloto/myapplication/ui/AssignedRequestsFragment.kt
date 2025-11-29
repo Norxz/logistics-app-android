@@ -81,7 +81,6 @@ class AssignedRequestsFragment : Fragment() {
             return
         }
 
-        // 🚨 ASUMO: RetrofitClient.getSolicitudApi() es el método correcto para obtener el servicio
         RetrofitClient.getSolicitudApi().getAssignedSolicitudesBySucursal(sucursalId).enqueue(object : Callback<List<SolicitudResponse>> {
 
             override fun onResponse(call: Call<List<SolicitudResponse>>, response: Response<List<SolicitudResponse>>) {
