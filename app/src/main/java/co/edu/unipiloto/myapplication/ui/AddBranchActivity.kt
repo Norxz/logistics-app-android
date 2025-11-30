@@ -1,6 +1,5 @@
 package co.edu.unipiloto.myapplication.ui
 
-import android.location.Geocoder
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -8,32 +7,19 @@ import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.dto.DireccionRequest
 import co.edu.unipiloto.myapplication.dto.SucursalRequest
-import co.edu.unipiloto.myapplication.dto.RetrofitClient // Suponemos que existe
-import co.edu.unipiloto.myapplication.repository.SucursalRepository // Suponemos que existe
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
+import co.edu.unipiloto.myapplication.dto.RetrofitClient
+import co.edu.unipiloto.myapplication.repository.SucursalRepository
+import co.edu.unipiloto.myapplication.utils.LocationHelper // ⬅️ Mantener este import
 import com.google.android.gms.maps.MapView
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.IOException
-import java.util.Locale
 
-/**
- * Activity para el registro y edición de sucursales.
- */
-class AddBranchActivity : AppCompatActivity(), OnMapReadyCallback {
+// ⬅️ Ya no implementamos OnMapReadyCallback aquí.
+class AddBranchActivity : AppCompatActivity() {
 
     // --- Vistas ---
     private lateinit var tvHeaderTitle: TextView
@@ -49,10 +35,13 @@ class AddBranchActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mapViewBranch: MapView
 
     // --- Mapa, Ubicación y ViewModel ---
-    private lateinit var googleMap: GoogleMap
+    // private lateinit var googleMap: GoogleMap // ⬅️ ELIMINADO
     private var isEditMode: Boolean = false
     private var branchId: Int? = null
-    private lateinit var viewModel: AddBranchViewModel // ⬅️ DECLARACIÓN DEL VIEWMODEL
+    private lateinit var viewModel: AddBranchViewModel
+
+    // ⬅️ INSTANCIA DE LOCATION HELPER
+    private lateinit var locationHelper: LocationHelper
 
     // ------------------------------------
     // --- LIFECYCLE & SETUP ---
@@ -62,22 +51,39 @@ class AddBranchActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_branch)
 
-        // Inicializar vistas
         initViews()
 
         // Inicializar el MapView
         mapViewBranch.onCreate(savedInstanceState)
-        mapViewBranch.getMapAsync(this)
 
-        // Comprobar modo edición
         branchId = intent.getIntExtra("BRANCH_ID", -1).takeIf { it != -1 }
         isEditMode = branchId != null
 
+        // ⬅️ INICIALIZACIÓN DE LOCATION HELPER
+        locationHelper = LocationHelper(activity = this,
+            mapView = mapViewBranch,
+            // ⬅️ El callback ahora acepta la CIUDAD
+            onLocationSelected = { address, lat, lon, city ->
+                // Este callback se llama cuando el usuario selecciona o busca una ubicación
+                etAddressComplete.setText(address)
+                etLatitude.setText(lat.toString())
+                etLongitude.setText(lon.toString())
+
+                // ⬅️ AHORA LLENAMOS EL CAMPO etCity
+                if (!city.isNullOrBlank()) {
+                    etCity.setText(city)
+                } else {
+                    // Opcional: limpiar o dejar un valor predeterminado si no se encuentra
+                    etCity.setText("")
+                }
+
+                Toast.makeText(this, "Ubicación actualizada.", Toast.LENGTH_SHORT).show()
+            })
+
         setupUI(isEditMode)
-        setupViewModel() // ⬅️ INICIALIZA EL VIEWMODEL
+        setupViewModel()
         setupListeners()
-        setupObservers() // ⬅️ CONFIGURA LOS OBSERVADORES DE RESPUESTA
-        // if (isEditMode) loadBranchData()
+        setupObservers()
     }
 
     private fun initViews() {
@@ -109,14 +115,12 @@ class AddBranchActivity : AppCompatActivity(), OnMapReadyCallback {
     // ------------------------------------
 
     private fun setupViewModel() {
-        // Asumimos que RetrofitClient.sucursalService y SucursalRepository existen
         val repository = SucursalRepository(RetrofitClient.sucursalService)
         val factory = AddBranchViewModelFactory(repository)
         viewModel = ViewModelProvider(this, factory)[AddBranchViewModel::class.java]
     }
 
     private fun setupObservers() {
-        // Observa el LiveData que notifica el resultado de guardado/actualización
         viewModel.saveResult.observe(this) { result ->
             result.onSuccess {
                 val message = if (isEditMode) "Sucursal actualizada con éxito." else "Sucursal registrada con éxito."
@@ -135,11 +139,23 @@ class AddBranchActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun setupListeners() {
         btnSaveBranch.setOnClickListener { saveOrUpdateBranch() }
-        btnBranchGps.setOnClickListener { findCurrentLocation() }
+
+        // ⬅️ DELEGA al LocationHelper para obtener GPS
+        btnBranchGps.setOnClickListener {
+            locationHelper.getCurrentLocation { address, lat, lon ->
+                // El callback ya está definido en la inicialización del helper
+            }
+        }
 
         val tilAddressComplete = findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.tilAddressComplete)
         tilAddressComplete.setEndIconOnClickListener {
-            geocodeAddress(etAddressComplete.text.toString())
+            val address = etAddressComplete.text.toString()
+            if (address.isBlank()) {
+                Toast.makeText(this, "Ingrese una dirección válida.", Toast.LENGTH_SHORT).show()
+                return@setEndIconOnClickListener
+            }
+            // ⬅️ DELEGA al LocationHelper para buscar dirección
+            locationHelper.searchAddress(address)
         }
     }
 
@@ -153,7 +169,6 @@ class AddBranchActivity : AppCompatActivity(), OnMapReadyCallback {
             return
         }
 
-        // 5. Llamada al ViewModel (Referencias resueltas)
         if (isEditMode && branchId != null) {
             viewModel.updateBranch(branchId!!, sucursalRequest)
         } else {
@@ -161,10 +176,7 @@ class AddBranchActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    // ... (El resto de funciones de geocodificación y validación se mantienen) ...
-    // Para simplificar, solo incluiré las funciones que habías proporcionado/aceptado previamente.
-
-    // ... (Funciones de Soporte) ...
+    // --- Funciones de Soporte (Se mantienen, ya que son de DTO/Validación) ---
 
     private fun buildSucursalRequest(): SucursalRequest? {
         if (!validateInput()) return null
@@ -215,94 +227,6 @@ class AddBranchActivity : AppCompatActivity(), OnMapReadyCallback {
             return false
         }
         return true
-    }
-
-    private fun findCurrentLocation() {
-        Toast.makeText(this, "Implementar lógica de GPS y permisos.", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun updateMapAndCoordinates(latLng: LatLng, city: String?) {
-        googleMap.clear()
-        googleMap.addMarker(MarkerOptions().position(latLng).title("Ubicación de Sucursal"))
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
-
-        etLatitude.setText(latLng.latitude.toString())
-        etLongitude.setText(latLng.longitude.toString())
-        if (!city.isNullOrBlank()) {
-            etCity.setText(city)
-        }
-    }
-
-    private fun geocodeAddress(address: String) {
-        if (address.isBlank()) {
-            Toast.makeText(this, "Ingrese una dirección válida.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        lifecycleScope.launch {
-            val latLng = performGeocoding(address)
-
-            if (latLng != null) {
-                updateMapAndCoordinates(latLng, null)
-                Toast.makeText(this@AddBranchActivity, "Dirección encontrada.", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this@AddBranchActivity, "Dirección no encontrada.", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
-    private suspend fun performGeocoding(address: String): LatLng? = withContext(Dispatchers.IO) {
-        try {
-            val geocoder = Geocoder(this@AddBranchActivity, Locale.getDefault())
-            val addresses = geocoder.getFromLocationName(address, 1)
-
-            if (!addresses.isNullOrEmpty()) {
-                val location = addresses[0]
-                return@withContext LatLng(location.latitude, location.longitude)
-            }
-            return@withContext null
-        } catch (e: IOException) {
-            Log.e("AddBranchActivity", "Error de Geocoding: ${e.message}")
-            return@withContext null
-        }
-    }
-
-    private fun reverseGeocodeLocation(latLng: LatLng) {
-        try {
-            val geocoder = Geocoder(this, Locale.getDefault())
-            val addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
-
-            if (!addresses.isNullOrEmpty()) {
-                val address = addresses[0]
-                val fullAddress = address.getAddressLine(0)
-                val city = address.locality
-
-                etAddressComplete.setText(fullAddress)
-                updateMapAndCoordinates(latLng, city)
-            } else {
-                updateMapAndCoordinates(latLng, null)
-                Toast.makeText(this, "Ubicación seleccionada, dirección no encontrada.", Toast.LENGTH_SHORT).show()
-            }
-        } catch (e: IOException) {
-            Log.e("AddBranchActivity", "Error de Reverse Geocoding: ${e.message}")
-            updateMapAndCoordinates(latLng, null)
-        }
-    }
-
-
-    // ------------------------------------
-    // --- MAPS LIFECYCLE ---
-    // ------------------------------------
-
-    override fun onMapReady(gMap: GoogleMap) {
-        googleMap = gMap
-
-        val defaultLocation = LatLng(4.6534, -74.0836) // Bogotá, Colombia
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 10f))
-
-        googleMap.setOnMapClickListener { latLng ->
-            reverseGeocodeLocation(latLng)
-        }
     }
 
     override fun onResume() {

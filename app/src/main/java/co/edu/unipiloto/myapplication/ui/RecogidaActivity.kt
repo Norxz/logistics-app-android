@@ -49,7 +49,7 @@ class RecogidaActivity : AppCompatActivity() {
         locationHelper = LocationHelper(
             this,
             mapView
-        ) { address, lat, lon ->
+        ) { address, lat, lon, city ->
             etAddress.setText(address)
             lastAddress = address
             lastLat = lat

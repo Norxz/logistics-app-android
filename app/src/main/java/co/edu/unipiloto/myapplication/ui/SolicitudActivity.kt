@@ -83,11 +83,11 @@ class SolicitudActivity : AppCompatActivity() {
         locationHelper = LocationHelper(
             this,
             mapView
-        ) { address, lat, lon ->
+        ) { address, lat, lon, city ->
             etReceiverAddress.setText(address)
             entregaLat = lat
             entregaLon = lon
-            calculatePrice() // Llamada al cálculo de precio al fijar la ubicación
+            calculatePrice()
         }
 
         btnReceiverGps.setOnClickListener {

@@ -22,7 +22,7 @@ import java.util.Locale
 class LocationHelper(
     private val activity: AppCompatActivity,
     private val mapView: MapView,
-    private val onLocationSelected: (address: String, lat: Double, lon: Double) -> Unit
+    private val onLocationSelected: (address: String, lat: Double, lon: Double, city: String?) -> Unit
 ) : OnMapReadyCallback {
 
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(activity)
@@ -82,11 +82,12 @@ class LocationHelper(
 
                 // 2. Regresar al hilo principal para actualizar la UI
                 Handler(Looper.getMainLooper()).post {
-                    if (!list.isNullOrEmpty()) {
-                        val address = list[0].getAddressLine(0)
-                        updateMarker(latLng) // Update Marker (UI change)
-                        onLocationSelected(address, latLng.latitude, latLng.longitude)
-                    }
+                    if (!list.isNullOrEmpty()) {val addressResult = list[0]
+                        val address = addressResult.getAddressLine(0)
+                        val city = addressResult.locality
+
+                        updateMarker(latLng)
+                        onLocationSelected(address, latLng.latitude, latLng.longitude, city)}
                 }
             } catch (e: Exception) {
                 Handler(Looper.getMainLooper()).post {
@@ -114,8 +115,12 @@ class LocationHelper(
             val list = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
 
             if (!list.isNullOrEmpty()) {
-                val address = list[0].getAddressLine(0)
-                onLocationSelected(address, latLng.latitude, latLng.longitude)
+                val addressResult = list[0]
+                val address = addressResult.getAddressLine(0)
+                val city = addressResult.locality // ⬅️ OBTENER LA CIUDAD
+
+                // ⬅️ CORRECCIÓN: Pasar el valor de 'city'
+                onLocationSelected(address, latLng.latitude, latLng.longitude, city)
             }
         } catch (e: Exception) {
             Toast.makeText(activity, "Error obteniendo dirección", Toast.LENGTH_SHORT).show()
@@ -132,9 +137,13 @@ class LocationHelper(
                     val r = result[0]
                     val latLng = LatLng(r.latitude, r.longitude)
 
+                    // ⬅️ OBTENER LA CIUDAD AQUÍ
+                    val city = r.locality
+
                     Handler(Looper.getMainLooper()).post {
                         updateMarker(latLng)
-                        onLocationSelected(address, r.latitude, r.longitude)
+                        // ⬅️ CORRECCIÓN: Pasar el valor de 'city'
+                        onLocationSelected(address, r.latitude, r.longitude, city)
                     }
                 } else {
                     Handler(Looper.getMainLooper()).post {
