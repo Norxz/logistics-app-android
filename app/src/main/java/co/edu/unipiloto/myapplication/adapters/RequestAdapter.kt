@@ -7,7 +7,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R // Asegúrate de que esta importación sea correcta para R
-import co.edu.unipiloto.myapplication.model.Request
+import co.edu.unipiloto.myapplication.model.Solicitud
 import com.google.android.material.button.MaterialButton
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -15,12 +15,12 @@ import java.util.Locale
 /**
  * Adaptador para mostrar la lista de solicitudes en el RecyclerView.
  *
- * @param requests La lista mutable de objetos Request.
+ * @param solicituds La lista mutable de objetos Request.
  * @param onItemClick Una función lambda que se ejecuta cuando se hace clic en el botón GESTIONAR.
  */
 class RequestAdapter(
-    private val requests: MutableList<Request>,
-    private val onItemClick: (Request) -> Unit
+    private val solicituds: MutableList<Solicitud>,
+    private val onItemClick: (Solicitud) -> Unit
 ) : RecyclerView.Adapter<RequestAdapter.RequestViewHolder>() {
 
     // ----------------------------------------------------------
@@ -34,20 +34,20 @@ class RequestAdapter(
         val tvCreationDate: TextView = view.findViewById(R.id.tvCreationDate)
         val btnViewDetails: MaterialButton = view.findViewById(R.id.btnViewDetails)
 
-        fun bind(request: Request) {
-            tvGuiaID.text = "GUÍA #${request.guiaId}"
-            tvAddress.text = request.address
-            tvClientName.text = "Cliente: ${request.clientName}"
+        fun bind(solicitud: Solicitud) {
+            tvGuiaID.text = "GUÍA #${solicitud.guiaId}"
+            tvAddress.text = solicitud.address
+            tvClientName.text = "Cliente: ${solicitud.clientName}"
 
             // Formateo de la fecha (Asume que creationTimestamp es un String tipo ISO)
-            tvCreationDate.text = formatTimestamp(request.creationTimestamp)
+            tvCreationDate.text = formatTimestamp(solicitud.creationTimestamp)
 
             // Asigna el estado y estiliza el badge
-            setStatusAndStyle(request.status, request.assignedRecolectorName)
+            setStatusAndStyle(solicitud.status, solicitud.assignedRecolectorName)
 
             // Manejador del clic del botón GESTIONAR
             btnViewDetails.setOnClickListener {
-                onItemClick(request)
+                onItemClick(solicitud)
             }
         }
 
@@ -124,9 +124,9 @@ class RequestAdapter(
     }
 
     override fun onBindViewHolder(holder: RequestViewHolder, position: Int) {
-        val request = requests[position]
+        val request = solicituds[position]
         holder.bind(request)
     }
 
-    override fun getItemCount(): Int = requests.size
+    override fun getItemCount(): Int = solicituds.size
 }

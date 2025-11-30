@@ -1,44 +1,31 @@
+
 package co.edu.unipiloto.myapplication.model
 
-import java.io.Serializable // Recommended for models used in intents
-
-
+import java.io.Serializable
 /**
- * Modelo DTO utilizado por la UI, mapeado de la respuesta del Backend.
- * Coincide con la estructura de co.edu.unipiloto.backend.model.Solicitud.
+ * Modelo de datos para representar una Solicitud de Recolección o Entrega.
+ * Esta es la entidad central para la gestión administrativa.
+ *
+ * @property id ID de la tabla SOLICITUDES.
+ * @property guiaId El número de guía o referencia.
+ * @property type El tipo de servicio (ej. 'RECOLECCIÓN', 'ENTREGA').
+ * @property status El estado actual ('PENDIENTE', 'ASIGNADA', 'EN_RUTA', 'COMPLETADA', 'CANCELADA').
+ * @property address Dirección completa de la solicitud.
+ * @property clientName Nombre del cliente solicitante.
+ * @property clientPhone Número de teléfono del cliente.
+ * @property creationTimestamp Fecha y hora de la creación de la solicitud.
+ * @property assignedRecolectorId ID de la tabla RECOLECTORES asignado (FK). Puede ser nulo.
+ * @property assignedRecolectorName Nombre del recolector asignado (para mostrar en la UI).
  */
 data class Solicitud(
-    // METADATA & RELATIONS (Needed by Adapter)
-    val id: Long, // 👈 Required by adapter (previously missing)
-    val estado: String, // 👈 Required by adapter (previously missing)
-    val createdAt: String, // 👈 Required by adapter (previously missing, usually Instant or String)
-    val guia: Guia, // 👈 Required for tracking number (previously missing)
-    val direccion: Direccion, // 👈 Required for address details (previously missing/incorrect)
-
-    // Remitente
-    val remitenteNombre: String, // Adapter uses 'remitente' (must be mapped)
-    val remitenteTipoId: String,
-    val remitenteNumeroId: String,
-    val remitenteTelefono: String,
-    val remitenteCodigoPais: String,
-
-    // Paquete
-    val alto: Double?,
-    val ancho: Double?,
-    val largo: Double?,
-    val pesoKg: Double,
-    val contenido: String?,
-
-    // Destinatario (Receptor)
-    val receptorNombre: String, // Adapter uses 'nombreReceptor' (must be mapped)
-    val receptorTipoId: String,
-    val receptorNumeroId: String,
-    val receptorTelefono: String,
-    val receptorCodigoPais: String,
-    // Note: direccionReceptor and ciudad from your old model are now inside 'direccion' object
-
-    // Logística
-    val fechaRecoleccion: String,
-    val franjaHoraria: String,
-    val precio: Double
-) : Serializable // Recommended to implement Serializable
+    val id: Long,
+    val guiaId: String,
+    val type: String,
+    val status: String,
+    val address: String,
+    val clientName: String,
+    val clientPhone: String?, // Puede ser opcional
+    val creationTimestamp: String,
+    val assignedRecolectorId: Long? = null,
+    val assignedRecolectorName: String? = null
+):Serializable

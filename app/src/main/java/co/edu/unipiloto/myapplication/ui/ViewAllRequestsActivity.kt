@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.adapters.RequestAdapter
-import co.edu.unipiloto.myapplication.model.Request // Importación del modelo de datos correcto
+import co.edu.unipiloto.myapplication.model.Solicitud // Importación del modelo de datos correcto
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import com.google.android.material.button.MaterialButton
 import co.edu.unipiloto.myapplication.rest.RetrofitClient // 👈 Cliente REST
@@ -29,7 +29,7 @@ class ViewAllRequestsActivity : AppCompatActivity() {
     private lateinit var recyclerViewRequests: RecyclerView
     private lateinit var btnLogoutRequests: MaterialButton
     private lateinit var adapter: RequestAdapter
-    private var requestList: MutableList<Request> = mutableListOf()
+    private var solicitudList: MutableList<Solicitud> = mutableListOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,7 +82,7 @@ class ViewAllRequestsActivity : AppCompatActivity() {
         recyclerViewRequests.setHasFixedSize(true)
 
         // Inicializamos el adaptador con la lista mutable
-        adapter = RequestAdapter(requestList) { request ->
+        adapter = RequestAdapter(solicitudList) { request ->
             handleManageRequestClick(request)
         }
         recyclerViewRequests.adapter = adapter
@@ -93,14 +93,14 @@ class ViewAllRequestsActivity : AppCompatActivity() {
      */
     private fun loadRequests() {
         // 🏆 LLAMADA A RETROFIT (GET: Asumimos endpoint /api/v1/solicitudes/all)
-        RetrofitClient.apiService.getAllRequests().enqueue(object : Callback<List<Request>> {
-            override fun onResponse(call: Call<List<Request>>, response: Response<List<Request>>) {
+        RetrofitClient.apiService.getAllRequests().enqueue(object : Callback<List<Solicitud>> {
+            override fun onResponse(call: Call<List<Solicitud>>, response: Response<List<Solicitud>>) {
                 val fetchedRequests = response.body()
 
                 if (response.isSuccessful && fetchedRequests != null) {
                     if (fetchedRequests.isNotEmpty()) {
-                        requestList.clear()
-                        requestList.addAll(fetchedRequests)
+                        solicitudList.clear()
+                        solicitudList.addAll(fetchedRequests)
                         adapter.notifyDataSetChanged()
                     } else {
                         Toast.makeText(this@ViewAllRequestsActivity, "No hay solicitudes pendientes.", Toast.LENGTH_SHORT).show()
@@ -111,21 +111,21 @@ class ViewAllRequestsActivity : AppCompatActivity() {
                 }
             }
 
-            override fun onFailure(call: Call<List<Request>>, t: Throwable) {
+            override fun onFailure(call: Call<List<Solicitud>>, t: Throwable) {
                 Log.e("AdminRequests", "Fallo de red: ${t.message}")
                 Toast.makeText(this@ViewAllRequestsActivity, "Fallo de red. Verifique el servidor.", Toast.LENGTH_LONG).show()
             }
         })
     }
 
-    private fun handleManageRequestClick(request: Request) {
+    private fun handleManageRequestClick(solicitud: Solicitud) {
         // Aquí defines la lógica de gestión (abrir un diálogo o una nueva Activity)
-        Toast.makeText(this, "Gestionando Guía: ${request.guiaId}", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Gestionando Guía: ${solicitud.guiaId}", Toast.LENGTH_SHORT).show()
 
         // EJEMPLO: Abrir RequestDetailActivity, la cual migraste en un paso anterior
         val intent = Intent(this, RequestDetailActivity::class.java)
         // Nota: Asegúrate de que el modelo Request sea Serializable si usas getSerializableExtra
-        intent.putExtra("REQUEST_DATA", request)
+        intent.putExtra("REQUEST_DATA", solicitud)
         startActivity(intent)
     }
 
