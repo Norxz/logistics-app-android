@@ -2,76 +2,51 @@ package co.edu.unipiloto.myapplication.ui
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.View
+import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter
-import co.edu.unipiloto.myapplication.storage.SessionManager
-import com.google.android.material.button.MaterialButton
+import co.edu.unipiloto.myapplication.adapters.DriverRequestAdapter
+import co.edu.unipiloto.myapplication.api.SolicitudApi
 import co.edu.unipiloto.myapplication.dto.RetrofitClient
 import co.edu.unipiloto.myapplication.dto.SolicitudResponse
-import co.edu.unipiloto.myapplication.dto.toModel
-import co.edu.unipiloto.myapplication.model.Solicitud
-import retrofit2.Call
-import retrofit2.Callback
+import co.edu.unipiloto.myapplication.storage.SessionManager
+import co.edu.unipiloto.myapplication.adapters.OnRequestClickListener
 import retrofit2.Response
 
 /**
- * Activity para el panel de control (dashboard) del conductor.
+ * Actividad principal del conductor. Muestra las solicitudes (rutas) asignadas
+ * y permite actualizar su estado.
  */
-class DriverDashboardActivity : AppCompatActivity() {
+class DriverDashboardActivity : AppCompatActivity(), OnRequestClickListener {
 
-    // --- VISTAS ---
     private lateinit var tvDriverTitle: TextView
     private lateinit var tvDriverSubtitle: TextView
-    private lateinit var btnLogout: MaterialButton
+    private lateinit var btnLogout: Button
     private lateinit var recyclerViewRoutes: RecyclerView
     private lateinit var tvNoRoutes: TextView
+    private lateinit var requestAdapter: DriverRequestAdapter
 
-    // --- UTILIDADES ---
+    private lateinit var solicitudApi: SolicitudApi
     private lateinit var sessionManager: SessionManager
-    private lateinit var adapter: SolicitudAdapter
-
-    // --- DATOS DE SESIÓN ---
-    private var driverId: Long = -1L
-    // 🚨 CORRECCIÓN 1: Usar nombre de sucursal para el subtítulo
-    private var driverSucursalName: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_driver_dashboard)
 
-        supportActionBar?.hide()
-
-        // Inicializar gestores
-        sessionManager = SessionManager(this)
-
-        // Verificar si el usuario está logueado y tiene el rol correcto.
-        if (!sessionManager.isLoggedIn() || sessionManager.getRole() != "CONDUCTOR") {
-            logoutUser()
-            return
-        }
-
-        // Obtener datos del conductor de la sesión actual
-        driverId = sessionManager.getUserId()
-        // 🚨 CORRECCIÓN 1: Usar getSucursal()
-        driverSucursalName = sessionManager.getSucursal()
-
-        // Configurar la UI y cargar los datos
+        // 🚨 CORRECCIÓN: Inicializar servicios (sessionManager) antes de usar las vistas
+        initServices()
         initViews()
+
         setupListeners()
         setupRecyclerView()
-        loadAssignedRoutes()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        loadAssignedRoutes()
+        loadAssignedRequests()
     }
 
     private fun initViews() {
@@ -81,91 +56,119 @@ class DriverDashboardActivity : AppCompatActivity() {
         recyclerViewRoutes = findViewById(R.id.recyclerViewRoutes)
         tvNoRoutes = findViewById(R.id.tvNoRoutes)
 
-        val driverName = sessionManager.getName().split(" ").firstOrNull() ?: "Conductor"
-        tvDriverTitle.text = getString(R.string.driver_dashboard_title, driverName)
-        // 🚨 CORRECCIÓN 1: Usar driverSucursalName
-        tvDriverSubtitle.text =
-            getString(R.string.driver_dashboard_subtitle, driverSucursalName ?: "Sin Sucursal")
+        // Ahora sessionManager ya está inicializado.
+        tvDriverTitle.text = getString(R.string.driver_dashboard_title, sessionManager.getUserFullName() ?: "Conductor")
+        tvDriverSubtitle.text = getString(R.string.driver_dashboard_subtitle)
+    }
+
+    private fun initServices() {
+        solicitudApi = RetrofitClient.getSolicitudApi()
+        sessionManager = SessionManager(this) // Se inicializa aquí
     }
 
     private fun setupListeners() {
         btnLogout.setOnClickListener {
-            logoutUser()
+            sessionManager.logout()
+            val intent = Intent(this, LoginActivity::class.java)
+            startActivity(intent)
+            finish()
         }
     }
 
     private fun setupRecyclerView() {
-        // Inicializamos el adaptador con el rol CONDUCTOR para que muestre los botones correctos
-        adapter = SolicitudAdapter(
-            items = emptyList<Solicitud>(),
-            role = sessionManager.getRole(),
-            // 🏆 CORRECCIÓN (Línea 103): Se debe incluir el tercer argumento Long?
-            onActionClick = { solicitud, action, gestorId -> // ✅ Aceptar los 3 argumentos
-                handleDriverAction(solicitud, action) // Llamar a la función con solo 2 argumentos
-            }
-        )
-
         recyclerViewRoutes.layoutManager = LinearLayoutManager(this)
-        recyclerViewRoutes.adapter = adapter
+        requestAdapter = DriverRequestAdapter(emptyList(), this)
+        recyclerViewRoutes.adapter = requestAdapter
     }
 
-    private fun handleDriverAction(solicitud: Solicitud, action: String) {
-        // Implementación dummy o lógica real para manejar los cambios de estado del conductor
-        Toast.makeText(this, "Acción: $action en ruta ${solicitud.id}", Toast.LENGTH_SHORT).show()
-        Log.d("DriverDash", "Acción: $action en ruta ${solicitud.id}")
-        // Aquí iría la llamada a Retrofit para actualizar el estado
-    }
-
+    // --- LÓGICA DE CARGA DE DATOS (COROUTINES) ---
 
     /**
-     * Carga las rutas (solicitudes) asignadas al conductor usando el servicio REST.
+     * Carga las solicitudes asignadas al ID del conductor logueado.
      */
-    private fun loadAssignedRoutes() {
+    private fun loadAssignedRequests() {
+        val driverId = sessionManager.getUserId()
+
         if (driverId == -1L) {
             Toast.makeText(this, "Error: ID de conductor no válido.", Toast.LENGTH_LONG).show()
+            tvNoRoutes.visibility = View.VISIBLE
             return
         }
 
-        // 🏆 CORRECCIÓN 3: Asumimos que el método para el conductor se llama getRoutesByDriverId
-        val call = RetrofitClient.getSolicitudApi().getRoutesByDriverId(driverId)
-
-        call.enqueue(object : Callback<List<SolicitudResponse>> {
-
-            override fun onResponse(call: Call<List<SolicitudResponse>>, response: Response<List<SolicitudResponse>>) {
-
-                val assignedResponses = response.body() ?: emptyList()
+        lifecycleScope.launch {
+            try {
+                // Se asume que SolicitudApi.kt fue modificado para incluir
+                // suspend fun getRoutesByDriverIdCoroutines(...)
+                val response: Response<List<SolicitudResponse>> = solicitudApi.getRoutesByDriverIdCoroutines(driverId)
 
                 if (response.isSuccessful) {
-
-                    val assignedSolicitudes = assignedResponses.map { it.toModel() }
-
-                    if (assignedSolicitudes.isNotEmpty()) {
-                        adapter.updateData(assignedSolicitudes)
-                        recyclerViewRoutes.visibility = View.VISIBLE
+                    val requests = response.body() ?: emptyList()
+                    if (requests.isNotEmpty()) {
+                        requestAdapter.updateData(requests)
                         tvNoRoutes.visibility = View.GONE
+                        recyclerViewRoutes.visibility = View.VISIBLE
                     } else {
-                        recyclerViewRoutes.visibility = View.GONE
+                        requestAdapter.updateData(emptyList())
                         tvNoRoutes.visibility = View.VISIBLE
-                        tvNoRoutes.text = getString(R.string.no_routes_assigned)
+                        recyclerViewRoutes.visibility = View.GONE
                     }
                 } else {
-                    Log.e("DriverDash", "Error ${response.code()} al cargar rutas.")
-                    Toast.makeText(this@DriverDashboardActivity, "Error al cargar rutas del servidor.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@DriverDashboardActivity, "Error ${response.code()} al cargar rutas.", Toast.LENGTH_LONG).show()
                 }
+            } catch (e: Exception) {
+                Toast.makeText(this@DriverDashboardActivity, "Error de red: ${e.message}", Toast.LENGTH_LONG).show()
             }
-
-            override fun onFailure(call: Call<List<SolicitudResponse>>, t: Throwable) {
-                Log.e("DriverDash", "Fallo de red: ${t.message}")
-                Toast.makeText(this@DriverDashboardActivity, "Fallo de red: No se pudo conectar al backend.", Toast.LENGTH_LONG).show()
-            }
-        })
+        }
     }
 
-    private fun logoutUser() {
-        sessionManager.logoutUser()
-        val intent = Intent(this, MainActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-        finish()
+    // --- LÓGICA DE ACTUALIZACIÓN DE ESTADO (COROUTINES) ---
+
+    /**
+     * Implementación de OnRequestClickListener. Llamada cuando se hace clic en un botón de estado.
+     */
+    override fun onRequestStatusChange(solicitudId: Long, currentStatus: String) {
+        val nextStatus = getNextStatus(currentStatus)
+
+        if (nextStatus == null) {
+            Toast.makeText(this, "La solicitud ya ha sido completada o cancelada.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        updateRequestStatus(solicitudId, nextStatus)
+    }
+
+    /**
+     * Define la transición de estados para el conductor.
+     */
+    private fun getNextStatus(currentStatus: String): String? {
+        return when (currentStatus) {
+            "ASIGNADA" -> "EN_RUTA_RECOLECCION"
+            "EN_RUTA_RECOLECCION" -> "EN_DISTRIBUCION"
+            "EN_DISTRIBUCION" -> "EN_RUTA_REPARTO"
+            "EN_RUTA_REPARTO" -> "ENTREGADA"
+            else -> null
+        }
+    }
+
+    /**
+     * Llama a la API para actualizar el estado de la solicitud.
+     */
+    private fun updateRequestStatus(solicitudId: Long, newStatus: String) {
+        val body = mapOf("estado" to newStatus)
+
+        lifecycleScope.launch {
+            try {
+                val response: Response<Void> = solicitudApi.updateEstado(solicitudId, body)
+
+                if (response.isSuccessful || response.code() == 204) {
+                    Toast.makeText(this@DriverDashboardActivity, "Estado actualizado a $newStatus.", Toast.LENGTH_SHORT).show()
+                    loadAssignedRequests()
+                } else {
+                    Toast.makeText(this@DriverDashboardActivity, "Error ${response.code()} al actualizar estado.", Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@DriverDashboardActivity, "Error de red al actualizar: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 }

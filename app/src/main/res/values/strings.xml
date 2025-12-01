@@ -194,6 +194,8 @@
     <string name="action_start_recollection">Iniciar Recolección</string>
     <string name="action_collect">Recolectar Paquete</string>
     <string name="error_confirmation_code_required">Ingrese un código de confirmación válido (mínimo 4 dígitos).</string>
+    <string name="guia_id_format">Guía #%s</string>
+    <string name="driver_recipient_format">Para: %s (Recibe)</string>
 
 
     <string-array name="logistic_roles">

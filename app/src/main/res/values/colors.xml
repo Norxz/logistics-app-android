@@ -30,5 +30,6 @@
     <color name="status_pending_assignment">#FF9500</color>
     <color name="status_completed">#34C759</color>
     <color name="status_delivered">#28A745</color>
+    <color name="status_collected">#FFC107</color>
 
 </resources>

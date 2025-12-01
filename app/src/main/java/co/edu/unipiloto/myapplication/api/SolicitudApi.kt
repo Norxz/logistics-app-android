@@ -164,4 +164,12 @@ interface SolicitudApi {
         @Path("solicitudId") solicitudId: Long,
         @Path("gestorId") gestorId: Long
     ): Response<SolicitudResponse>
+
+    /**
+     * Mapea a: GET /api/v1/solicitudes/driver/{driverId}/routes
+     * **NUEVA VERSIÓN SUSPEND** para el DriverDashboardActivity.
+     * Obtiene todas las solicitudes de envío ASIGNADAS a un conductor específico.
+     */
+    @GET("solicitudes/driver/{driverId}/routes")
+    suspend fun getRoutesByDriverIdCoroutines(@Path("driverId") driverId: Long): Response<List<SolicitudResponse>>
 }

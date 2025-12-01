@@ -30,8 +30,7 @@ class SessionManager(context: Context) {
     private val KEY_EMAIL = "USER_EMAIL"
 
     // Claves específicas de personal logístico (SOLO SUCURSAL)
-    private val KEY_SUCURSAL = "sucursal_name" // (Nombre de la sucursal)
-    // 🏆 CORRECCIÓN 1: Renombrar para coincidir con la convención del Fragmento
+    private val KEY_SUCURSAL = "sucursal_name"
     private val KEY_BRANCH_ID = "branch_id"
 
     // Solo se necesita la instancia de SharedPreferences
@@ -40,7 +39,6 @@ class SessionManager(context: Context) {
 
     /**
      * Crea y guarda una sesión de usuario después de un inicio de sesión exitoso.
-     * * 💡 MEJORA: Se añade sucursalId como parámetro opcional para guardar todo en una transacción.
      */
     fun createLoginSession(
         userId: Long,
@@ -56,9 +54,7 @@ class SessionManager(context: Context) {
             editor.putString(KEY_ROLE, role)
             editor.putString(KEY_SUCURSAL, sucursal)
 
-            // Guardar el ID de la sucursal en la misma transacción si está disponible
             if (sucursalId != null) {
-                // Usar la clave corregida
                 editor.putLong(KEY_BRANCH_ID, sucursalId)
             }
 
@@ -69,69 +65,47 @@ class SessionManager(context: Context) {
 
     // --- Getters de Sesión ---
 
-    /**
-     * Verifica si hay un usuario con sesión activa.
-     */
     fun isLoggedIn(): Boolean {
         return pref.getBoolean(KEY_IS_LOGGED_IN, false)
     }
 
-    /**
-     * Obtiene el ID del usuario de la sesión actual.
-     */
     fun getUserId(): Long {
         return pref.getLong(KEY_USER_ID, -1L)
     }
 
-    /**
-     * Obtiene el nombre completo del usuario.
-     */
     fun getName(): String {
         return pref.getString(KEY_NAME, "") ?: ""
     }
 
-    /**
-     * Obtiene el rol del usuario de la sesión actual.
-     */
+    fun getUserFullName(): String? {
+        return pref.getString(KEY_NAME, null)
+    }
+
     fun getRole(): String {
         return pref.getString(KEY_ROLE, "") ?: ""
     }
 
-    /**
-     * Obtiene el nombre de la sucursal asignada al usuario.
-     */
     fun getSucursal(): String? {
         return pref.getString(KEY_SUCURSAL, null)
     }
 
-    /**
-     * Obtiene el correo electrónico del usuario.
-     */
     fun getUserEmail(): String? {
         return pref.getString(KEY_EMAIL, null)
     }
 
     // --- Métodos de Sucursal ---
 
-    /**
-     * Guarda el ID de la sucursal del usuario (útil para el personal logístico).
-     * NOTA: Este método ahora es redundante si se usa createLoginSession con sucursalId.
-     */
     fun saveSucursalId(id: Long) {
-        // Usar la clave corregida
         pref.edit().putLong(KEY_BRANCH_ID, id).apply()
     }
 
-    /**
-     * Obtiene el ID de la sucursal.
-     * 🏆 CORRECCIÓN 2: Renombrado a getBranchId() para coincidir con el Fragmento.
-     * Devuelve null si no está guardado.
-     */
     fun getBranchId(): Long? {
-        // Usar la clave corregida
         val id = pref.getLong(KEY_BRANCH_ID, -1L)
-        // Usar -1L como valor por defecto para verificar si el ID existe realmente
         return id.takeIf { it != -1L }
+    }
+
+    fun getSucursalId(): Long? {
+        return getBranchId()
     }
 
     // --- Cierre de Sesión ---
@@ -143,11 +117,8 @@ class SessionManager(context: Context) {
         pref.edit().clear().apply()
     }
 
-    /**
-     * 🚨 CORRECCIÓN REQUERIDA POR AssignDriverActivity
-     * Alias para getBranchId() para mantener la compatibilidad con el código cliente.
-     */
-    fun getSucursalId(): Long? {
-        return getBranchId()
+    // 📢 MÉTODO AÑADIDO: Alias para logoutUser()
+    fun logout() {
+        logoutUser()
     }
 }
