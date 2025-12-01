@@ -51,11 +51,14 @@ class AssignedRequestsFragment : Fragment() {
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
+        // 🏆 CORRECCIÓN DE ERROR (Línea 57):
+        // Se debe pasar un lambda con 3 argumentos (Solicitud, String, Long?)
+        // aunque el tercero (gestorId) se ignore aquí.
         adapter = SolicitudAdapter(
             items = emptyList<Solicitud>(),
             role = userRole,
-            onActionClick = { solicitud, action ->
-                Log.d("AssignedFrag", "Acción: $action en solicitud ${solicitud.id}")
+            onActionClick = { solicitud, action, gestorId -> // ✅ Aceptar el tercer argumento
+                handleAssignedAction(solicitud, action) // ✅ Llamar a la función con solo 2 argumentos
             }
         )
         recyclerView.adapter = adapter
@@ -69,11 +72,24 @@ class AssignedRequestsFragment : Fragment() {
     }
 
     /**
+     * Función que maneja las acciones dentro de AssignedRequestsFragment (si las hay, como Cancelar).
+     * Nota: Esta función solo necesita dos parámetros.
+     */
+    private fun handleAssignedAction(solicitud: Solicitud, action: String) {
+        Log.d("AssignedFrag", "Acción: $action en solicitud ${solicitud.id}")
+        // Aquí iría la lógica para manejar las acciones permitidas en esta pestaña
+        // (ej. Navegar a detalles o Cancelar la solicitud si fuera permitido).
+    }
+
+
+    /**
      * Carga las solicitudes asignadas usando el ID de la Sucursal del Gestor/Gerente.
      */
     private fun loadAssignedRequests() {
 
-        val sucursalId = sessionManager.getSucursalId() ?: run {
+        // ... (resto del código loadAssignedRequests sin cambios) ...
+
+        val sucursalId = sessionManager.getBranchId() ?: run {
             tvNoRequests.visibility = View.VISIBLE
             tvNoRequests.text = getString(R.string.error_no_branch_id)
             recyclerView.visibility = View.GONE
@@ -84,13 +100,10 @@ class AssignedRequestsFragment : Fragment() {
             Callback<List<SolicitudResponse>> {
 
             override fun onResponse(call: Call<List<SolicitudResponse>>, response: Response<List<SolicitudResponse>>) {
-
                 val assignedResponses = response.body() ?: emptyList()
 
                 if (response.isSuccessful) {
-
-                    // 3. Mapeo de DTO a Modelo local
-                    val assignedItems = assignedResponses.map { it.toModel() } // Usa la función de extensión
+                    val assignedItems = assignedResponses.map { it.toModel() }
 
                     if (assignedItems.isNotEmpty()) {
                         tvNoRequests.visibility = View.GONE

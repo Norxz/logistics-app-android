@@ -99,8 +99,10 @@ class DriverDashboardActivity : AppCompatActivity() {
         adapter = SolicitudAdapter(
             items = emptyList<Solicitud>(),
             role = sessionManager.getRole(),
-            // 🚨 CORRECCIÓN 2: Se provee el listener onActionClick vacío para cumplir con el constructor
-            onActionClick = { solicitud, action -> handleDriverAction(solicitud, action) }
+            // 🏆 CORRECCIÓN (Línea 103): Se debe incluir el tercer argumento Long?
+            onActionClick = { solicitud, action, gestorId -> // ✅ Aceptar los 3 argumentos
+                handleDriverAction(solicitud, action) // Llamar a la función con solo 2 argumentos
+            }
         )
 
         recyclerViewRoutes.layoutManager = LinearLayoutManager(this)

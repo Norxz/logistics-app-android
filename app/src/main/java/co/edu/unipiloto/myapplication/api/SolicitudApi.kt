@@ -145,4 +145,13 @@ interface SolicitudApi {
      */
     @GET("solicitudes")
     fun getAllSolicitudes(): Call<List<SolicitudResponse>>
+
+    @PUT("api/v1/solicitudes/{id}/assign")
+    suspend fun assignDriverEndpoint(@Path("id") solicitudId: Long, @Body body: Map<String, Long>): Response<SolicitudResponse>
+
+    @PUT("api/v1/solicitudes/{id}/assignGestor")
+    suspend fun assignGestorEndpoint(
+        @Path("id") solicitudId: Long,
+        @Body body: Map<String, Long>
+    ): Response<SolicitudResponse>
 }

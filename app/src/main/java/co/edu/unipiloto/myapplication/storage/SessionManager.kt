@@ -31,7 +31,8 @@ class SessionManager(context: Context) {
 
     // Claves específicas de personal logístico (SOLO SUCURSAL)
     private val KEY_SUCURSAL = "sucursal_name" // (Nombre de la sucursal)
-    private val KEY_SUCURSAL_ID = "sucursal_id" // (ID numérico de la sucursal)
+    // 🏆 CORRECCIÓN 1: Renombrar para coincidir con la convención del Fragmento
+    private val KEY_BRANCH_ID = "branch_id"
 
     // Solo se necesita la instancia de SharedPreferences
     private val pref: SharedPreferences =
@@ -45,7 +46,7 @@ class SessionManager(context: Context) {
         userId: Long,
         role: String,
         sucursal: String?,
-        sucursalId: Long?, // 💡 Nuevo parámetro
+        sucursalId: Long?,
         name: String,
         email: String
     ) {
@@ -55,9 +56,10 @@ class SessionManager(context: Context) {
             editor.putString(KEY_ROLE, role)
             editor.putString(KEY_SUCURSAL, sucursal)
 
-            // 💡 Guardar el ID de la sucursal en la misma transacción si está disponible
+            // Guardar el ID de la sucursal en la misma transacción si está disponible
             if (sucursalId != null) {
-                editor.putLong(KEY_SUCURSAL_ID, sucursalId)
+                // Usar la clave corregida
+                editor.putLong(KEY_BRANCH_ID, sucursalId)
             }
 
             editor.putString(KEY_NAME, name)
@@ -113,18 +115,22 @@ class SessionManager(context: Context) {
 
     /**
      * Guarda el ID de la sucursal del usuario (útil para el personal logístico).
-     * 💡 NOTA: Este método ahora es redundante si se usa createLoginSession con sucursalId.
+     * NOTA: Este método ahora es redundante si se usa createLoginSession con sucursalId.
      */
     fun saveSucursalId(id: Long) {
-        pref.edit().putLong(KEY_SUCURSAL_ID, id).apply()
+        // Usar la clave corregida
+        pref.edit().putLong(KEY_BRANCH_ID, id).apply()
     }
 
     /**
      * Obtiene el ID de la sucursal.
+     * 🏆 CORRECCIÓN 2: Renombrado a getBranchId() para coincidir con el Fragmento.
      * Devuelve null si no está guardado.
      */
-    fun getSucursalId(): Long? {
-        val id = pref.getLong(KEY_SUCURSAL_ID, -1L)
+    fun getBranchId(): Long? {
+        // Usar la clave corregida
+        val id = pref.getLong(KEY_BRANCH_ID, -1L)
+        // Usar -1L como valor por defecto para verificar si el ID existe realmente
         return id.takeIf { it != -1L }
     }
 
@@ -134,6 +140,6 @@ class SessionManager(context: Context) {
      * Cierra la sesión del usuario actual, eliminando todos los datos guardados.
      */
     fun logoutUser() {
-        pref.edit().clear().apply() // 💡 Uso simple de .edit().clear().apply()
+        pref.edit().clear().apply()
     }
 }

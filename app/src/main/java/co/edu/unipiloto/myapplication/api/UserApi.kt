@@ -94,4 +94,7 @@ interface UserApi {
      */
     @GET("users/drivers/available") // 🚨 Verifica este endpoint con tu backend
     fun getDriversForAssignment(): Call<List<User>>
+
+    @GET("api/v1/users/conductores") // ⬅️ Usa el endpoint REST real para todos los conductores
+    suspend fun getAllConductores(): Response<List<UserResponse>>
 }

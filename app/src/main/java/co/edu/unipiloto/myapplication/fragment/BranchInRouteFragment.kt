@@ -52,12 +52,13 @@ class BranchInRouteFragment : Fragment() {
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
+        // 🏆 CORRECCIÓN DE ERROR (Línea 58):
+        // Se debe pasar un lambda con 3 argumentos (Solicitud, String, Long?)
         adapter = SolicitudAdapter(
             items = emptyList<Solicitud>(),
             role = userRole,
-            onActionClick = { solicitud, action ->
-                // ✅ 'solicitud.id' resuelto por la importación de Solicitud
-                Log.d("InRouteFrag", "Acción: $action en solicitud ${solicitud.id}")
+            onActionClick = { solicitud, action, gestorId -> // ✅ Aceptamos el tercer parámetro
+                handleInRouteAction(solicitud, action) // Llamamos a la función de manejo de acciones
             }
         )
         recyclerView.adapter = adapter
@@ -71,12 +72,23 @@ class BranchInRouteFragment : Fragment() {
     }
 
     /**
+     * Función que maneja las acciones dentro de BranchInRouteFragment.
+     * Solo necesita dos parámetros.
+     */
+    private fun handleInRouteAction(solicitud: Solicitud, action: String) {
+        // ✅ Esta función es la que antes estaba implícita en el lambda
+        Log.d("InRouteFrag", "Acción: $action en solicitud ${solicitud.id}")
+        // Aquí iría la lógica para manejar las acciones permitidas en esta pestaña (ej. Cancelar).
+    }
+
+    /**
      * Carga las solicitudes que ya están en estado 'ASIGNADA' o 'EN RUTA' para la sucursal del gestor,
      * usando el servicio REST.
      */
     private fun loadInRouteRequests() {
-        // 🚨 CORRECCIÓN 1: Usar getSucursalId() en lugar de getZona()
-        val sucursalId = sessionManager.getSucursalId() ?: run {
+        // ... (el resto del código loadInRouteRequests sin cambios) ...
+
+        val sucursalId = sessionManager.getBranchId() ?: run {
             tvEmpty.visibility = View.VISIBLE
             tvEmpty.text = getString(R.string.error_no_branch_id)
             recyclerView.visibility = View.GONE
@@ -87,17 +99,16 @@ class BranchInRouteFragment : Fragment() {
         RetrofitClient.getSolicitudApi().getAssignedSolicitudesBySucursal(sucursalId).enqueue(object :
             Callback<List<SolicitudResponse>> {
 
-            // 🚨 CORRECCIÓN 3: onResponse debe manejar List<SolicitudResponse>
             override fun onResponse(call: Call<List<SolicitudResponse>>, response: Response<List<SolicitudResponse>>) {
 
                 val assignedResponses = response.body() ?: emptyList()
 
                 if (response.isSuccessful) {
 
-                    // 💡 Mapear DTO (Response) a Modelo (Solicitud)
+                    // Mapear DTO (Response) a Modelo (Solicitud)
                     val assignedItems = assignedResponses.map { it.toModel() }
 
-                    if (assignedItems.isNotEmpty()) { // ✅ isNotEmpty resuelto por el tipo List
+                    if (assignedItems.isNotEmpty()) {
                         tvEmpty.visibility = View.GONE
                         recyclerView.visibility = View.VISIBLE
                         adapter.updateData(assignedItems)
@@ -113,7 +124,6 @@ class BranchInRouteFragment : Fragment() {
                 }
             }
 
-            // 🚨 CORRECCIÓN 4: onFailure debe manejar List<SolicitudResponse>
             override fun onFailure(call: Call<List<SolicitudResponse>>, t: Throwable) {
                 Log.e("InRouteFrag", "Fallo de red: ${t.message}")
                 tvEmpty.visibility = View.VISIBLE

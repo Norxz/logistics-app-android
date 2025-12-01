@@ -116,4 +116,38 @@ class SolicitudRepository(private val solicitudApi: SolicitudApi) {
             Result.failure(Exception("Error de conexión: ${e.message}"))
         }
     }
+
+    /**
+     * 🏆 IMPLEMENTACIÓN FALTANTE
+     * Asigna un conductor a una solicitud específica, resolviendo el error del ViewModel.
+     * Mapea a: PUT /api/v1/solicitudes/{solicitudId}/assign
+     */
+    suspend fun assignDriver(solicitudId: Long, driverId: Long): Result<SolicitudResponse> {
+        // Prepara el cuerpo de la solicitud JSON con el ID del conductor
+        val body = mapOf("recolectorId" to driverId)
+
+        // Usa la función handleApiCall (si la tienes definida en el repositorio)
+        // o realiza el try-catch manual.
+        return handleApiCall {
+            // 🚨 DEBES CAMBIAR 'assignDriverEndpoint' por el nombre real del método
+            // que definiste en tu interfaz SolicitudApi.
+            solicitudApi.assignDriverEndpoint(solicitudId, body)
+        }
+    }
+
+    /**
+     * 🏆 IMPLEMENTACIÓN FALTANTE
+     * Asigna un gestor a una solicitud específica, resolviendo el error del ViewModel.
+     * Mapea a: PUT /api/v1/solicitudes/{solicitudId}/assignGestor
+     */
+    suspend fun assignGestor(solicitudId: Long, gestorId: Long): Result<SolicitudResponse> {
+        // Prepara el cuerpo de la solicitud (body)
+        val body = mapOf("gestorId" to gestorId)
+
+        // Usa tu función genérica para manejar la llamada
+        return handleApiCall {
+            // 🚨 DEBES LLAMAR AL MÉTODO DE TU INTERFAZ SOLICITUDAPI
+            solicitudApi.assignGestorEndpoint(solicitudId, body)
+        }
+    }
 }

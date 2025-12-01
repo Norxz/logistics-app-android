@@ -74,18 +74,12 @@ class ManagerDashboardActivity : AppCompatActivity() {
     }
 
     private fun setupViewPager() {
-        // El PageAdapter necesita conocer el rol o el tipo de datos a mostrar
         val adapter = DashboardPagerAdapter(this)
         viewPager.adapter = adapter
 
-        // Conecta el TabLayout con el ViewPager2 usando el array de títulos
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
-            // 💡 Usamos el array de títulos. Más limpio que el 'when'.
             tab.text = tabTitles[position]
         }.attach()
-
-        // Evitar que el usuario pueda deslizar el ViewPager (si prefieres la navegación solo por pestañas)
-        // viewPager.isUserInputEnabled = false
     }
 
     private fun setupListeners() {

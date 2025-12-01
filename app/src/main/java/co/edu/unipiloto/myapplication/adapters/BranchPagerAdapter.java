@@ -7,7 +7,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 
 import co.edu.unipiloto.myapplication.fragment.BranchCompletedFragment;
 import co.edu.unipiloto.myapplication.fragment.BranchInRouteFragment;
-import co.edu.unipiloto.myapplication.ui.*;
+import co.edu.unipiloto.myapplication.fragment.BranchPendingFragment;
 
 
 public class BranchPagerAdapter extends FragmentStateAdapter {

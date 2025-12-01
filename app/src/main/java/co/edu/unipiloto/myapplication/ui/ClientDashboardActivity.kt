@@ -125,7 +125,10 @@ class ClientDashboardActivity : AppCompatActivity() {
         solicitadosAdapter = SolicitudAdapter(
             items = emptyList(),
             role = sessionManager.getRole(),
-            onActionClick = { solicitud: Solicitud, action: String -> handleSolicitudAction(solicitud, action) }
+            // 🏆 CORRECCIÓN (Línea 128): Se debe incluir el tercer argumento Long?
+            onActionClick = { solicitud: Solicitud, action: String, gestorId: Long? ->
+                handleSolicitudAction(solicitud, action) // Se ignora gestorId
+            }
         )
         binding.rvSolicitados.adapter = solicitadosAdapter
         binding.rvSolicitados.layoutManager = LinearLayoutManager(this)
@@ -134,7 +137,10 @@ class ClientDashboardActivity : AppCompatActivity() {
         finalizadosAdapter = SolicitudAdapter(
             items = emptyList(),
             role = sessionManager.getRole(),
-            onActionClick = { solicitud: Solicitud, action: String -> handleSolicitudAction(solicitud, action) }
+            // 🏆 CORRECCIÓN (Línea 137): Se debe incluir el tercer argumento Long?
+            onActionClick = { solicitud: Solicitud, action: String, gestorId: Long? ->
+                handleSolicitudAction(solicitud, action) // Se ignora gestorId
+            }
         )
         binding.rvFinalizados.adapter = finalizadosAdapter
         binding.rvFinalizados.layoutManager = LinearLayoutManager(this)

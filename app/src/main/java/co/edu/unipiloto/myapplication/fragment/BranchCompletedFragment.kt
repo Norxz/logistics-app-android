@@ -49,14 +49,18 @@ class BranchCompletedFragment : Fragment() {
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
+        // 🏆 CORRECCIÓN DE ERROR (Línea 55):
+        // Cambiamos el lambda a tres parámetros para coincidir con el SolicitudAdapter.
         adapter = SolicitudAdapter(
             items = emptyList<Solicitud>(),
             role = sessionManager.getRole() ?: "GESTOR",
-            onActionClick = { solicitud, action ->
+            onActionClick = { solicitud, action, gestorId -> // ✅ Se incluye gestorId: Long?
                 Log.d(
                     "CompletedFrag",
                     "Acción: $action en historial ${solicitud.id}. No se procesa."
                 )
+                // Aquí podrías llamar a una función handleCompletedAction(solicitud, action)
+                // si se requiriera lógica de acción.
             }
         )
         recyclerView.adapter = adapter
@@ -74,31 +78,29 @@ class BranchCompletedFragment : Fragment() {
      * Carga las solicitudes de historial (ENTREGADA/CANCELADA/FINALIZADA) usando el servicio REST.
      */
     private fun loadCompletedRequests() {
-        val sucursalId = sessionManager.getSucursalId() ?: run {
+        // ... (resto del código sin cambios) ...
+        val sucursalId = sessionManager.getBranchId() ?: run {
             tvEmpty.visibility = View.VISIBLE
             tvEmpty.text = getString(R.string.error_no_branch_id)
             recyclerView.visibility = View.GONE
             return
         }
 
-        // 🏆 CORRECCIÓN DE TIPO: El Callback debe manejar List<SolicitudResponse>
         RetrofitClient.getSolicitudApi().getCompletedSolicitudesBySucursal(sucursalId).enqueue(object :
             Callback<List<SolicitudResponse>> {
 
-            // 🚨 CORRECCIÓN: Los parámetros onResponse deben usar List<SolicitudResponse>
             override fun onResponse(call: Call<List<SolicitudResponse>>, response: Response<List<SolicitudResponse>>) {
 
                 val assignedResponses = response.body() ?: emptyList()
 
                 if (response.isSuccessful) {
 
-                    // 💡 PASO CLAVE: Mapear DTO a Modelo local (Solicitud)
                     val completedItems = assignedResponses.map { it.toModel() }
 
                     if (completedItems.isNotEmpty()) {
                         tvEmpty.visibility = View.GONE
                         recyclerView.visibility = View.VISIBLE
-                        adapter.updateData(completedItems) // Actualiza el adaptador con el modelo Solicitud
+                        adapter.updateData(completedItems)
                     } else {
                         recyclerView.visibility = View.GONE
                         tvEmpty.visibility = View.VISIBLE
@@ -111,7 +113,6 @@ class BranchCompletedFragment : Fragment() {
                 }
             }
 
-            // 🚨 CORRECCIÓN: Los parámetros onFailure deben usar List<SolicitudResponse>
             override fun onFailure(call: Call<List<SolicitudResponse>>, t: Throwable) {
                 Log.e("CompletedFrag", "Fallo de red: ${t.message}")
                 tvEmpty.visibility = View.VISIBLE

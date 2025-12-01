@@ -30,7 +30,7 @@
             android:id="@+id/tvSolicitudId"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            tools:text="@string/guide_example"
+            tools:text="SOLICITUD #12345"
             android:textSize="14sp"
             android:textColor="@color/on_surface_secondary"
             android:layout_marginStart="8dp"
@@ -68,7 +68,7 @@
             android:id="@+id/tvInfoExtra"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            tools:text="Asignado a: Homer Simpson (Recolector)"
+            tools:text="Sucursal de Origen: Principal"
             android:textSize="14sp"
             android:textColor="@color/on_surface_secondary"
             android:layout_marginTop="4dp"
@@ -82,7 +82,7 @@
             android:id="@+id/tvFranjaHoraria"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            tools:text="Fecha: 2025-10-01 10:00 - 12:00"
+            tools:text="Franja: 10:00 - 12:00"
             android:textSize="14sp"
             android:textColor="@color/on_surface_secondary"
             android:layout_marginTop="4dp"
@@ -102,14 +102,87 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
+        <Spinner
+            android:id="@+id/spinnerGestorAsignar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            tools:hint="Seleccionar Gestor"
+            android:background="@drawable/bg_spinner_border"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:minHeight="48dp"
+            app:layout_constraintTop_toBottomOf="@+id/tvCreado"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnAsignarGestor"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="8dp"
+            android:visibility="gone"
+            tools:visibility="visible"
+            app:layout_constraintHorizontal_weight="3" />
+
+        <Button
+            android:id="@+id/btnAsignarGestor"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/action_assign"
+            style="@style/Widget.MaterialComponents.Button"
+            android:minHeight="48dp"
+            android:visibility="gone"
+            tools:visibility="visible"
+            app:layout_constraintTop_toTopOf="@+id/spinnerGestorAsignar"
+            app:layout_constraintBottom_toBottomOf="@+id/spinnerGestorAsignar"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/spinnerGestorAsignar"
+            app:layout_constraintHorizontal_weight="1" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilConfirmCode"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="8dp"
+            app:hintEnabled="true"
+            app:hintTextAppearance="@style/TextAppearance.AppCompat.Small"
+            app:layout_constraintTop_toBottomOf="@+id/btnAsignarGestor"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnConfirmDelivery"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etConfirmCode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/hint_confirmation_code"
+                android:inputType="textCapCharacters"
+                android:maxLength="6"
+                android:minHeight="48dp"
+                android:textSize="16sp"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/btnConfirmDelivery"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/action_confirm"
+            style="@style/Widget.MaterialComponents.Button"
+            android:backgroundTint="@color/primary_color"
+            android:minHeight="48dp"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toTopOf="@+id/tilConfirmCode"
+            app:layout_constraintBottom_toBottomOf="@+id/tilConfirmCode"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:visibility="gone"
+            tools:visibility="visible"/>
+
         <LinearLayout
             android:id="@+id/llActions"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="end"
-            android:layout_marginTop="16dp"
-            app:layout_constraintTop_toBottomOf="@+id/tvCreado"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@+id/tilConfirmCode"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
@@ -139,30 +212,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-            android:text="@string/action_on_route"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:visibility="gone"
-            tools:visibility="visible"/>
-
-            <Button
-                android:id="@+id/btnDeliverDriver"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="@string/action_deliver"
+                android:text="@string/action_on_route"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:backgroundTint="@color/status_success"
-                android:visibility="gone"
-                tools:visibility="visible"/>
-
-            <Button
-                android:id="@+id/btnConfirmDelivery"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="@string/action_confirm"
-                style="@style/Widget.MaterialComponents.Button"
-                android:backgroundTint="@color/primary_color"
                 android:visibility="gone"
                 tools:visibility="visible"/>
 

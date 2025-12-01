@@ -1,4 +1,3 @@
-// co.edu.unipiloto.myapplication.repository.UserRepository.kt
 package co.edu.unipiloto.myapplication.repository
 
 import co.edu.unipiloto.myapplication.api.UserApi
@@ -75,6 +74,28 @@ class UserRepository(private val userApi: UserApi) {
         } catch (e: Exception) {
             Result.failure(Exception("Error de conexión: ${e.message}"))
         }
+    }
+
+    // --- 4. NUEVAS FUNCIONES PARA VIEWMODEL ---
+
+    /**
+     * 🌟 NUEVA FUNCIÓN REQUERIDA POR EL VIEWMODEL
+     * Obtiene los conductores disponibles (Gestores/Recolectores) para asignación.
+     */
+    suspend fun getDrivers(): Result<List<UserResponse>> = handleApiCall {
+        // Asumiendo que esta función existe en UserApi y retorna todos los conductores.
+        userApi.getAllConductores()
+    }
+
+    /**
+     * 🏆 FUNCIÓN CORREGIDA: Obtiene la lista de Gestores disponibles.
+     *
+     * Ahora llama a `getGestoresBySucursal(sucursalId)` para garantizar que el
+     * `ManagerDashboardViewModel` reciba solo Gestores y no Conductores.
+     */
+    suspend fun getAvailableManagers(sucursalId: Long): Result<List<UserResponse>> {
+        // 🚀 CORRECCIÓN CLAVE: Usar la función que trae a los GESTORES de la sucursal.
+        return getGestoresBySucursal(sucursalId)
     }
 
     // --- FUNCIÓN UTILITARIA PARA MANEJO DE LLAMADAS GENÉRICAS ---
