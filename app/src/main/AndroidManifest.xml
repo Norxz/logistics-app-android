@@ -87,6 +87,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".ui.AssignDriverActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".ui.ManageBranchesActivity"
             android:exported="false"
             android:label="Gestionar Sucursales" />

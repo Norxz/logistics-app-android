@@ -209,7 +209,8 @@ class LoginActivity : AppCompatActivity() {
     private fun navigateToDashboard(role: String) {
         val intent = when (role.uppercase()) {
             "CLIENTE" -> Intent(this, ClientDashboardActivity::class.java)
-            "CONDUCTOR","GESTOR" -> Intent(this, DriverDashboardActivity::class.java)
+            "GESTOR" -> Intent(this, AssignDriverActivity::class.java)
+            "CONDUCTOR" -> Intent(this, DriverDashboardActivity::class.java)
             "ANALISTA", "FUNCIONARIO" -> Intent(this, ManagerDashboardActivity::class.java)
             "ADMIN" -> Intent(this, AdminPanelActivity::class.java)
             else -> {
