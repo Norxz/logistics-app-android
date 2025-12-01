@@ -12,10 +12,15 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+// --- IMPORTS RESTAURADOS PARA COROUTINES ---
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+// ------------------------------------------
 import co.edu.unipiloto.myapplication.R
-// --- IMPORTS REQUERIDOS ---
 import co.edu.unipiloto.myapplication.api.SolicitudApi
+import co.edu.unipiloto.myapplication.api.UserApi
 import co.edu.unipiloto.myapplication.dto.SolicitudResponse
+import co.edu.unipiloto.myapplication.dto.UserResponse
 import co.edu.unipiloto.myapplication.dto.RetrofitClient
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import co.edu.unipiloto.myapplication.ui.adapter.AssignedRequestAdapter
@@ -29,7 +34,7 @@ import retrofit2.Response
  */
 class AssignDriverActivity : AppCompatActivity() {
 
-    // Vistas del Layout (activity_assign_driver.xml)
+    // Vistas del Layout
     private lateinit var etSolicitudId: EditText
     private lateinit var tvSolicitudDetails: TextView
     private lateinit var spinnerDrivers: Spinner
@@ -41,19 +46,23 @@ class AssignDriverActivity : AppCompatActivity() {
     private lateinit var requestAdapter: AssignedRequestAdapter
     private var selectedDriverId: Long? = null
     private var selectedSolicitudId: Long? = null
-    private lateinit var driverNames: List<String>
+
+    // 🏆 VARIABLES PARA MANEJO DINÁMICO
+    private lateinit var driverNamesList: List<String>
+    private var driverIdToNameMap: Map<String, Long> = emptyMap() // DisplayName -> ID
 
     // Servicios y Gestores
     private lateinit var solicitudApi: SolicitudApi
+    private lateinit var userApi: UserApi // ⬅️ AGREGADO
     private lateinit var sessionManager: SessionManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_assign_driver)
 
-        // 🚨 CORRECCIÓN DE REFERENCIA: Uso del patrón Retrofit.create()
-        // Asumiendo que RetrofitClient.getInstance() devuelve el objeto Retrofit configurado
+        // --- INICIALIZACIÓN DE SERVICIOS ---
         solicitudApi = RetrofitClient.getSolicitudApi()
+        userApi = RetrofitClient.getUserApi() // ⬅️ Inicializar UserApi
         sessionManager = SessionManager(this)
 
         supportActionBar?.title = "Asignación y Monitoreo Logístico"
@@ -75,36 +84,90 @@ class AssignDriverActivity : AppCompatActivity() {
         tvNoRequests = findViewById(R.id.tvNoRequests)
     }
 
-    // --- 1. CONFIGURACIÓN DEL SPINNER DE CONDUCTORES ---
+    // -------------------------------------------------------------------------
+    // --- 1. CONFIGURACIÓN DEL SPINNER DE CONDUCTORES (USANDO COROUTINES) ---
+    // -------------------------------------------------------------------------
     private fun setupDriverSpinner() {
-        val driverMap = mapOf(
-            "Seleccionar Conductor" to null,
-            "Juan Pérez (ID: 101)" to "101",
-            "María López (ID: 102)" to "102",
-            "Carlos Ruiz (ID: 103)" to "103"
-        )
+        val sucursalId = sessionManager.getSucursalId()
 
-        driverNames = driverMap.keys.toList()
+        // Convertir Any a Long? de forma segura
+        val sucursalIdLong = (sucursalId as? String)?.toLongOrNull() ?: (sucursalId as? Long)
 
-        val adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_item,
-            driverNames
-        )
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerDrivers.adapter = adapter
+        if (sucursalIdLong == null || sucursalIdLong <= 0) {
+            Toast.makeText(this, "Error: Sucursal no válida. No se pueden cargar conductores.", Toast.LENGTH_LONG).show()
+            driverNamesList = listOf("Error de sucursal")
+            val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, driverNamesList)
+            spinnerDrivers.adapter = adapter
+            return
+        }
 
+        // 🏆 CORRECCIÓN: Usar lifecycleScope.launch para llamar a la función suspendida
+        lifecycleScope.launch {
+            try {
+                // 1. Llamada a la API de usuarios (conductores)
+                val response = userApi.getConductoresBySucursal(sucursalIdLong)
+
+                if (response.isSuccessful) {
+                    val drivers = response.body() ?: emptyList()
+
+                    // 2. Procesar los datos
+                    val names = mutableListOf("Seleccionar Conductor")
+                    val idMap = mutableMapOf<String, Long>()
+
+                    // Elemento inicial
+                    idMap["Seleccionar Conductor"] = 0L
+
+                    drivers.forEach { driver ->
+                        // Asumo que UserResponse tiene id y fullName
+                        val displayName = "${driver.fullName} (ID: ${driver.id})"
+                        names.add(displayName)
+                        idMap[displayName] = driver.id
+                    }
+
+                    driverNamesList = names
+                    driverIdToNameMap = idMap
+
+                    // 3. Poblar el Spinner
+                    val adapter = ArrayAdapter(
+                        this@AssignDriverActivity,
+                        android.R.layout.simple_spinner_item,
+                        driverNamesList
+                    )
+                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                    spinnerDrivers.adapter = adapter
+
+                } else {
+                    Toast.makeText(this@AssignDriverActivity, "Error ${response.code()} al cargar conductores.", Toast.LENGTH_SHORT).show()
+                    driverNamesList = listOf("Error de API")
+                    spinnerDrivers.adapter = ArrayAdapter(this@AssignDriverActivity, android.R.layout.simple_spinner_item, driverNamesList)
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@AssignDriverActivity, "Error de red al cargar conductores: ${e.message}", Toast.LENGTH_SHORT).show()
+                driverNamesList = listOf("Fallo de conexión")
+                spinnerDrivers.adapter = ArrayAdapter(this@AssignDriverActivity, android.R.layout.simple_spinner_item, driverNamesList)
+            }
+        }
+
+        // 4. Configurar el Listener del Spinner
         spinnerDrivers.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                selectedDriverId = driverMap[driverNames[position]]?.toLongOrNull()
+                val selectedDisplayName = parent.getItemAtPosition(position).toString()
+
+                val selectedId = driverIdToNameMap[selectedDisplayName]
+
+                // Si el ID es 0L (Seleccionar Conductor) o nulo, se establece a null.
+                selectedDriverId = if (selectedId != null && selectedId > 0) selectedId else null
             }
+
             override fun onNothingSelected(parent: AdapterView<*>) {
                 selectedDriverId = null
             }
         }
     }
 
+    // -------------------------------------------------------------------------
     // --- 2. CONFIGURACIÓN DEL RECYCLERVIEW ---
+    // -------------------------------------------------------------------------
     private fun setupRecyclerView() {
         rvAssignedRequests.layoutManager = LinearLayoutManager(this)
 
@@ -114,7 +177,9 @@ class AssignDriverActivity : AppCompatActivity() {
         rvAssignedRequests.adapter = requestAdapter
     }
 
+    // -------------------------------------------------------------------------
     // --- 3. LÓGICA DE CARGA DE DATOS Y LISTENERS ---
+    // -------------------------------------------------------------------------
 
     private fun setupListeners() {
         btnAssignDriver.setOnClickListener {
@@ -128,25 +193,21 @@ class AssignDriverActivity : AppCompatActivity() {
     private fun loadRequestsForMonitoring() {
         val sucursalId = sessionManager.getSucursalId()
 
-        // Si getSucursalId devuelve String:
-        val sucursalIdLong = if (sucursalId is Long) sucursalId else (sucursalId as? String)?.toLongOrNull()
+        // Convertir Any a Long? de forma segura
+        val sucursalIdLong = (sucursalId as? String)?.toLongOrNull() ?: (sucursalId as? Long)
 
-        if (sucursalIdLong == null) {
+        if (sucursalIdLong == null || sucursalIdLong <= 0) {
             Toast.makeText(this, "Error: El gestor no tiene sucursal asignada o el ID es inválido.", Toast.LENGTH_LONG).show()
             tvNoRequests.visibility = View.VISIBLE
             rvAssignedRequests.visibility = View.GONE
             return
         }
 
-        // 🚨 CORRECCIÓN CLAVE: Cambiar a getAssignedSolicitudesBySucursal para monitoreo
         solicitudApi.getAssignedSolicitudesBySucursal(sucursalIdLong).enqueue(object : Callback<List<SolicitudResponse>> {
             override fun onResponse(call: Call<List<SolicitudResponse>>, response: Response<List<SolicitudResponse>>) {
                 if (response.isSuccessful) {
                     val requests = response.body() ?: emptyList()
                     if (requests.isNotEmpty()) {
-                        // Filtramos las solicitudes que están PENDIENTES DE ASIGNACIÓN
-                        // para que el gestor pueda hacer clic sobre ellas y reasignar o ver detalles.
-                        // (Si solo quieres ver las que ya están EN CURSO, puedes aplicar un filtro aquí)
                         requestAdapter.updateData(requests)
                         tvNoRequests.visibility = View.GONE
                         rvAssignedRequests.visibility = View.VISIBLE
@@ -178,12 +239,31 @@ class AssignDriverActivity : AppCompatActivity() {
     private fun fillAssignmentSection(request: SolicitudResponse) {
         selectedSolicitudId = request.id
 
-        if (request.estado == "PENDIENTE_ASIGNACION") {
+        if (request.estado == "PENDIENTE_ASIGNACION" || request.estado == "ASIGNADA") {
             etSolicitudId.setText(request.guia.trackingNumber)
             tvSolicitudDetails.text = "Destino: ${request.direccionCompleta}, Programada: ${request.fechaRecoleccion} (${request.franjaHoraria})"
-            spinnerDrivers.setSelection(0)
+
+            // 💡 Intenta preseleccionar el conductor actual si lo tiene y está en la lista del Spinner
+            val currentDriverId = request.recolectorId
+            if (currentDriverId != null) {
+                // Busca el nombre del conductor en el mapa por su ID
+                val driverDisplayName = driverIdToNameMap.entries
+                    .firstOrNull { it.value == currentDriverId }?.key
+
+                if (driverDisplayName != null) {
+                    val position = driverNamesList.indexOf(driverDisplayName)
+                    if (position >= 0) {
+                        spinnerDrivers.setSelection(position)
+                    }
+                }
+            } else {
+                spinnerDrivers.setSelection(0)
+            }
         } else {
             Toast.makeText(this, "Esta solicitud ya está en curso (${request.estado.replace("_", " ")}).", Toast.LENGTH_SHORT).show()
+            etSolicitudId.text.clear()
+            tvSolicitudDetails.text = ""
+            selectedSolicitudId = null
         }
     }
 
@@ -216,7 +296,7 @@ class AssignDriverActivity : AppCompatActivity() {
                 if (response.isSuccessful) {
                     Toast.makeText(
                         this@AssignDriverActivity,
-                        "Solicitud ${solicitudId} asignada con éxito.",
+                        "Solicitud ${solicitudId} reasignada con éxito.",
                         Toast.LENGTH_LONG
                     ).show()
 
