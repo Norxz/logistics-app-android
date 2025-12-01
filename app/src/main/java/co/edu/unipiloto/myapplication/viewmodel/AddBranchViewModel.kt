@@ -1,5 +1,4 @@
-// Archivo: co.edu.unipiloto.myapplication.ui/AddBranchViewModel.kt
-package co.edu.unipiloto.myapplication.ui
+package co.edu.unipiloto.myapplication.viewmodel
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

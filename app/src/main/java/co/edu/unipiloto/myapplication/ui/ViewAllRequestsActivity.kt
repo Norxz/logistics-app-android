@@ -15,6 +15,8 @@ import co.edu.unipiloto.myapplication.model.Solicitud // 🏆 Usamos el modelo c
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import com.google.android.material.button.MaterialButton
 import co.edu.unipiloto.myapplication.dto.RetrofitClient.getSolicitudApi // 👈 Importamos el método API
+import co.edu.unipiloto.myapplication.dto.SolicitudResponse
+import co.edu.unipiloto.myapplication.dto.toModel
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -93,14 +95,20 @@ class ViewAllRequestsActivity : AppCompatActivity() {
      * Carga todas las solicitudes del sistema usando el servicio REST.
      */
     private fun loadRequests() {
-        getSolicitudApi().getAllSolicitudes().enqueue(object : Callback<List<Solicitud>> {
-            override fun onResponse(call: Call<List<Solicitud>>, response: Response<List<Solicitud>>) {
+        // 🛑 CAMBIO CLAVE: Esperar List<SolicitudResponse>
+        getSolicitudApi().getAllSolicitudes().enqueue(object : Callback<List<SolicitudResponse>> {
+
+            override fun onResponse(call: Call<List<SolicitudResponse>>, response: Response<List<SolicitudResponse>>) {
+                // fetchedRequests ahora es List<SolicitudResponse>
                 val fetchedRequests = response.body()
 
                 if (response.isSuccessful && fetchedRequests != null) {
                     if (fetchedRequests.isNotEmpty()) {
-                        // ✅ CORRECCIÓN 2: Usar el método updateData del adaptador
-                        adapter.updateData(fetchedRequests)
+
+                        // ✅ APLICAR LA SOLUCIÓN: Mapear DTO a Modelo
+                        val modelList = fetchedRequests.map { it.toModel() }
+
+                        adapter.updateData(modelList) // <-- Le pasamos los Modelos
                     } else {
                         Toast.makeText(this@ViewAllRequestsActivity, "No hay solicitudes pendientes.", Toast.LENGTH_SHORT).show()
                     }
@@ -110,7 +118,7 @@ class ViewAllRequestsActivity : AppCompatActivity() {
                 }
             }
 
-            override fun onFailure(call: Call<List<Solicitud>>, t: Throwable) {
+            override fun onFailure(call: Call<List<SolicitudResponse>>, t: Throwable) {
                 Log.e("AdminRequests", "Fallo de red: ${t.message}")
                 Toast.makeText(this@ViewAllRequestsActivity, "Fallo de red. Verifique el servidor.", Toast.LENGTH_LONG).show()
             }

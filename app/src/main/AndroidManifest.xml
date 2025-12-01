@@ -81,7 +81,7 @@
             android:name=".ui.LogisticUserManagementActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.ManageBranchesActivity"
+            android:name=".ui.ManagerDashboardActivity"
             android:exported="false" />
         <activity
             android:name=".ui.AddBranchActivity"

@@ -24,7 +24,7 @@ import co.edu.unipiloto.myapplication.viewmodel.SolicitudViewModelFactory
  * Es la VISTA en el patrón MVVM. Es responsable de:
  * 1. Inicializar la sesión y seguridad.
  * 2. Configurar la interfaz de usuario (RecyclerView, Listeners).
- * 3. Observar los datos ([SolicitudViewModel]) para actualizar la UI.
+ * 3. Observar los datos ([co.edu.unipiloto.myapplication.viewmodel.SolicitudViewModel]) para actualizar la UI.
  * 4. Manejar las interacciones del usuario (navegación, botones de acción, toggles).
  */
 class ClientDashboardActivity : AppCompatActivity() {
@@ -98,7 +98,7 @@ class ClientDashboardActivity : AppCompatActivity() {
     // --- Inicialización y Configuración ---
 
     /**
-     * Inicializa el [SolicitudViewModel] utilizando un [SolicitudViewModelFactory]
+     * Inicializa el [SolicitudViewModel] utilizando un [co.edu.unipiloto.myapplication.viewmodel.SolicitudViewModelFactory]
      * para inyectar la dependencia del repositorio y el API service.
      */
     private fun initViewModel() {

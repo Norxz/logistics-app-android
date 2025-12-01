@@ -10,25 +10,24 @@ import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.dto.ClienteRequest
-import co.edu.unipiloto.myapplication.dto.DireccionRequest
-import co.edu.unipiloto.myapplication.dto.PaqueteRequest
-import co.edu.unipiloto.myapplication.dto.RetrofitClient
-import co.edu.unipiloto.myapplication.dto.SolicitudRequest
+import co.edu.unipiloto.myapplication.dto.*
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import co.edu.unipiloto.myapplication.utils.LocationHelper
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import com.google.android.gms.maps.MapView
+import co.edu.unipiloto.myapplication.repository.SolicitudRepository
+import co.edu.unipiloto.myapplication.repository.SucursalRepository
+// 🎯 CORRECCIÓN: Usamos las clases renombradas para la creación (NewRequestCreation...)
+import co.edu.unipiloto.myapplication.viewmodel.NewRequestCreationViewModel
+import co.edu.unipiloto.myapplication.viewmodel.NewRequestCreationVMFactory
+
 
 class SolicitudActivity : AppCompatActivity() {
 
-    // ... (Variables de Vistas - No requieren cambios)
+    // ... (Variables de Vistas)
     private lateinit var etSenderName: TextInputEditText
     private lateinit var etSenderID: TextInputEditText
     private lateinit var etSenderPhone: TextInputEditText
@@ -58,9 +57,11 @@ class SolicitudActivity : AppCompatActivity() {
     private var entregaLon: Double? = null
     private lateinit var sessionManager: SessionManager
     private lateinit var locationHelper: LocationHelper
+
+    // 🌟 CORRECCIÓN: Usamos el ViewModel renombrado
+    private lateinit var viewModel: NewRequestCreationViewModel
     // -------------------------------------------------------------------
 
-    // 🌟 Nueva instancia de Handler para Debounce
     private val handler = Handler(Looper.getMainLooper())
     private var priceUpdateRunnable: Runnable? = null
     // -------------------------------------------------------------------
@@ -75,6 +76,8 @@ class SolicitudActivity : AppCompatActivity() {
         setupSpinners()
         setupEndIcons()
         processRecolectionIntent(intent)
+        setupViewModel()
+        setupObservers()
 
         // CONFIGURACIÓN DEL MAPA Y GEOLOCALIZACIÓN PARA ENTREGA
         val mapView = findViewById<MapView>(R.id.mapViewReceiver)
@@ -91,11 +94,15 @@ class SolicitudActivity : AppCompatActivity() {
         }
 
         btnReceiverGps.setOnClickListener {
-            locationHelper.getCurrentLocation { address, lat, lon ->
+            // Re-inicializa LocationHelper con el callback para la ubicación actual
+            locationHelper = LocationHelper(
+                this,
+                mapView
+            ) { address, lat, lon, city ->
                 etReceiverAddress.setText(address)
                 entregaLat = lat
                 entregaLon = lon
-                calculatePrice() // Llamada al cálculo de precio al usar GPS
+                calculatePrice()
             }
         }
 
@@ -111,16 +118,52 @@ class SolicitudActivity : AppCompatActivity() {
             } else false
         }
 
-        // 🌟 LLAMADA A LISTENERS DESPUÉS DE LA CONFIGURACIÓN BÁSICA
         setupListeners()
     }
 
-    // ... (Métodos de ciclo de vida para MapView - No requieren cambios)
-    override fun onResume() { super.onResume(); findViewById<MapView>(R.id.mapViewReceiver).onResume() }
-    override fun onPause() { super.onPause(); findViewById<MapView>(R.id.mapViewReceiver).onPause() }
-    override fun onDestroy() { super.onDestroy(); findViewById<MapView>(R.id.mapViewReceiver).onDestroy() }
-    override fun onLowMemory() { super.onLowMemory(); findViewById<MapView>(R.id.mapViewReceiver).onLowMemory() }
-    // ---------------------------------------------
+    // --- SECCIÓN DE VIEWMODEL ---
+
+    private fun setupViewModel() {
+        // Asumiendo que RetrofitClient y Repositories existen (usando RetrofitClient.solicitudService/sucursalService)
+        val solicitudRepo = SolicitudRepository(RetrofitClient.getSolicitudApi())
+        val sucursalRepo = SucursalRepository(RetrofitClient.getSucursalApi())
+
+        // ✅ CORRECCIÓN: Usamos la Factory que acepta dos repositorios
+        val factory = NewRequestCreationVMFactory(solicitudRepo, sucursalRepo)
+
+        // ✅ CORRECCIÓN: Usamos el ViewModel renombrado
+        viewModel = ViewModelProvider(this, factory)[NewRequestCreationViewModel::class.java]
+    }
+
+    private fun setupObservers() {
+        // ✅ CORRECCIÓN: Observar el LiveData 'saveResult' del nuevo ViewModel
+        viewModel.saveResult.observe(this) { result ->
+            result.onSuccess { response: SolicitudResponse ->
+                val solicitudId = response.id
+
+                Toast.makeText(
+                    this,
+                    "¡Solicitud enviada (Guía #${solicitudId})!",
+                    Toast.LENGTH_LONG
+                ).show()
+
+                val intent = Intent(this, GuideConfirmationActivity::class.java)
+                intent.putExtra("solicitudId", solicitudId)
+                intent.putExtra("usuarioEmail", sessionManager.getUserEmail())
+                startActivity(intent)
+                finish()
+            }.onFailure { exception: Throwable ->
+                Log.e("API_CALL", "Error al procesar solicitud: ${exception.message}")
+                Toast.makeText(
+                    this,
+                    "Error al enviar solicitud: ${exception.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+
+    // ----------------------------------
 
 
     private fun processRecolectionIntent(intent: Intent) {
@@ -135,9 +178,7 @@ class SolicitudActivity : AppCompatActivity() {
         }
     }
 
-
     private fun initViews() {
-        // ... (Asignación de Vistas - No requieren cambios)
         etSenderName = findViewById(R.id.etSenderName)
         etSenderID = findViewById(R.id.etSenderID)
         etSenderPhone = findViewById(R.id.etSenderPhone)
@@ -163,7 +204,6 @@ class SolicitudActivity : AppCompatActivity() {
     }
 
     private fun setupSpinners() {
-        // ... (Configuración de Spinners - No requieren cambios)
         val idTypes = listOf("CC", "TI", "CE", "Pasaporte")
         val adapterId = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, idTypes)
         spIDType.adapter = adapterId
@@ -192,7 +232,6 @@ class SolicitudActivity : AppCompatActivity() {
     }
 
     private fun calculatePrice() {
-        // Validación básica para evitar errores antes de calcular
         if (recoleccionLat == null || entregaLat == null) {
             etPrice.setText("0")
             return
@@ -201,152 +240,110 @@ class SolicitudActivity : AppCompatActivity() {
         val peso = etPackageWeight.text.toString().toDoubleOrNull() ?: 0.0
         val precioSimulado = 5000 + (peso * 1500)
         etPrice.setText(String.format("%.0f", precioSimulado))
-        // TODO: En un caso real, realizar la llamada Retrofit para obtener el precio real
     }
 
     private fun setupListeners() {
 
-        // 🌟 CORRECCIÓN: Usar una clase anónima TextWatcher
         val priceChangeWatcher = object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                // Limpiar cualquier ejecución anterior
                 priceUpdateRunnable?.let { handler.removeCallbacks(it) }
 
-                // Crear un nuevo Runnable
                 priceUpdateRunnable = Runnable {
                     calculatePrice()
                 }
 
-                // Programar el cálculo 500ms después de la última pulsación (Debounce)
                 handler.postDelayed(priceUpdateRunnable!!, 500)
             }
             override fun afterTextChanged(s: Editable?) {}
         }
 
-        // 🌟 Asignación del TextWatcher (ahora es del tipo correcto)
         etPackageHeight.addTextChangedListener(priceChangeWatcher)
         etPackageWidth.addTextChangedListener(priceChangeWatcher)
         etPackageLength.addTextChangedListener(priceChangeWatcher)
         etPackageWeight.addTextChangedListener(priceChangeWatcher)
-        // -------------------------------------------------------------------
-
 
         btnSend.setOnClickListener {
-
-            if (!validateInputs()) return@setOnClickListener
-
-            val clientId = sessionManager.getUserId() ?: run {
-                Toast.makeText(this, "Error: Usuario no logueado.", Toast.LENGTH_LONG).show()
-                return@setOnClickListener
-            }
-
-            // DTOs de Clientes
-            val remitente = ClienteRequest(
-                nombre = etSenderName.text.toString().trim(),
-                tipoId = spIDType.selectedItem.toString(),
-                numeroId = etSenderID.text.toString().trim(),
-                telefono = etSenderPhone.text.toString().trim(),
-                codigoPais = spSenderCountryCode.selectedItem.toString()
-            )
-            val receptor = ClienteRequest(
-                nombre = etReceiverName.text.toString().trim(),
-                tipoId = spReceiverIDType.selectedItem.toString(),
-                numeroId = etReceiverID.text.toString().trim(),
-                telefono = etReceiverPhone.text.toString().trim(),
-                codigoPais = spReceiverCountryCode.selectedItem.toString()
-            )
-
-            // DTO de Direcciones
-            val direccionRecoleccionDto = DireccionRequest(
-                direccionCompleta = recoleccionAddress!!,
-                ciudad = "Bogota", // Esto debería ser dinámico
-                latitud = recoleccionLat,
-                longitud = recoleccionLon,
-                pisoApto = null,
-                notasEntrega = null
-            )
-            val direccionEntregaDto = DireccionRequest(
-                direccionCompleta = etReceiverAddress.text.toString().trim(),
-                ciudad = "Bogota", // Esto debería ser dinámico
-                latitud = entregaLat,
-                longitud = entregaLon,
-                pisoApto = null,
-                notasEntrega = null
-            )
-
-            // DTO de Paquete
-            val paqueteDto = PaqueteRequest(
-                peso = etPackageWeight.text.toString().toDouble(),
-                alto = etPackageHeight.text.toString().toDouble(),
-                ancho = etPackageWidth.text.toString().toDouble(),
-                largo = etPackageLength.text.toString().toDouble(),
-                contenido = etPackageContent.text.toString().trim()
-            )
-
-            // DTO FINAL SolicitudRequest
-            val requestDto = SolicitudRequest(
-                clientId = clientId,
-                remitente = remitente,
-                receptor = receptor,
-                direccionRecoleccion = direccionRecoleccionDto,
-                direccionEntrega = direccionEntregaDto,
-                paquete = paqueteDto,
-                fechaRecoleccion = "2025-01-01",
-                franjaHoraria = spFranja.selectedItem.toString(),
-                sucursalId = 1 // Hardcodeado
-            )
-
-
-            // 3. 🚀 API CALL
-            // 🌟 CORRECCIÓN: Acceder a la interfaz de servicio REST
-            lifecycleScope.launch { // Inicia un Coroutine Scope
-                try {
-                    // Ejecuta la función suspend en un hilo de I/O
-                    val response = withContext(Dispatchers.IO) {
-                        // Llama directamente a la función suspend, que devuelve Response<T>
-                        RetrofitClient.solicitudService.crearSolicitud(requestDto)
-                    }
-
-                    // Manejo de la respuesta (de vuelta en el Main Thread)
-                    if (response.isSuccessful) {
-                        val solicitudId = response.body()?.id
-
-                        Toast.makeText(
-                            this@SolicitudActivity,
-                            "¡Solicitud enviada (Guía #$solicitudId)!",
-                            Toast.LENGTH_LONG
-                        ).show()
-
-                        val intent = Intent(this@SolicitudActivity, GuideConfirmationActivity::class.java)
-                        intent.putExtra("solicitudId", solicitudId)
-                        intent.putExtra("usuarioEmail", sessionManager.getUserEmail())
-                        startActivity(intent)
-                        finish()
-                    } else {
-                        val errorBody = response.errorBody()?.string()
-                        Log.e("API_CALL", "Error ${response.code()}: $errorBody")
-                        Toast.makeText(
-                            this@SolicitudActivity,
-                            "Error ${response.code()} al enviar: ${response.message()}. Revise logs.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                } catch (t: Throwable) {
-                    // Captura errores de red/conexión
-                    Log.e("API_CALL", "Fallo de red: ${t.message}")
-                    Toast.makeText(
-                        this@SolicitudActivity,
-                        "Fallo de conexión. Verifique el servidor y la red.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
+            saveSolicitud()
         }
     }
 
+    // 🌟 MÉTODO DE GUARDADO
+    private fun saveSolicitud() {
+
+        if (!validateInputs()) return
+
+        val clientId = sessionManager.getUserId() ?: run {
+            Toast.makeText(this, "Error: Usuario no logueado.", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        // DTOs de Clientes y Paquete
+        val remitente = ClienteRequest(
+            nombre = etSenderName.text.toString().trim(),
+            tipoId = spIDType.selectedItem.toString(),
+            numeroId = etSenderID.text.toString().trim(),
+            telefono = etSenderPhone.text.toString().trim(),
+            codigoPais = spSenderCountryCode.selectedItem.toString()
+        )
+        val receptor = ClienteRequest(
+            nombre = etReceiverName.text.toString().trim(),
+            tipoId = spReceiverIDType.selectedItem.toString(),
+            numeroId = etReceiverID.text.toString().trim(),
+            telefono = etReceiverPhone.text.toString().trim(),
+            codigoPais = spReceiverCountryCode.selectedItem.toString()
+        )
+
+        // DTO de Direcciones
+        val direccionRecoleccionDto = DireccionRequest(
+            direccionCompleta = recoleccionAddress!!,
+            ciudad = "Bogota",
+            latitud = recoleccionLat,
+            longitud = recoleccionLon,
+            pisoApto = null,
+            notasEntrega = null
+        )
+        val direccionEntregaDto = DireccionRequest(
+            direccionCompleta = etReceiverAddress.text.toString().trim(),
+            ciudad = "Bogota",
+            latitud = entregaLat,
+            longitud = entregaLon,
+            pisoApto = null,
+            notasEntrega = null
+        )
+
+        // DTO de Paquete
+        val paqueteDto = PaqueteRequest(
+            peso = etPackageWeight.text.toString().toDouble(),
+            alto = etPackageHeight.text.toString().toDouble(),
+            ancho = etPackageWidth.text.toString().toDouble(),
+            largo = etPackageLength.text.toString().toDouble(),
+            contenido = etPackageContent.text.toString().trim()
+        )
+
+        // DTO SolicitudRequest (sucursalId temporalmente a 0)
+        val requestDto = SolicitudRequest(
+            clientId = clientId,
+            remitente = remitente,
+            receptor = receptor,
+            direccionRecoleccion = direccionRecoleccionDto,
+            direccionEntrega = direccionEntregaDto,
+            paquete = paqueteDto,
+            fechaRecoleccion = "2025-01-01",
+            franjaHoraria = spFranja.selectedItem.toString(),
+            sucursalId = 0
+        )
+
+
+        // 🚀 LLAMADA AL VIEWMODEL (Resuelve el Unresolved reference 'processAndSaveSolicitud')
+        val recLat = recoleccionLat ?: 0.0
+        val recLon = recoleccionLon ?: 0.0
+
+        viewModel.processAndSaveSolicitud(requestDto, recLat, recLon)
+    }
+
     private fun validateInputs(): Boolean {
-        // ... (Lógica de Validación - No requiere cambios)
+        // ... (Lógica de Validación) ...
         if (recoleccionLat == null || recoleccionLon == null || recoleccionAddress.isNullOrEmpty()) {
             Toast.makeText(this, "Falta la dirección de Recolección (vuelva a la pantalla anterior).", Toast.LENGTH_LONG).show()
             return false

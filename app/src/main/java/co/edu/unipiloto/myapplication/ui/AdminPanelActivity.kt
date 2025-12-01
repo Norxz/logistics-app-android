@@ -61,8 +61,8 @@ class AdminPanelActivity : AppCompatActivity() {
         }
 
         // 2. Botón: Gestionar Sucursales
-        btnManageBranches.setOnClickListener { // ⬅️ NUEVO: Listener para Sucursales
-            val intent = Intent(this, ManageBranchesActivity::class.java)
+        btnManageBranches.setOnClickListener {
+            val intent = Intent(this, ManagerDashboardActivity::class.java)
             startActivity(intent)
         }
 

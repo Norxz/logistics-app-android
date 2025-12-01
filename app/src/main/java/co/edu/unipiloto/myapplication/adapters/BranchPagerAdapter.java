@@ -5,6 +5,8 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
+import co.edu.unipiloto.myapplication.fragment.BranchCompletedFragment;
+import co.edu.unipiloto.myapplication.fragment.BranchInRouteFragment;
 import co.edu.unipiloto.myapplication.ui.*;
 
 

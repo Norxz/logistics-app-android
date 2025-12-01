@@ -5,12 +5,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.databinding.ItemSolicitudBinding
 import co.edu.unipiloto.myapplication.model.Solicitud
-import co.edu.unipiloto.myapplication.model.Sucursal
-import co.edu.unipiloto.myapplication.model.User
 
 /**
  * Define el tipo para el listener de clic en las acciones.
@@ -39,7 +38,6 @@ class SolicitudAdapter(
 
             // 2. Mostrar Conductor/Sucursal (Información Adicional)
             val infoExtra = when {
-                // ✅ FIX: Usar 'solicitud.conductor' en lugar de 'solicitud.recolector'
                 solicitud.conductor != null -> context.getString(R.string.recolector_assigned_format, solicitud.conductor.fullName)
                 solicitud.sucursal != null -> context.getString(R.string.branch_origin_format, solicitud.sucursal.nombre)
                 else -> ""
@@ -65,12 +63,16 @@ class SolicitudAdapter(
                 "CONDUCTOR" -> handleConductorActions(solicitud)
             }
 
-            // 5. Configurar Colores del Estado
-            val estadoColorRes = when (solicitud.estado.uppercase()) {
+            val estadoUpper = solicitud.estado.uppercase()
+            val estadoColorRes = when (estadoUpper) {
                 "PENDIENTE" -> R.color.status_pending
+                // ✅ ASIGNADA: Esperando que el conductor inicie la acción.
                 "ASIGNADA" -> R.color.status_assigned
-                "INICIADA" -> R.color.status_in_progress
-                "ENTREGADA", "FINALIZADA" -> R.color.status_success
+                // ✅ EN_RUTA_RECOLECCION, EN_RUTA_REPARTO, EN_DISTRIBUCION: En tránsito o en proceso.
+                "EN_RUTA_RECOLECCION", "EN_DISTRIBUCION", "EN_RUTA_REPARTO" -> R.color.status_in_progress
+                // ✅ ENTREGADA: Finalizado exitosamente.
+                "ENTREGADA" -> R.color.status_success
+                // ✅ CANCELADA: Finalizado con error.
                 "CANCELADA" -> R.color.status_error
                 else -> R.color.on_surface_secondary
             }
@@ -104,21 +106,26 @@ class SolicitudAdapter(
             }
         }
 
+        // Archivo: SolicitudAdapter.kt
+
+        // Archivo: SolicitudAdapter.kt, dentro de SolicitudViewHolder
+
         private fun handleConductorActions(solicitud: Solicitud) {
             val context = itemView.context
+            val estadoUpper = solicitud.estado.uppercase()
 
-            when (solicitud.estado.uppercase()) {
+            when (estadoUpper) {
                 "ASIGNADA" -> {
-                    // Botón principal: Aceptar / Iniciar recolección
-                    binding.btnStartRouteDriver.apply { // Usaremos StartRoute para iniciar la recolección
+                    // El conductor debe INICIAR la recolección. El botón debe decir "INICIAR RUTA".
+                    binding.btnStartRouteDriver.apply {
                         visibility = View.VISIBLE
-                        // Usamos un String más adecuado para INICIAR el proceso de recolección
-                        text = context.getString(R.string.action_start)
+                        text = context.getString(R.string.action_start) // O "Iniciar Recolección"
                         setOnClickListener {
-                            this@SolicitudAdapter.onActionClick(solicitud, "INICIAR")
+                            // Accion: INICIAR. Mueve el estado a EN_RUTA_RECOLECCION.
+                            this@SolicitudAdapter.onActionClick(solicitud, "INICIAR_RECOLECCION")
                         }
                     }
-                    // Botón secundario: Cancelar (opcional)
+                    // Opción de cancelar
                     binding.btnCancelClient.apply {
                         visibility = View.VISIBLE
                         text = context.getString(R.string.action_cancel)
@@ -127,25 +134,31 @@ class SolicitudAdapter(
                         }
                     }
                 }
-                "INICIADA" -> {
-                    // Botón principal: Finalizar recolección/Entrega (depende del flujo)
-                    binding.btnDeliverDriver.apply { // Usaremos DeliverDriver para finalizar
+
+                "EN_RUTA_RECOLECCION" -> {
+                    // El conductor está en ruta. El botón debe decir "FINALIZAR" (Recolección).
+                    binding.btnDeliverDriver.apply {
                         visibility = View.VISIBLE
-                        text = context.getString(R.string.action_finish) // Usar 'action_finish'
+                        text = context.getString(R.string.action_finish_recoleccion) // Sugerencia: crear un string nuevo
                         setOnClickListener {
-                            this@SolicitudAdapter.onActionClick(solicitud, "FINALIZAR")
-                        }
-                    }
-                    // Botón secundario: Cancelar (opcional)
-                    binding.btnCancelClient.apply {
-                        visibility = View.VISIBLE
-                        text = context.getString(R.string.action_cancel)
-                        setOnClickListener {
-                            this@SolicitudAdapter.onActionClick(solicitud, "CANCELAR_CONDUCTOR")
+                            // Accion: FINALIZAR. Mueve el estado a RECOLECTADA (o EN_DISTRIBUCION).
+                            this@SolicitudAdapter.onActionClick(solicitud, "FINALIZAR_RECOLECCION")
                         }
                     }
                 }
-                // Nota: Los estados "ENTREGADA" o "FINALIZADA" no suelen tener botones de acción.
+
+                "EN_RUTA_REPARTO" -> {
+                    // El conductor tiene el paquete para la entrega final.
+                    binding.btnDeliverDriver.apply {
+                        visibility = View.VISIBLE
+                        text = context.getString(R.string.action_deliver) // Sugerencia: crear un string "Entregar"
+                        setOnClickListener {
+                            // Accion: FINALIZAR. Mueve el estado a ENTREGADA.
+                            this@SolicitudAdapter.onActionClick(solicitud, "ENTREGAR")
+                        }
+                    }
+                }
+                // Nota: Los estados EN_DISTRIBUCION, ENTREGADA, CANCELADA no suelen tener acciones.
             }
         }
     }
@@ -162,7 +175,8 @@ class SolicitudAdapter(
     }
 
     override fun onBindViewHolder(holder: SolicitudViewHolder, position: Int) {
-        holder.bind(items[position])
+        val solicitud = items[position]
+        holder.bind(solicitud)
     }
 
     override fun getItemCount(): Int = items.size
@@ -170,5 +184,14 @@ class SolicitudAdapter(
     fun updateData(newItems: List<Solicitud>) {
         items = newItems
         notifyDataSetChanged()
+    }
+
+    class SolicitudDiffCallback : DiffUtil.ItemCallback<Solicitud>() {
+        override fun areItemsTheSame(oldItem: Solicitud, newItem: Solicitud): Boolean {
+            return oldItem.id == newItem.id
+        }
+        override fun areContentsTheSame(oldItem: Solicitud, newItem: Solicitud): Boolean {
+            return oldItem == newItem
+        }
     }
 }

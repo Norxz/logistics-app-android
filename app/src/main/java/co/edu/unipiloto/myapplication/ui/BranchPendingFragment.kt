@@ -1,12 +1,12 @@
 package co.edu.unipiloto.myapplication.ui
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider // ⬅️ Necesario
 import androidx.recyclerview.widget.LinearLayoutManager
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter
@@ -15,7 +15,10 @@ import co.edu.unipiloto.myapplication.dto.RetrofitClient
 import co.edu.unipiloto.myapplication.dto.SolicitudResponse
 import co.edu.unipiloto.myapplication.model.Solicitud
 import co.edu.unipiloto.myapplication.model.User
+import co.edu.unipiloto.myapplication.repository.SolicitudRepository // ⬅️ Necesario
 import co.edu.unipiloto.myapplication.storage.SessionManager
+import co.edu.unipiloto.myapplication.viewmodel.ManagerDashboardViewModel // ⬅️ Necesario
+import co.edu.unipiloto.myapplication.viewmodel.ManagerDashboardViewModelFactory // ⬅️ Necesario
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -31,6 +34,7 @@ class BranchPendingFragment : Fragment() {
 
     private lateinit var sessionManager: SessionManager
     private lateinit var adapter: SolicitudAdapter
+    private lateinit var viewModel: ManagerDashboardViewModel // 🌟 AGREGADO
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -44,6 +48,9 @@ class BranchPendingFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         sessionManager = SessionManager(requireContext())
+
+        setupViewModel() // 🌟 Configurar ViewModel
+        setupObservers() // 🌟 Configurar Observadores
 
         binding.recyclerViewBranchList.layoutManager = LinearLayoutManager(requireContext())
 
@@ -61,6 +68,40 @@ class BranchPendingFragment : Fragment() {
         loadPendingRequests()
     }
 
+    // --- NUEVOS MÉTODOS DE VIEWMODEL ---
+
+    private fun setupViewModel() {
+        // Inicialización manual (sin Dagger/Hilt)
+        val repository = SolicitudRepository(RetrofitClient.getSolicitudApi())
+        val factory = ManagerDashboardViewModelFactory(repository)
+        viewModel = ViewModelProvider(this, factory)[ManagerDashboardViewModel::class.java]
+    }
+
+    private fun setupObservers() {
+        // Observar el LiveData del ViewModel
+        viewModel.pendingSolicitudes.observe(viewLifecycleOwner) { solicitudes ->
+            if (solicitudes.isNotEmpty()) {
+                binding.tvBranchEmpty.visibility = View.GONE
+                binding.recyclerViewBranchList.visibility = View.VISIBLE
+                adapter.updateData(solicitudes)
+            } else {
+                binding.tvBranchEmpty.visibility = View.VISIBLE
+                binding.recyclerViewBranchList.visibility = View.GONE
+                binding.tvBranchEmpty.text = getString(R.string.no_pending_requests_branch)
+            }
+        }
+
+        // Observar errores (opcional)
+        viewModel.error.observe(viewLifecycleOwner) { errorMessage ->
+            if (errorMessage != null) {
+                Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
+                viewModel.clearError()
+            }
+        }
+    }
+
+    // ------------------------------------
+
     override fun onResume() {
         super.onResume()
         loadPendingRequests()
@@ -75,57 +116,19 @@ class BranchPendingFragment : Fragment() {
             return
         }
 
-        // ✅ Corregido: Usar SolicitudResponse consistentemente
-        RetrofitClient.getSolicitudApi().getSolicitudesBySucursal(sucursalId)
-            .enqueue(object : Callback<List<SolicitudResponse>> {
-
-                // ✅ FIX: El tipo del Call y Response debe ser List<SolicitudResponse>
-                override fun onResponse(
-                    call: Call<List<SolicitudResponse>>,
-                    response: Response<List<SolicitudResponse>>
-                ) {
-                    if (response.isSuccessful) {
-
-                        // **NOTA IMPORTANTE:** Si usas SolicitudResponse, debes convertirlo a Solicitud si el adaptador lo requiere.
-                        // Asumiendo que SolicitudResponse es el modelo Solicitud:
-                        @Suppress("UNCHECKED_CAST")
-                        val solicitudes = response.body()?.filter { it.estado == "PENDIENTE" }
-                                as? List<Solicitud> ?: emptyList()
-
-                        if (solicitudes.isNotEmpty()) {
-                            binding.tvBranchEmpty.visibility = View.GONE
-                            binding.recyclerViewBranchList.visibility = View.VISIBLE
-                            adapter.updateData(solicitudes)
-                        } else {
-                            binding.tvBranchEmpty.visibility = View.VISIBLE
-                            binding.recyclerViewBranchList.visibility = View.GONE
-                            binding.tvBranchEmpty.text = getString(R.string.no_pending_requests_branch)
-                        }
-
-                    } else {
-                        Log.e("BranchPending", "Error ${response.code()} al cargar solicitudes.")
-                        binding.tvBranchEmpty.visibility = View.VISIBLE
-                        binding.tvBranchEmpty.text = getString(R.string.error_server_code, response.code().toString())
-                    }
-                }
-
-                // ✅ FIX: El tipo del Call debe ser List<SolicitudResponse>
-                override fun onFailure(call: Call<List<SolicitudResponse>>, t: Throwable) {
-                    Log.e("BranchPending", "Fallo de red: ${t.message}")
-                    binding.tvBranchEmpty.visibility = View.VISIBLE
-                    binding.tvBranchEmpty.text = getString(R.string.error_network_fail)
-                }
-            })
+        // 🏆 CORRECCIÓN CLAVE: Usar el ViewModel para iniciar la carga con Corrutinas
+        viewModel.loadBranchSolicitudes(sucursalId)
     }
 
     private fun handleAssignmentAction(solicitud: Solicitud) {
 
         val sucursalId = sessionManager.getSucursalId() ?: return
 
-        // ❌ ERROR PENDIENTE: 'getAvailableDriverBySucursal' no está definido en UserApi.
+        // ❌ NOTA: Esta sección aún usa el patrón Call/enqueue y fallará si UserApi.getAvailableDriverBySucursal
+        // fue migrada a suspend fun. Si funciona, mantente consistente con Call<T> aquí.
         RetrofitClient.getUserApi().getAvailableDriverBySucursal(sucursalId)
             .enqueue(object : Callback<User> {
-
+                // ... (Lógica de onResponse y onFailure se mantiene) ...
                 override fun onResponse(
                     call: Call<User>,
                     response: Response<User>
@@ -155,11 +158,11 @@ class BranchPendingFragment : Fragment() {
 
         val body = mapOf("recolectorId" to recolector.id.toString())
 
-        // ✅ FIX: Usar SolicitudResponse consistentemente
+        // ❌ NOTA: Esta sección aún usa el patrón Call/enqueue y fallará si SolicitudApi.assignRequest
+        // fue migrada a suspend fun. Si funciona, mantente consistente con Call<T> aquí.
         RetrofitClient.getSolicitudApi().assignRequest(solicitudId, body)
             .enqueue(object : Callback<SolicitudResponse> {
 
-                // ✅ FIX: El tipo del Call y Response debe ser SolicitudResponse
                 override fun onResponse(
                     call: Call<SolicitudResponse>,
                     response: Response<SolicitudResponse>
@@ -170,7 +173,7 @@ class BranchPendingFragment : Fragment() {
                             getString(R.string.request_assigned_success),
                             Toast.LENGTH_SHORT
                         ).show()
-                        loadPendingRequests()
+                        loadPendingRequests() // Recargar la lista
                     } else {
                         Toast.makeText(
                             requireContext(),
@@ -180,7 +183,6 @@ class BranchPendingFragment : Fragment() {
                     }
                 }
 
-                // ✅ FIX: El tipo del Call debe ser SolicitudResponse
                 override fun onFailure(call: Call<SolicitudResponse>, t: Throwable) {
                     Toast.makeText(
                         requireContext(),

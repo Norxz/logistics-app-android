@@ -3,7 +3,6 @@ package co.edu.unipiloto.myapplication.ui
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import co.edu.unipiloto.myapplication.R

@@ -7,6 +7,7 @@ import co.edu.unipiloto.myapplication.dto.SolicitudResponse
 import okhttp3.ResponseBody
 import java.lang.Exception
 import retrofit2.Response
+import java.io.IOException
 
 /**
  * 📦 Repositorio que gestiona la lógica de datos y las llamadas al API
@@ -31,6 +32,14 @@ class SolicitudRepository(private val solicitudApi: SolicitudApi) {
      */
     suspend fun getSolicitudesByClient(clientId: Long): Result<List<SolicitudResponse>> = handleApiCall {
         solicitudApi.getSolicitudesByClient(clientId)
+    }
+
+    /**
+     * Obtiene todas las solicitudes asignadas a una sucursal específica (para el Manager).
+     */
+    suspend fun getSolicitudesByBranch(branchId: Long): Result<List<SolicitudResponse>> = handleApiCall {
+        // 🏆 CORRECCIÓN: Usa 'solicitudApi' y llama a la función suspend de la API
+        solicitudApi.getSolicitudesBySucursal(branchId)
     }
 
     // --- 3. ACTUALIZACIÓN DE ESTADO ---

@@ -17,7 +17,7 @@ interface SucursalApi {
      * @return Lista de DTOs simplificados (SucursalResponse).
      */
     @GET("sucursales")
-    suspend fun listarSucursales(): Response<List<SucursalResponse>> // ⬅️ Restaurado
+    suspend fun listarSucursales(): Response<List<SucursalResponse>>
 
     /**
      * Mapea a: POST /api/v1/sucursales
@@ -26,7 +26,7 @@ interface SucursalApi {
      * @return DTO de la sucursal creada.
      */
     @POST("sucursales")
-    suspend fun crearSucursal(@Body request: SucursalRequest): Response<SucursalResponse> // ⬅️ Restaurado
+    suspend fun crearSucursal(@Body request: SucursalRequest): Response<SucursalResponse>
 
     /**
      * Mapea a: GET /api/v1/sucursales/{id}
@@ -35,7 +35,7 @@ interface SucursalApi {
      * @return DTO de la sucursal.
      */
     @GET("sucursales/{id}")
-    suspend fun obtenerSucursal(@Path("id") id: Long): Response<SucursalResponse> // ⬅️ Restaurado
+    suspend fun obtenerSucursal(@Path("id") id: Long): Response<SucursalResponse>
 
     /**
      * Mapea a: PUT /api/v1/sucursales/{id}
@@ -45,7 +45,7 @@ interface SucursalApi {
      * @return DTO de la sucursal actualizada.
      */
     @PUT("sucursales/{id}")
-    suspend fun actualizarSucursal( // ⬅️ Restaurado
+    suspend fun actualizarSucursal(
         @Path("id") id: Long,
         @Body request: SucursalRequest
     ): Response<SucursalResponse>
@@ -55,5 +55,19 @@ interface SucursalApi {
      * Elimina una sucursal.
      */
     @DELETE("sucursales/{id}")
-    suspend fun eliminarSucursal(@Path("id") id: Long): Response<Void> // ⬅️ Restaurado
+    suspend fun eliminarSucursal(@Path("id") id: Long): Response<Void>
+
+    /**
+     * Mapea a: GET /api/v1/sucursales/cercana?lat={latitud}&lon={longitud}
+     * Busca la sucursal completa (DTO) geográficamente más cercana a las coordenadas dadas.
+     * Esta función es la que usa el Repositorio y ViewModel para guardar solicitudes.
+     * * @param latitud Latitud de la ubicación de recolección.
+     * @param longitud Longitud de la ubicación de recolección.
+     * @return El DTO completo de la sucursal más cercana.
+     */
+    @GET("sucursales/cercana")
+    suspend fun getNearestSucursal(
+        @Query("lat") latitud: Double,
+        @Query("lon") longitud: Double
+    ): Response<SucursalResponse>
 }

@@ -1,5 +1,4 @@
-// co.edu.unipiloto.myapplication.ui.AssignedRequestsFragment.kt
-package co.edu.unipiloto.myapplication.ui
+package co.edu.unipiloto.myapplication.fragment
 
 import android.os.Bundle
 import android.util.Log
@@ -12,24 +11,25 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter
-import co.edu.unipiloto.myapplication.storage.SessionManager
 import co.edu.unipiloto.myapplication.dto.RetrofitClient
-import co.edu.unipiloto.myapplication.model.Solicitud
 import co.edu.unipiloto.myapplication.dto.SolicitudResponse
 import co.edu.unipiloto.myapplication.dto.toModel
+import co.edu.unipiloto.myapplication.model.Solicitud
+import co.edu.unipiloto.myapplication.storage.SessionManager
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
 /**
- * Fragmento que lista las solicitudes que ya han sido asignadas a conductores para el Manager/Gestor.
- * (Pestaña Asignadas)
+ * Fragmento que muestra las solicitudes que ya han sido asignadas y están "En Ruta".
+ * (Pestaña 1 de BranchPagerAdapter)
  */
-class AssignedRequestsFragment : Fragment() {
+class BranchInRouteFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
-    private lateinit var tvNoRequests: TextView
+    private lateinit var tvEmpty: TextView
     private lateinit var sessionManager: SessionManager
+
     private lateinit var adapter: SolicitudAdapter
 
     private var userRole: String = "GESTOR"
@@ -48,7 +48,7 @@ class AssignedRequestsFragment : Fragment() {
         userRole = sessionManager.getRole() ?: "GESTOR"
 
         recyclerView = view.findViewById(R.id.recyclerViewBranchList)
-        tvNoRequests = view.findViewById(R.id.tvBranchEmpty)
+        tvEmpty = view.findViewById(R.id.tvBranchEmpty)
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
@@ -56,62 +56,68 @@ class AssignedRequestsFragment : Fragment() {
             items = emptyList<Solicitud>(),
             role = userRole,
             onActionClick = { solicitud, action ->
-                Log.d("AssignedFrag", "Acción: $action en solicitud ${solicitud.id}")
+                // ✅ 'solicitud.id' resuelto por la importación de Solicitud
+                Log.d("InRouteFrag", "Acción: $action en solicitud ${solicitud.id}")
             }
         )
         recyclerView.adapter = adapter
 
-        loadAssignedRequests()
+        loadInRouteRequests()
     }
 
     override fun onResume() {
         super.onResume()
-        loadAssignedRequests()
+        loadInRouteRequests()
     }
 
     /**
-     * Carga las solicitudes asignadas usando el ID de la Sucursal del Gestor/Gerente.
+     * Carga las solicitudes que ya están en estado 'ASIGNADA' o 'EN RUTA' para la sucursal del gestor,
+     * usando el servicio REST.
      */
-    private fun loadAssignedRequests() {
-
+    private fun loadInRouteRequests() {
+        // 🚨 CORRECCIÓN 1: Usar getSucursalId() en lugar de getZona()
         val sucursalId = sessionManager.getSucursalId() ?: run {
-            tvNoRequests.visibility = View.VISIBLE
-            tvNoRequests.text = getString(R.string.error_no_branch_id)
+            tvEmpty.visibility = View.VISIBLE
+            tvEmpty.text = getString(R.string.error_no_branch_id)
             recyclerView.visibility = View.GONE
             return
         }
 
-        RetrofitClient.getSolicitudApi().getAssignedSolicitudesBySucursal(sucursalId).enqueue(object : Callback<List<SolicitudResponse>> {
+        // 🏆 CORRECCIÓN 2: Usar getSolicitudApi() y esperar List<SolicitudResponse>
+        RetrofitClient.getSolicitudApi().getAssignedSolicitudesBySucursal(sucursalId).enqueue(object :
+            Callback<List<SolicitudResponse>> {
 
+            // 🚨 CORRECCIÓN 3: onResponse debe manejar List<SolicitudResponse>
             override fun onResponse(call: Call<List<SolicitudResponse>>, response: Response<List<SolicitudResponse>>) {
 
                 val assignedResponses = response.body() ?: emptyList()
 
                 if (response.isSuccessful) {
 
-                    // 3. Mapeo de DTO a Modelo local
-                    val assignedItems = assignedResponses.map { it.toModel() } // Usa la función de extensión
+                    // 💡 Mapear DTO (Response) a Modelo (Solicitud)
+                    val assignedItems = assignedResponses.map { it.toModel() }
 
-                    if (assignedItems.isNotEmpty()) {
-                        tvNoRequests.visibility = View.GONE
+                    if (assignedItems.isNotEmpty()) { // ✅ isNotEmpty resuelto por el tipo List
+                        tvEmpty.visibility = View.GONE
                         recyclerView.visibility = View.VISIBLE
                         adapter.updateData(assignedItems)
                     } else {
-                        tvNoRequests.visibility = View.VISIBLE
                         recyclerView.visibility = View.GONE
-                        tvNoRequests.text = getString(R.string.no_assigned_requests)
+                        tvEmpty.visibility = View.VISIBLE
+                        tvEmpty.text = getString(R.string.no_assigned_requests)
                     }
                 } else {
-                    Log.e("AssignedFrag", "Error ${response.code()} al cargar asignadas.")
-                    tvNoRequests.visibility = View.VISIBLE
-                    tvNoRequests.text = getString(R.string.error_server_code, response.code())
+                    Log.e("InRouteFrag", "Error ${response.code()} al cargar asignadas.")
+                    tvEmpty.visibility = View.VISIBLE
+                    tvEmpty.text = "Error al conectar con el servidor: ${response.code()}"
                 }
             }
 
+            // 🚨 CORRECCIÓN 4: onFailure debe manejar List<SolicitudResponse>
             override fun onFailure(call: Call<List<SolicitudResponse>>, t: Throwable) {
-                Log.e("AssignedFrag", "Fallo de red: ${t.message}")
-                tvNoRequests.visibility = View.VISIBLE
-                tvNoRequests.text = getString(R.string.error_network_fail)
+                Log.e("InRouteFrag", "Fallo de red: ${t.message}")
+                tvEmpty.visibility = View.VISIBLE
+                tvEmpty.text = "Fallo de red. Verifique el servidor."
             }
         })
     }

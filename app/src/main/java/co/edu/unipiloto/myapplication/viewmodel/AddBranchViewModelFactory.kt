@@ -1,5 +1,4 @@
-// Archivo: co.edu.unipiloto.myapplication.ui/AddBranchViewModelFactory.kt
-package co.edu.unipiloto.myapplication.ui
+package co.edu.unipiloto.myapplication.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

@@ -1,4 +1,4 @@
-package co.edu.unipiloto.myapplication.ui
+package co.edu.unipiloto.myapplication.fragment
 
 import android.os.Bundle
 import android.util.Log
@@ -11,26 +11,27 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.adapters.SolicitudAdapter
-import co.edu.unipiloto.myapplication.storage.SessionManager
 import co.edu.unipiloto.myapplication.dto.RetrofitClient
 import co.edu.unipiloto.myapplication.dto.SolicitudResponse
-import co.edu.unipiloto.myapplication.dto.toModel // 💡 IMPORTAR la función de mapeo
+import co.edu.unipiloto.myapplication.dto.toModel
 import co.edu.unipiloto.myapplication.model.Solicitud
+import co.edu.unipiloto.myapplication.storage.SessionManager
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
 /**
- * Fragmento que muestra un historial de solicitudes completadas (ENTREGADA/CANCELADA)
- * dentro de la sucursal logística del Gestor/Funcionario.
+ * Fragmento que lista las solicitudes que ya han sido asignadas a conductores para el Manager/Gestor.
+ * (Pestaña Asignadas)
  */
-class BranchCompletedFragment : Fragment() {
+class AssignedRequestsFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
-    private lateinit var tvEmpty: TextView
+    private lateinit var tvNoRequests: TextView
     private lateinit var sessionManager: SessionManager
-
     private lateinit var adapter: SolicitudAdapter
+
+    private var userRole: String = "GESTOR"
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -43,75 +44,74 @@ class BranchCompletedFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         sessionManager = SessionManager(requireContext())
+        userRole = sessionManager.getRole() ?: "GESTOR"
 
         recyclerView = view.findViewById(R.id.recyclerViewBranchList)
-        tvEmpty = view.findViewById(R.id.tvBranchEmpty)
+        tvNoRequests = view.findViewById(R.id.tvBranchEmpty)
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
         adapter = SolicitudAdapter(
             items = emptyList<Solicitud>(),
-            role = sessionManager.getRole() ?: "GESTOR",
+            role = userRole,
             onActionClick = { solicitud, action ->
-                Log.d("CompletedFrag", "Acción: $action en historial ${solicitud.id}. No se procesa.")
+                Log.d("AssignedFrag", "Acción: $action en solicitud ${solicitud.id}")
             }
         )
         recyclerView.adapter = adapter
 
-        loadCompletedRequests()
+        loadAssignedRequests()
     }
 
     override fun onResume() {
         super.onResume()
-        loadCompletedRequests()
+        loadAssignedRequests()
     }
 
-
     /**
-     * Carga las solicitudes de historial (ENTREGADA/CANCELADA/FINALIZADA) usando el servicio REST.
+     * Carga las solicitudes asignadas usando el ID de la Sucursal del Gestor/Gerente.
      */
-    private fun loadCompletedRequests() {
+    private fun loadAssignedRequests() {
+
         val sucursalId = sessionManager.getSucursalId() ?: run {
-            tvEmpty.visibility = View.VISIBLE
-            tvEmpty.text = getString(R.string.error_no_branch_id)
+            tvNoRequests.visibility = View.VISIBLE
+            tvNoRequests.text = getString(R.string.error_no_branch_id)
             recyclerView.visibility = View.GONE
             return
         }
 
-        // 🏆 CORRECCIÓN DE TIPO: El Callback debe manejar List<SolicitudResponse>
-        RetrofitClient.getSolicitudApi().getCompletedSolicitudesBySucursal(sucursalId).enqueue(object : Callback<List<SolicitudResponse>> {
+        RetrofitClient.getSolicitudApi().getAssignedSolicitudesBySucursal(sucursalId).enqueue(object :
+            Callback<List<SolicitudResponse>> {
 
-            // 🚨 CORRECCIÓN: Los parámetros onResponse deben usar List<SolicitudResponse>
             override fun onResponse(call: Call<List<SolicitudResponse>>, response: Response<List<SolicitudResponse>>) {
 
                 val assignedResponses = response.body() ?: emptyList()
 
                 if (response.isSuccessful) {
 
-                    // 💡 PASO CLAVE: Mapear DTO a Modelo local (Solicitud)
-                    val completedItems = assignedResponses.map { it.toModel() }
+                    // 3. Mapeo de DTO a Modelo local
+                    val assignedItems = assignedResponses.map { it.toModel() } // Usa la función de extensión
 
-                    if (completedItems.isNotEmpty()) {
-                        tvEmpty.visibility = View.GONE
+                    if (assignedItems.isNotEmpty()) {
+                        tvNoRequests.visibility = View.GONE
                         recyclerView.visibility = View.VISIBLE
-                        adapter.updateData(completedItems) // Actualiza el adaptador con el modelo Solicitud
+                        adapter.updateData(assignedItems)
                     } else {
+                        tvNoRequests.visibility = View.VISIBLE
                         recyclerView.visibility = View.GONE
-                        tvEmpty.visibility = View.VISIBLE
-                        tvEmpty.text = getString(R.string.no_completed_requests)
+                        tvNoRequests.text = getString(R.string.no_assigned_requests)
                     }
                 } else {
-                    Log.e("CompletedFrag", "Error ${response.code()} al cargar historial.")
-                    tvEmpty.visibility = View.VISIBLE
-                    tvEmpty.text = "Error al conectar con el servidor: ${response.code()}"
+                    Log.e("AssignedFrag", "Error ${response.code()} al cargar asignadas.")
+                    tvNoRequests.visibility = View.VISIBLE
+                    tvNoRequests.text = getString(R.string.error_server_code, response.code())
                 }
             }
 
-            // 🚨 CORRECCIÓN: Los parámetros onFailure deben usar List<SolicitudResponse>
             override fun onFailure(call: Call<List<SolicitudResponse>>, t: Throwable) {
-                Log.e("CompletedFrag", "Fallo de red: ${t.message}")
-                tvEmpty.visibility = View.VISIBLE
-                tvEmpty.text = "Fallo de red. Verifique el servidor."
+                Log.e("AssignedFrag", "Fallo de red: ${t.message}")
+                tvNoRequests.visibility = View.VISIBLE
+                tvNoRequests.text = getString(R.string.error_network_fail)
             }
         })
     }

@@ -5,6 +5,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
+import co.edu.unipiloto.myapplication.fragment.AssignedRequestsFragment;
 import co.edu.unipiloto.myapplication.ui.*; // Asegúrate de que este import abarque BranchPendingFragment
 
 public class DashboardPagerAdapter extends FragmentStateAdapter {

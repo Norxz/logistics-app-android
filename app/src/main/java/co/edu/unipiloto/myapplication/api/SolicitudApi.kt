@@ -3,7 +3,6 @@ package co.edu.unipiloto.myapplication.api
 
 import co.edu.unipiloto.myapplication.dto.SolicitudRequest
 import co.edu.unipiloto.myapplication.dto.SolicitudResponse
-import co.edu.unipiloto.myapplication.model.Solicitud
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Response
@@ -89,7 +88,7 @@ interface SolicitudApi {
      * Retorna la lista de DTOs simplificados.
      */
     @GET("solicitudes/branch/{sucursalId}")
-    fun getSolicitudesBySucursal(@Path("sucursalId") sucursalId: Long): retrofit2.Call<List<SolicitudResponse>>
+    suspend fun getSolicitudesBySucursal(@Path("sucursalId") sucursalId: Long): Response<List<SolicitudResponse>>
 
     /**
      * Mapea a: GET /api/v1/solicitudes/branch/{sucursalId}/assigned
@@ -144,6 +143,6 @@ interface SolicitudApi {
     /**
      * Obtiene todas las solicitudes del sistema (visible para ADMIN).
      */
-    @GET("solicitudes/all") // 🚨 Verifica este endpoint con tu backend
-    fun getAllSolicitudes(): Call<List<Solicitud>>
+    @GET("solicitudes")
+    fun getAllSolicitudes(): Call<List<SolicitudResponse>>
 }
