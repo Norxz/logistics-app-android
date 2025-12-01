@@ -19,7 +19,6 @@ class ManagerDashboardViewModel(
     private val userRepository: UserRepository
 ) : ViewModel() {
 
-    // 🏆 NUEVA PROPIEDAD: Para almacenar el ID de la sucursal actual
     private var currentBranchId: Long? = null
 
     // --- LiveData de Solicitudes y Estado ---
@@ -34,12 +33,9 @@ class ManagerDashboardViewModel(
 
     // --- LiveData para Gestores y Asignación ---
 
-    // LiveData que guarda la lista de GESTORES disponibles
     private val _availableGestores = MutableLiveData<List<User>>(emptyList())
-    // 🏆 CORRECCIÓN 1: Renombrado a 'availableGestores' para coincidir con el Fragmento
     val availableGestores: LiveData<List<User>> = _availableGestores
 
-    // LiveData para el resultado de la asignación
     private val _assignmentResult = MutableLiveData<Result<Solicitud>?>()
     val assignmentResult: LiveData<Result<Solicitud>?> = _assignmentResult
 
@@ -50,7 +46,7 @@ class ManagerDashboardViewModel(
         if (_isLoading.value == true) return
         _isLoading.value = true
         _error.value = null
-        currentBranchId = branchId // ✅ Almacenar el ID para futuras recargas
+        currentBranchId = branchId
 
         viewModelScope.launch {
             val result = solicitudRepository.getSolicitudesByBranch(branchId)
@@ -69,7 +65,6 @@ class ManagerDashboardViewModel(
         }
     }
 
-    // 🏆 CORRECCIÓN 2: Función renombrada y modificada para usar 'currentBranchId'
     fun loadAvailableGestores() {
         val branchId = currentBranchId ?: run {
             _error.value = "ID de sucursal no establecido para cargar gestores."
@@ -77,7 +72,6 @@ class ManagerDashboardViewModel(
         }
 
         viewModelScope.launch {
-            // 🏆 Llamar al endpoint de gestores (conductores activos)
             val result = userRepository.getAvailableManagers(branchId)
 
             result.onSuccess { gestorList: List<UserResponse> ->
@@ -92,35 +86,44 @@ class ManagerDashboardViewModel(
 
     // --- Función de Acción (Asignación) ---
 
-    // Función para asignar un GESTOR a una solicitud
     fun assignGestorToRequest(solicitudId: Long, gestorId: Long) {
         _assignmentResult.value = null // Limpiar resultado anterior
         viewModelScope.launch {
             try {
-                // 🚨 Asumimos que solicitudRepository.assignGestor(solicitudId, gestorId) existe
+                // Se asume que solicitudRepository.assignGestor(solicitudId, gestorId) existe
                 val result = solicitudRepository.assignGestor(solicitudId, gestorId)
 
                 result.onSuccess { updatedSolicitudResponse: SolicitudResponse ->
                     _assignmentResult.value = Result.success(updatedSolicitudResponse.toModel())
 
                 }.onFailure { exception: Throwable ->
+                    // 🛑 MEJORA CLAVE: Registrar el error en Logcat
+                    Log.e("ManagerVM", "Fallo en asignación de Gestor. Solicitud ID: $solicitudId, Causa: ${exception.message}", exception)
                     _assignmentResult.value = Result.failure(exception)
                 }
 
             } catch (e: Exception) {
+                Log.e("ManagerVM", "Excepción de conexión o I/O durante asignación: ${e.message}", e)
                 _assignmentResult.value = Result.failure(e)
             }
 
-            // 🏆 CORRECCIÓN 3: Recargar usando el ID de sucursal almacenado
+            // Recargar datos para reflejar el cambio (o la eliminación del ítem si fue exitoso)
             val branchIdToReload = currentBranchId
             if (branchIdToReload != null) {
                 loadBranchSolicitudes(branchIdToReload)
-                loadAvailableGestores() // También recargar gestores por si su estado cambió
+                loadAvailableGestores()
             }
         }
     }
 
     fun clearError() {
         _error.value = null
+    }
+
+    /**
+     * Limpia el LiveData de resultados de asignación después de que el fragmento lo consume.
+     */
+    fun clearAssignmentResult() {
+        _assignmentResult.value = null
     }
 }

@@ -141,13 +141,20 @@ class SolicitudRepository(private val solicitudApi: SolicitudApi) {
      * Mapea a: PUT /api/v1/solicitudes/{solicitudId}/assignGestor
      */
     suspend fun assignGestor(solicitudId: Long, gestorId: Long): Result<SolicitudResponse> {
-        // Prepara el cuerpo de la solicitud (body)
-        val body = mapOf("gestorId" to gestorId)
+        return try {
+            // Asegúrate de que esta llamada NO esté usando un ID o campo de Conductor.
+            val response = solicitudApi.assignGestor(solicitudId, gestorId)
 
-        // Usa tu función genérica para manejar la llamada
-        return handleApiCall {
-            // 🚨 DEBES LLAMAR AL MÉTODO DE TU INTERFAZ SOLICITUDAPI
-            solicitudApi.assignGestorEndpoint(solicitudId, body)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                // Este mensaje puede ser el que ves. Revisa el cuerpo del error.
+                val errorMessage = response.errorBody()?.string() ?: "Error HTTP ${response.code()}"
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            // Error de conexión o Timeout
+            Result.failure(e)
         }
     }
 }

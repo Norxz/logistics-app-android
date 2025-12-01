@@ -154,4 +154,10 @@ interface SolicitudApi {
         @Path("id") solicitudId: Long,
         @Body body: Map<String, Long>
     ): Response<SolicitudResponse>
+
+    @POST("solicitudes/{solicitudId}/asignar-gestor/{gestorId}")
+    suspend fun assignGestor(
+        @Path("solicitudId") solicitudId: Long,
+        @Path("gestorId") gestorId: Long
+    ): Response<SolicitudResponse>
 }
