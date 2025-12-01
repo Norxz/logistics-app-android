@@ -20,7 +20,7 @@ class AdminPanelActivity : AppCompatActivity() {
     // Vistas
     private lateinit var tvAdminTitle: TextView
     private lateinit var btnManageUsers: MaterialButton
-    private lateinit var btnManageBranches: MaterialButton // ⬅️ NUEVO: Declarar la vista
+    private lateinit var btnManageBranches: MaterialButton
     private lateinit var btnViewAllRequests: MaterialButton
     private lateinit var btnLogoutAdmin: MaterialButton
 
@@ -47,7 +47,7 @@ class AdminPanelActivity : AppCompatActivity() {
         tvAdminTitle = findViewById(R.id.tvAdminTitle)
 
         btnManageUsers = findViewById(R.id.btnManageUsers)
-        btnManageBranches = findViewById(R.id.btnManageBranches) // ⬅️ NUEVO: Inicializar la vista
+        btnManageBranches = findViewById(R.id.btnManageBranches)
         btnViewAllRequests = findViewById(R.id.btnViewAllRequests)
         btnLogoutAdmin = findViewById(R.id.btnLogoutAdmin)
     }
@@ -62,7 +62,7 @@ class AdminPanelActivity : AppCompatActivity() {
 
         // 2. Botón: Gestionar Sucursales
         btnManageBranches.setOnClickListener {
-            val intent = Intent(this, ManagerDashboardActivity::class.java)
+            val intent = Intent(this, ManageBranchesActivity::class.java)
             startActivity(intent)
         }
 
