@@ -142,4 +142,12 @@ class SessionManager(context: Context) {
     fun logoutUser() {
         pref.edit().clear().apply()
     }
+
+    /**
+     * 🚨 CORRECCIÓN REQUERIDA POR AssignDriverActivity
+     * Alias para getBranchId() para mantener la compatibilidad con el código cliente.
+     */
+    fun getSucursalId(): Long? {
+        return getBranchId()
+    }
 }

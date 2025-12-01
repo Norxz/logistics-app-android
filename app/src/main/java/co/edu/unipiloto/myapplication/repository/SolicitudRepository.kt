@@ -39,7 +39,7 @@ class SolicitudRepository(private val solicitudApi: SolicitudApi) {
      */
     suspend fun getSolicitudesByBranch(branchId: Long): Result<List<SolicitudResponse>> = handleApiCall {
         // 🏆 CORRECCIÓN: Usa 'solicitudApi' y llama a la función suspend de la API
-        solicitudApi.getSolicitudesBySucursal(branchId)
+        solicitudApi.getSolicitudesBySucursalCoroutines(branchId)
     }
 
     // --- 3. ACTUALIZACIÓN DE ESTADO ---

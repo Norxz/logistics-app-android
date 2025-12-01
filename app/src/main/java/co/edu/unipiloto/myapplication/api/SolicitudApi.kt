@@ -87,9 +87,13 @@ interface SolicitudApi {
      * Obtiene todas las solicitudes de una sucursal para que el Gestor pueda filtrar/asignar.
      * Retorna la lista de DTOs simplificados.
      */
+    // 1. VERSIÓN PARA EL REPOSITORIO (Patrón Corutinas)
     @GET("solicitudes/branch/{sucursalId}")
-    suspend fun getSolicitudesBySucursal(@Path("sucursalId") sucursalId: Long): Response<List<SolicitudResponse>>
+    suspend fun getSolicitudesBySucursalCoroutines(@Path("sucursalId") sucursalId: Long): Response<List<SolicitudResponse>>
 
+    // 2. VERSIÓN PARA LA ACTIVITY (Patrón Call/Enqueue)
+    @GET("solicitudes/branch/{sucursalId}")
+    fun getSolicitudesBySucursal(@Path("sucursalId") sucursalId: Long): retrofit2.Call<List<SolicitudResponse>>
     /**
      * Mapea a: GET /api/v1/solicitudes/branch/{sucursalId}/assigned
      * Obtiene todas las solicitudes de una sucursal que ya están ASIGNADAS a un conductor.

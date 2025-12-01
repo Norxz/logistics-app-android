@@ -27,5 +27,8 @@
     <color name="status_default">#9E9E9E</color>
     <color name="status_assigned">#42A5F5</color>
     <color name="status_in_progress">#66BB6A</color>
+    <color name="status_pending_assignment">#FF9500</color>
+    <color name="status_completed">#34C759</color>
+    <color name="status_delivered">#28A745</color>
 
 </resources>

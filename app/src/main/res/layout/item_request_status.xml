@@ -149,9 +149,9 @@
                     android:layout_width="18dp"
                     android:layout_height="18dp"
                     android:src="@drawable/ic_driver"
-                    android:tint="@color/primary_color"
                     android:layout_marginEnd="8dp"
-                    android:contentDescription="Icono de Conductor" />
+                    android:contentDescription="Icono de Conductor"
+                    app:tint="@color/primary_color" />
 
                 <TextView
                     android:layout_width="wrap_content"
