@@ -6,6 +6,7 @@ import android.location.Geocoder
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.LocationServices
@@ -21,7 +22,7 @@ import java.util.Locale
 class LocationHelper(
     private val activity: AppCompatActivity,
     private val mapView: MapView,
-    private val onLocationSelected: (address: String, lat: Double, lon: Double) -> Unit
+    private val onLocationSelected: (address: String, lat: Double, lon: Double, city: String?) -> Unit
 ) : OnMapReadyCallback {
 
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(activity)
@@ -58,18 +59,42 @@ class LocationHelper(
         )
     }
 
+    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     private fun requestCurrentLocation() {
-        if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED
-        ) return
+        if (!hasLocationPermission()) return
 
         fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
             if (loc != null) {
                 val latLng = LatLng(loc.latitude, loc.longitude)
-                updateMarker(latLng)
-                reverseGeocode(latLng)
+                // Llama a la versión asíncrona:
+                reverseGeocodeAsync(latLng)
             }
         }
+    }
+
+    private fun reverseGeocodeAsync(latLng: LatLng) {
+        // 1. Mover el trabajo pesado a un hilo secundario
+        Thread {
+            try {
+                val geocoder = Geocoder(activity, Locale.getDefault())
+                // 🚨 EL BLOQUEO OCURRE AQUÍ, AHORA ESTÁ EN UN THREAD
+                val list = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
+
+                // 2. Regresar al hilo principal para actualizar la UI
+                Handler(Looper.getMainLooper()).post {
+                    if (!list.isNullOrEmpty()) {val addressResult = list[0]
+                        val address = addressResult.getAddressLine(0)
+                        val city = addressResult.locality
+
+                        updateMarker(latLng)
+                        onLocationSelected(address, latLng.latitude, latLng.longitude, city)}
+                }
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post {
+                    Toast.makeText(activity, "Error obteniendo dirección", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }.start()
     }
 
     private fun updateMarker(latLng: LatLng) {
@@ -90,8 +115,12 @@ class LocationHelper(
             val list = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
 
             if (!list.isNullOrEmpty()) {
-                val address = list[0].getAddressLine(0)
-                onLocationSelected(address, latLng.latitude, latLng.longitude)
+                val addressResult = list[0]
+                val address = addressResult.getAddressLine(0)
+                val city = addressResult.locality // ⬅️ OBTENER LA CIUDAD
+
+                // ⬅️ CORRECCIÓN: Pasar el valor de 'city'
+                onLocationSelected(address, latLng.latitude, latLng.longitude, city)
             }
         } catch (e: Exception) {
             Toast.makeText(activity, "Error obteniendo dirección", Toast.LENGTH_SHORT).show()
@@ -108,9 +137,13 @@ class LocationHelper(
                     val r = result[0]
                     val latLng = LatLng(r.latitude, r.longitude)
 
+                    // ⬅️ OBTENER LA CIUDAD AQUÍ
+                    val city = r.locality
+
                     Handler(Looper.getMainLooper()).post {
                         updateMarker(latLng)
-                        onLocationSelected(address, r.latitude, r.longitude)
+                        // ⬅️ CORRECCIÓN: Pasar el valor de 'city'
+                        onLocationSelected(address, r.latitude, r.longitude, city)
                     }
                 } else {
                     Handler(Looper.getMainLooper()).post {
@@ -141,8 +174,7 @@ class LocationHelper(
         )
 
         googleMap?.setOnMapClickListener { latLng ->
-            updateMarker(latLng)
-            reverseGeocode(latLng)
+            reverseGeocodeAsync(latLng) // ⬅️ Usar la versión asíncrona
         }
     }
 

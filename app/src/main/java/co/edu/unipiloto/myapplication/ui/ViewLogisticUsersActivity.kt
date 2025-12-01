@@ -11,19 +11,24 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
 import co.edu.unipiloto.myapplication.adapters.LogisticUserAdapter
-import co.edu.unipiloto.myapplication.model.LogisticUser
-import co.edu.unipiloto.myapplication.rest.RetrofitClient // 👈 Cliente REST
+import co.edu.unipiloto.myapplication.dto.RetrofitClient // Cliente REST
+import co.edu.unipiloto.myapplication.model.User // Usar el modelo User
 import com.google.android.material.button.MaterialButton
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+
+// 🚨 IMPORTANTE: Necesitas un método getUserApi en RetrofitClient
+// import co.edu.unipiloto.myapplication.dto.RetrofitClient.getUserApi // Si lo tienes como función de extensión
 
 class ViewLogisticUsersActivity : AppCompatActivity() {
 
     private lateinit var recyclerViewUsers: RecyclerView
     private lateinit var adapter: LogisticUserAdapter
     private lateinit var btnAddUser: MaterialButton
-    private val userList = mutableListOf<LogisticUser>() // List used by the adapter
+    private val userList = mutableListOf<User>()
+
+    // ... (onCreate, onResume, initViews, setupListeners, setupRecyclerView)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,16 +36,13 @@ class ViewLogisticUsersActivity : AppCompatActivity() {
 
         supportActionBar?.hide()
 
-
         initViews()
         setupRecyclerView()
         setupListeners()
-        // loadUsers() will be called in onResume
     }
 
     override fun onResume() {
         super.onResume()
-        // Load and refresh users every time the activity becomes visible
         loadUsers()
     }
 
@@ -51,7 +53,7 @@ class ViewLogisticUsersActivity : AppCompatActivity() {
 
     private fun setupListeners() {
         findViewById<ImageButton>(R.id.btnBack)?.setOnClickListener {
-            onBackPressedDispatcher.onBackPressed()
+            finish()
         }
 
         btnAddUser.setOnClickListener {
@@ -70,18 +72,16 @@ class ViewLogisticUsersActivity : AppCompatActivity() {
         recyclerViewUsers.layoutManager = LinearLayoutManager(this)
         recyclerViewUsers.adapter = adapter
 
-        // Aquí se pasa la lista real de usuarios
         adapter.submitList(userList)
     }
-
 
     /**
      * Loads all logistical users from the REST backend.
      */
     private fun loadUsers() {
-        // 🏆 LLAMADA A RETROFIT (GET ALL)
-        RetrofitClient.apiService.getAllLogisticUsers().enqueue(object : Callback<List<LogisticUser>> {
-            override fun onResponse(call: Call<List<LogisticUser>>, response: Response<List<LogisticUser>>) {
+        // 🏆 CORRECCIÓN FINAL: Usar el método getAllLogisticUsers de UserApi, accesible vía RetrofitClient.userApi o RetrofitClient.getUserApi()
+        RetrofitClient.getUserApi().getAllLogisticUsers().enqueue(object : Callback<List<User>> {
+            override fun onResponse(call: Call<List<User>>, response: Response<List<User>>) {
                 if (response.isSuccessful && response.body() != null) {
                     val users = response.body()!!
                     userList.clear()
@@ -92,14 +92,15 @@ class ViewLogisticUsersActivity : AppCompatActivity() {
                     Toast.makeText(this@ViewLogisticUsersActivity, "Error al cargar personal logístico.", Toast.LENGTH_SHORT).show()
                 }
             }
-            override fun onFailure(call: Call<List<LogisticUser>>, t: Throwable) {
+
+            override fun onFailure(call: Call<List<User>>, t: Throwable) {
                 Log.e("LogUserMgmt", "Fallo de red: ${t.message}")
                 Toast.makeText(this@ViewLogisticUsersActivity, "Fallo de red. Servidor no disponible.", Toast.LENGTH_LONG).show()
             }
         })
     }
 
-    private fun handleEditUserClick(user: LogisticUser) {
+    private fun handleEditUserClick(user: User) {
         val intent = Intent(this, EditLogisticUserActivity::class.java)
         intent.putExtra("RECOLECTOR_ID", user.id)
         startActivity(intent)
@@ -108,12 +109,12 @@ class ViewLogisticUsersActivity : AppCompatActivity() {
     /**
      * Shows confirmation dialog and calls the REST endpoint to delete the user.
      */
-    private fun handleDeleteUserClick(user: LogisticUser) {
+    private fun handleDeleteUserClick(user: User) {
         AlertDialog.Builder(this)
             .setTitle("Confirmar Eliminación")
             .setMessage("¿Estás seguro de que deseas eliminar a ${user.fullName}? Esta acción es permanente y eliminará también el usuario asociado.")
             .setPositiveButton("Eliminar") { dialog, which ->
-                deleteUserFromRest(user.userId, user.fullName) // Use the user FK (userId) if that's what the endpoint expects
+                deleteUserFromRest(user.id, user.fullName)
             }
             .setNegativeButton("Cancelar", null)
             .show()
@@ -125,8 +126,8 @@ class ViewLogisticUsersActivity : AppCompatActivity() {
             return
         }
 
-        // 🏆 LLAMADA A RETROFIT (DELETE)
-        RetrofitClient.apiService.deleteLogisticUser(userId).enqueue(object : Callback<Void> {
+        // 🏆 CORRECCIÓN FINAL: Usar el método deleteLogisticUser de UserApi, accesible vía RetrofitClient.userApi o RetrofitClient.getUserApi()
+        RetrofitClient.getUserApi().deleteLogisticUser(userId).enqueue(object : Callback<Void> {
             override fun onResponse(call: Call<Void>, response: Response<Void>) {
                 if (response.isSuccessful) {
                     Toast.makeText(this@ViewLogisticUsersActivity, "$userName eliminado correctamente.", Toast.LENGTH_SHORT).show()

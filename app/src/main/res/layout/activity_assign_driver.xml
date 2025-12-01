@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_surface"
+    android:padding="16dp"
+    android:clipToPadding="false"
+    tools:context=".ui.AssignDriverActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:text="Asignación de Envíos y Monitoreo"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large"
+            android:textStyle="bold"
+            android:textColor="@color/on_surface" />
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="6dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:text="Asignar Nuevo Conductor"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary_dark_color" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:boxCornerRadiusBottomEnd="8dp"
+                    app:boxCornerRadiusBottomStart="8dp"
+                    app:boxCornerRadiusTopEnd="8dp"
+                    app:boxCornerRadiusTopStart="8dp"
+                    android:hint="ID/Guía de Solicitud a Asignar">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etSolicitudId"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textCapCharacters"
+                        android:maxLength="10" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:id="@+id/tvSolicitudDetails"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:paddingStart="4dp"
+                    android:textStyle="italic"
+                    android:textSize="13sp"
+                    android:textColor="@color/on_surface_secondary"
+                    tools:text="Detalles: 15kg, Recogida: 01/Dic, Destino: Calle 10 Sur" />
+
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Seleccionar Conductor Disponible:"
+                    android:layout_marginBottom="6dp"
+                    android:textColor="@color/on_surface"
+                    android:textStyle="bold" />
+
+                <Spinner
+                    android:id="@+id/spinnerDrivers"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:spinnerMode="dropdown"
+                    android:background="@drawable/bg_spinner_border"
+                    android:layout_marginBottom="24dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAssignDriver"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Asignar Conductor"
+                    android:padding="14dp"
+                    android:textSize="16sp"
+                    app:cornerRadius="10dp"
+                    android:backgroundTint="@color/primary_color" />
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="12dp"
+            android:text="Solicitudes Asignadas (Monitoreo)"
+            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+            android:textStyle="bold"
+            android:textColor="@color/on_surface" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvAssignedRequests"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="200dp"
+            android:background="@android:color/transparent"
+            android:padding="0dp"
+            android:nestedScrollingEnabled="false"
+            tools:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:listitem="@layout/item_request_status" />
+
+        <TextView
+            android:id="@+id/tvNoRequests"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="No hay solicitudes activas o asignadas en este momento."
+            android:paddingTop="32dp"
+            android:paddingBottom="32dp"
+            android:background="@color/md_white"
+            android:layout_marginTop="4dp"
+            android:visibility="gone"
+            android:textColor="@color/on_surface_secondary"/>
+
+    </LinearLayout>
+</ScrollView>

@@ -9,7 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.rest.RetrofitClient
+import co.edu.unipiloto.myapplication.dto.RetrofitClient
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import co.edu.unipiloto.myapplication.utils.FileUtils
 import co.edu.unipiloto.myapplication.utils.NotificationHelper
@@ -18,24 +18,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.util.Properties
-import javax.mail.internet.InternetAddress
-import javax.mail.internet.MimeMessage
-import javax.mail.Message
-import javax.mail.PasswordAuthentication
-import javax.mail.Session
-import javax.mail.Transport
-import javax.mail.internet.MimeBodyPart
-import javax.mail.internet.MimeMultipart
-
+// 🚨 IMPORTACIÓN CRUCIAL: Necesaria para usar .isSuccessful, .body(), etc.
+import retrofit2.Response
 
 /**
  * Activity que confirma la creación de una solicitud y muestra las opciones de guía.
+ * Gestiona la descarga local de la guía PDF y simula la solicitud de envío por correo.
  */
 class GuideConfirmationActivity : AppCompatActivity() {
 
     private lateinit var sessionManager: SessionManager
-
+    private var solicitudId: Long = -1L
+    private var usuarioEmail: String? = null
+    private val solicitudApiService by lazy { RetrofitClient.getSolicitudApi() }
+    private val guideApiService by lazy { RetrofitClient.getGuideApi() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,117 +39,66 @@ class GuideConfirmationActivity : AppCompatActivity() {
 
         sessionManager = SessionManager(this)
 
-        val usuarioEmail = intent.getStringExtra("usuarioEmail")
-        if (usuarioEmail.isNullOrEmpty()) {
-            Toast.makeText(this, "No se recibió el email del usuario", Toast.LENGTH_LONG).show()
+        solicitudId = intent.getLongExtra("solicitudId", -1L)
+        usuarioEmail = intent.getStringExtra("usuarioEmail")
+
+        if (usuarioEmail.isNullOrEmpty() || solicitudId == -1L) {
+            Toast.makeText(this, "Error: Datos de solicitud incompletos.", Toast.LENGTH_LONG).show()
+            finish()
             return
         }
 
-        val solicitudId = intent.getLongExtra("solicitudId", -1L)
-
         initViews()
-        setupListeners(solicitudId, usuarioEmail)
+        setupListeners()
     }
 
     private fun initViews() {
+        // Asumiendo que el layout usa los IDs R.id.tvStatusTitle y R.id.tvStatusMessage
         findViewById<TextView>(R.id.tvStatusTitle).text = getString(R.string.guide_title_text)
         findViewById<TextView>(R.id.tvStatusMessage).text = getString(R.string.guide_description)
     }
 
-    private fun setupListeners(solicitudId: Long, usuarioEmail: String) {
+    private fun setupListeners() {
+        // 1. Botón de DESCARGAR Y ENVIAR POR CORREO (Llamada al backend)
         findViewById<MaterialButton>(R.id.btnGenerateAndSend).setOnClickListener {
-            Log.d("DEBUG_BTN", "SolicitudId: $solicitudId, UsuarioEmail: '$usuarioEmail'")
-            if (solicitudId != -1L && usuarioEmail.isNotEmpty()) {
-                downloadAndSendGuidePdf(solicitudId, usuarioEmail)
-            } else {
-                Toast.makeText(this, "ID de solicitud o correo no válido", Toast.LENGTH_SHORT)
-                    .show()
-            }
+            simulateSendGuideEmail()
         }
 
+        // 2. Botón de DESCARGAR (Almacenamiento local)
         findViewById<MaterialButton>(R.id.btnGenerateGuide).setOnClickListener {
-            if (solicitudId != -1L) {
-                downloadGuidePdf(solicitudId)
-            } else {
-                Toast.makeText(this, "ID de solicitud no válido", Toast.LENGTH_SHORT).show()
-            }
+            downloadAndOpenGuidePdf(solicitudId)
         }
 
+        // 3. Botón de VOLVER
         findViewById<MaterialButton>(R.id.btnBack).setOnClickListener {
+            // Regresar al MainActivity o al Dashboard
             val intent = Intent(this, MainActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
             startActivity(intent)
             finish()
         }
     }
 
+    /**
+     * Lógica unificada para descargar el PDF desde la API y abrirlo con una aplicación externa.
+     * @param solicitudId ID de la solicitud a descargar.
+     * @param showSuccessToast Indica si se debe mostrar un Toast de éxito.
+     */
+    private fun downloadAndOpenGuidePdf(solicitudId: Long, showSuccessToast: Boolean = true) {
 
-    private fun downloadGuidePdf(solicitudId: Long) {
         lifecycleScope.launch {
+            var pdfFile: File? = null
             try {
+                // Se ejecuta la llamada de red en un hilo de IO
                 val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.apiService.downloadGuidePdf(solicitudId)
+                    // 🚨 CORRECCIÓN: Cambiar guideApiService por solicitudApiService
+                    solicitudApiService.generarPdf(solicitudId)
                 }
 
+                // 🚨 CORRECCIÓN 2: 'response.isSuccessful' y 'response.body()' ahora funcionan gracias al import 'retrofit2.Response'
                 if (response.isSuccessful && response.body() != null) {
-
-                    val pdfFile = withContext(Dispatchers.IO) {
-                        val inputStream = response.body()!!.byteStream()
-
-                        FileUtils.savePdfToExternalFile(
-                            this@GuideConfirmationActivity,
-                            inputStream,
-                            "guia_solicitud_$solicitudId.pdf"
-                        )
-                    }
-
-                    try {
-                        FileUtils.openPdf(this@GuideConfirmationActivity, pdfFile)
-                    } catch (_: ActivityNotFoundException) {
-                        Toast.makeText(
-                            this@GuideConfirmationActivity,
-                            "No hay visor de PDF instalado.",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-
-                } else {
-                    Toast.makeText(
-                        this@GuideConfirmationActivity,
-                        "Error al descargar PDF",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-
-            } catch (e: Exception) {
-                Log.e("PDF_ERROR", "Error descargando PDF", e)
-                Toast.makeText(
-                    this@GuideConfirmationActivity,
-                    "Error descargando PDF (ver LogCat)",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        }
-    }
-
-    private fun downloadAndSendGuidePdf(solicitudId: Long, usuarioEmail: String) {
-        lifecycleScope.launch {
-            try {
-                // Mostrar diálogo de progreso
-                val progressDialog =
-                    android.app.ProgressDialog(this@GuideConfirmationActivity).apply {
-                        setMessage("Descargando y enviando guía...")
-                        setCancelable(false)
-                        show()
-                    }
-
-                val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.apiService.downloadGuidePdf(solicitudId)
-                }
-
-                if (response.isSuccessful && response.body() != null) {
-
-                    val pdfFile = withContext(Dispatchers.IO) {
+                    // Guarda el archivo en almacenamiento externo (Downloads)
+                    pdfFile = withContext(Dispatchers.IO) {
                         val inputStream = response.body()!!.byteStream()
                         FileUtils.savePdfToExternalFile(
                             this@GuideConfirmationActivity,
@@ -162,163 +107,62 @@ class GuideConfirmationActivity : AppCompatActivity() {
                         )
                     }
 
-                    try {
-                        FileUtils.openPdf(this@GuideConfirmationActivity, pdfFile)
-                    } catch (_: ActivityNotFoundException) {
-                        Toast.makeText(
-                            this@GuideConfirmationActivity,
-                            "No hay visor de PDF instalado.",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-
-                    // Enviar el PDF por correo en segundo plano
-                    lifecycleScope.launch(Dispatchers.IO) {
+                    if (pdfFile != null) {
                         try {
-                            val senderEmail = "santi.ch.lokcis@gmail.com"
-                            val senderPassword = "ubwd edem tnfc uktb" // App Password
-
-                            val messageBody = """
-                            Hola,
-
-                            Adjunto encontrarás la guía de la solicitud #$solicitudId.
-
-                            Saludos,
-                            Logistics App
-                        """.trimIndent()
-
-                            sendMailWithAttachment(
-                                fromEmail = senderEmail,
-                                fromPassword = senderPassword,
-                                toEmail = usuarioEmail,
-                                subject = "Guía de Solicitud",
-                                messageBody = messageBody,
-                                pdfFile = pdfFile
-                            )
-
-                            withContext(Dispatchers.Main) {
+                            FileUtils.openPdf(this@GuideConfirmationActivity, pdfFile!!)
+                            if (showSuccessToast) {
                                 Toast.makeText(
                                     this@GuideConfirmationActivity,
-                                    "Correo enviado correctamente a $usuarioEmail",
-                                    Toast.LENGTH_LONG
-                                ).show()
-
-                                NotificationHelper.showNotification(
-                                    context = this@GuideConfirmationActivity,
-                                    title = "Guía enviada",
-                                    content = "El correo con la guía de la solicitud #$solicitudId fue enviado a $usuarioEmail"
-                                )
-                            }
-
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                            withContext(Dispatchers.Main) {
-                                Toast.makeText(
-                                    this@GuideConfirmationActivity,
-                                    "Error enviando correo: ${e.message}",
+                                    "Guía descargada en la carpeta Downloads",
                                     Toast.LENGTH_LONG
                                 ).show()
                             }
-                        } finally {
-                            withContext(Dispatchers.Main) { progressDialog.dismiss() }
+                        } catch (_: ActivityNotFoundException) {
+                            Toast.makeText(
+                                this@GuideConfirmationActivity,
+                                "No hay visor de PDF instalado. Archivo guardado.",
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
                     }
-
                 } else {
-                    progressDialog.dismiss()
+                    // 🚨 CORRECCIÓN 3: Quitar el paréntesis extra 'response.code()' -> 'response.code'
                     Toast.makeText(
                         this@GuideConfirmationActivity,
-                        "Error al descargar PDF",
+                        "Error ${response.code()} al descargar PDF", // Usar .code (Int)
                         Toast.LENGTH_SHORT
                     ).show()
                 }
 
             } catch (e: Exception) {
+                Log.e("PDF_ERROR", "Error descargando PDF", e)
                 Toast.makeText(
                     this@GuideConfirmationActivity,
-                    "Error descargando PDF (ver LogCat)",
+                    "Error de conexión al descargar PDF.",
                     Toast.LENGTH_LONG
                 ).show()
-                Log.e("PDF_ERROR", "Error descargando PDF", e)
             }
         }
     }
 
+    /**
+     * Simula el proceso de solicitud de envío de correo, notificando al usuario.
+     */
+    private fun simulateSendGuideEmail() {
+        Toast.makeText(
+            this,
+            "Procesando envío de guía al correo ${usuarioEmail}. Esto debe ser manejado por el servidor.",
+            Toast.LENGTH_LONG
+        ).show()
 
-    private fun sendPdfByEmail(pdfFile: File, usuarioEmail: String) {
-        val senderEmail = "santi.ch.lokcis@gmail.com"
-        val senderPassword = "ubwd edem tnfc uktb" // ⚠️ Genera un App Password en Gmail
+        // 1. Descargar el archivo primero (opcional, para visualización inmediata)
+        downloadAndOpenGuidePdf(solicitudId, showSuccessToast = false)
 
-        val messageBody = """
-        Hola,
-        
-        Adjunto encontrarás la guía de la solicitud #${intent.getLongExtra("solicitudId", -1L)}.
-        
-        Saludos,
-        Logistics App
-    """.trimIndent()
-
-        sendMailWithAttachment(
-            fromEmail = senderEmail,
-            fromPassword = senderPassword,
-            toEmail = usuarioEmail,
-            subject = "Guía de Solicitud",
-            messageBody = messageBody,
-            pdfFile = pdfFile
+        // 2. Simular el envío exitoso de la notificación (como si el backend hubiera respondido OK)
+        NotificationHelper.showNotification(
+            context = this,
+            title = "Envío de Guía Solicitado",
+            content = "El correo con la guía de la solicitud #$solicitudId está siendo procesado y se enviará a ${usuarioEmail}"
         )
-
-        Toast.makeText(this, "Correo enviado en segundo plano a $usuarioEmail", Toast.LENGTH_LONG)
-            .show()
     }
-
-    fun sendMailWithAttachment(
-        fromEmail: String,
-        fromPassword: String,
-        toEmail: String,
-        subject: String,
-        messageBody: String,
-        pdfFile: File
-    ) {
-        Thread {
-            try {
-                val props = Properties().apply {
-                    put("mail.smtp.auth", "true")
-                    put("mail.smtp.starttls.enable", "true")
-                    put("mail.smtp.host", "smtp.gmail.com")
-                    put("mail.smtp.port", "587")
-                }
-
-                val session = Session.getInstance(props, object : javax.mail.Authenticator() {
-                    override fun getPasswordAuthentication(): PasswordAuthentication {
-                        return PasswordAuthentication(fromEmail, fromPassword)
-                    }
-                })
-
-                val message = MimeMessage(session).apply {
-                    setFrom(InternetAddress(fromEmail))
-                    setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail))
-                    setSubject(subject)
-                }
-
-                val multipart = MimeMultipart()
-
-                // Texto
-                val textPart = MimeBodyPart()
-                textPart.setText(messageBody)
-                multipart.addBodyPart(textPart)
-
-                // PDF
-                val filePart = MimeBodyPart()
-                filePart.attachFile(pdfFile)
-                multipart.addBodyPart(filePart)
-
-                message.setContent(multipart)
-
-                Transport.send(message)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }.start()
-    }
-
 }

@@ -1,18 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_surface"
-    android:padding="32dp">
+    android:padding="@dimen/padding_screen_horizontal"
+    tools:context=".ui.GuideConfirmationActivity">
 
     <ImageView
         android:id="@+id/ivStatusIcon"
-        android:layout_width="96dp"
-        android:layout_height="96dp"
-        android:layout_marginBottom="24dp"
+        android:layout_width="@dimen/icon_size_large"
+        android:layout_height="@dimen/icon_size_large"
+        android:layout_marginBottom="@dimen/spacing_medium"
         android:src="@drawable/ic_check_circle"
         android:contentDescription="@string/guide_description_text"
+
         app:layout_constraintVertical_chainStyle="packed"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -25,11 +29,12 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/guide_title_text"
-        android:textSize="28sp"
+        android:textSize="@dimen/text_size_headline"
         android:textStyle="bold"
         android:gravity="center"
         android:textColor="@color/on_surface"
-        android:layout_marginBottom="12dp"
+        android:layout_marginBottom="@dimen/spacing_small"
+
         app:layout_constraintTop_toBottomOf="@+id/ivStatusIcon"
         app:layout_constraintBottom_toTopOf="@+id/tvStatusMessage"
         app:layout_constraintStart_toStartOf="parent"
@@ -40,9 +45,10 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/guide_description"
-        android:textSize="16sp"
+        android:textSize="@dimen/text_size_body"
         android:gravity="center"
         android:textColor="@color/on_surface_secondary"
+
         app:layout_constraintTop_toBottomOf="@+id/tvStatusTitle"
         app:layout_constraintBottom_toTopOf="@+id/guidelineCenter"
         app:layout_constraintStart_toStartOf="parent"
@@ -53,33 +59,33 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_begin="336dp" />
+        app:layout_constraintGuide_percent="0.5" /> <com.google.android.material.button.MaterialButton
+    android:id="@+id/btnGenerateAndSend"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:text="@string/guide_button_send"
+    android:paddingVertical="@dimen/button_padding_vertical"
+    android:backgroundTint="@color/primary_color"
+    android:textSize="@dimen/text_size_button"
+    app:cornerRadius="@dimen/button_corner_radius"
+    android:layout_marginBottom="@dimen/spacing_tiny"
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnGenerateAndSend"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="@string/guide_button_send"
-        android:paddingVertical="14dp"
-        android:backgroundTint="@color/primary_color"
-        android:textSize="16sp"
-        app:cornerRadius="12dp"
-        android:layout_marginBottom="12dp"
-        app:layout_constraintBottom_toTopOf="@+id/btnGenerateGuide"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+    app:layout_constraintBottom_toTopOf="@+id/btnGenerateGuide"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintEnd_toEndOf="parent" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnGenerateGuide"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/guide_button_download"
-        android:paddingVertical="14dp"
+        android:paddingVertical="@dimen/button_padding_vertical"
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
         android:textColor="@color/primary_color"
         app:strokeColor="@color/primary_color"
-        app:cornerRadius="12dp"
-        android:layout_marginBottom="12dp"
+        app:cornerRadius="@dimen/button_corner_radius"
+        android:layout_marginBottom="@dimen/spacing_tiny"
+
         app:layout_constraintBottom_toTopOf="@+id/btnBack"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -91,7 +97,8 @@
         android:text="@string/back"
         style="@style/Widget.MaterialComponents.Button.TextButton"
         android:textColor="@color/on_surface_secondary"
-        android:paddingVertical="14dp"
+        android:paddingVertical="@dimen/button_padding_vertical"
+
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />

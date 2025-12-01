@@ -9,11 +9,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.edu.unipiloto.myapplication.R
-import co.edu.unipiloto.myapplication.adapters.RequestAdapter
-import co.edu.unipiloto.myapplication.model.Request // Importación del modelo de datos correcto
+// ✅ CORRECCIÓN 1: Adaptador y Modelo deben manejar Solicitud
+import co.edu.unipiloto.myapplication.adapters.RequestAdapter // Manteniendo el nombre de tu archivo
+import co.edu.unipiloto.myapplication.model.Solicitud // 🏆 Usamos el modelo correcto: Solicitud
 import co.edu.unipiloto.myapplication.storage.SessionManager
 import com.google.android.material.button.MaterialButton
-import co.edu.unipiloto.myapplication.rest.RetrofitClient // 👈 Cliente REST
+import co.edu.unipiloto.myapplication.dto.RetrofitClient.getSolicitudApi // 👈 Importamos el método API
+import co.edu.unipiloto.myapplication.dto.SolicitudResponse
+import co.edu.unipiloto.myapplication.dto.toModel
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -28,8 +31,10 @@ class ViewAllRequestsActivity : AppCompatActivity() {
     private lateinit var btnBack: ImageButton
     private lateinit var recyclerViewRequests: RecyclerView
     private lateinit var btnLogoutRequests: MaterialButton
+
+    // ✅ CORRECCIÓN 1: No se esperan argumentos de tipo genérico en RequestAdapter (Línea 35)
     private lateinit var adapter: RequestAdapter
-    private var requestList: MutableList<Request> = mutableListOf()
+    private var requestList: MutableList<Solicitud> = mutableListOf() // La lista contiene Solicitud
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,7 +44,6 @@ class ViewAllRequestsActivity : AppCompatActivity() {
 
         // Inicialización de la lógica
         sessionManager = SessionManager(this)
-        // ❌ ELIMINADA la inicialización de userRepository
 
         // 1. Verificar sesión de administrador
         if (sessionManager.getRole() != "ADMIN") {
@@ -57,7 +61,6 @@ class ViewAllRequestsActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Asegura que los datos se recarguen al regresar (ej., después de editar un request)
         loadRequests()
     }
 
@@ -81,9 +84,9 @@ class ViewAllRequestsActivity : AppCompatActivity() {
         recyclerViewRequests.layoutManager = LinearLayoutManager(this)
         recyclerViewRequests.setHasFixedSize(true)
 
-        // Inicializamos el adaptador con la lista mutable
-        adapter = RequestAdapter(requestList) { request ->
-            handleManageRequestClick(request)
+        // La inicialización es correcta ahora que la declaración fue simplificada.
+        adapter = RequestAdapter(requestList) { solicitud ->
+            handleManageRequestClick(solicitud)
         }
         recyclerViewRequests.adapter = adapter
     }
@@ -92,16 +95,20 @@ class ViewAllRequestsActivity : AppCompatActivity() {
      * Carga todas las solicitudes del sistema usando el servicio REST.
      */
     private fun loadRequests() {
-        // 🏆 LLAMADA A RETROFIT (GET: Asumimos endpoint /api/v1/solicitudes/all)
-        RetrofitClient.apiService.getAllRequests().enqueue(object : Callback<List<Request>> {
-            override fun onResponse(call: Call<List<Request>>, response: Response<List<Request>>) {
+        // 🛑 CAMBIO CLAVE: Esperar List<SolicitudResponse>
+        getSolicitudApi().getAllSolicitudes().enqueue(object : Callback<List<SolicitudResponse>> {
+
+            override fun onResponse(call: Call<List<SolicitudResponse>>, response: Response<List<SolicitudResponse>>) {
+                // fetchedRequests ahora es List<SolicitudResponse>
                 val fetchedRequests = response.body()
 
                 if (response.isSuccessful && fetchedRequests != null) {
                     if (fetchedRequests.isNotEmpty()) {
-                        requestList.clear()
-                        requestList.addAll(fetchedRequests)
-                        adapter.notifyDataSetChanged()
+
+                        // ✅ APLICAR LA SOLUCIÓN: Mapear DTO a Modelo
+                        val modelList = fetchedRequests.map { it.toModel() }
+
+                        adapter.updateData(modelList) // <-- Le pasamos los Modelos
                     } else {
                         Toast.makeText(this@ViewAllRequestsActivity, "No hay solicitudes pendientes.", Toast.LENGTH_SHORT).show()
                     }
@@ -111,21 +118,18 @@ class ViewAllRequestsActivity : AppCompatActivity() {
                 }
             }
 
-            override fun onFailure(call: Call<List<Request>>, t: Throwable) {
+            override fun onFailure(call: Call<List<SolicitudResponse>>, t: Throwable) {
                 Log.e("AdminRequests", "Fallo de red: ${t.message}")
                 Toast.makeText(this@ViewAllRequestsActivity, "Fallo de red. Verifique el servidor.", Toast.LENGTH_LONG).show()
             }
         })
     }
 
-    private fun handleManageRequestClick(request: Request) {
-        // Aquí defines la lógica de gestión (abrir un diálogo o una nueva Activity)
-        Toast.makeText(this, "Gestionando Guía: ${request.guiaId}", Toast.LENGTH_SHORT).show()
+    private fun handleManageRequestClick(solicitud: Solicitud) {
+        Toast.makeText(this, "Gestionando Guía: ${solicitud.guia.id}", Toast.LENGTH_SHORT).show()
 
-        // EJEMPLO: Abrir RequestDetailActivity, la cual migraste en un paso anterior
         val intent = Intent(this, RequestDetailActivity::class.java)
-        // Nota: Asegúrate de que el modelo Request sea Serializable si usas getSerializableExtra
-        intent.putExtra("REQUEST_DATA", request)
+        intent.putExtra("REQUEST_DATA", solicitud)
         startActivity(intent)
     }
 

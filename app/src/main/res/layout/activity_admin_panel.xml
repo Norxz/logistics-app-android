@@ -9,6 +9,7 @@
     android:paddingEnd="32dp"
     tools:context=".ui.AdminPanelActivity">
 
+
     <TextView
         android:id="@+id/tvAdminTitle"
         android:layout_width="0dp"
@@ -25,34 +26,40 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnManageUsers"
+        style="@style/AdminPanelButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="48dp"
         android:backgroundTint="@color/accent_orange"
-        android:paddingVertical="18dp"
         android:text="Gestionar Usuarios Logísticos"
-        android:textColor="@color/md_white"
-        android:textSize="18sp"
-        app:cornerRadius="12dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvAdminTitle"
         app:layout_constraintVertical_chainStyle="packed" />
 
     <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnManageBranches"
+        style="@style/AdminPanelButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="@color/primary_dark_color"
+        android:text="Gestionar Sucursales"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnManageUsers" />
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnViewAllRequests"
+        style="@style/AdminPanelButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:backgroundTint="@color/status_success"
-        android:paddingVertical="18dp"
         android:text="Ver Todas las Solicitudes"
-        android:textColor="@color/md_white"
-        android:textSize="18sp"
-        app:cornerRadius="12dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btnManageUsers" />
+        app:layout_constraintTop_toBottomOf="@id/btnManageBranches" />
 
     <View
         android:id="@+id/spacer"

@@ -15,7 +15,7 @@
     <string name="client_dashboard_title">Bienvenido, Cliente</string>
     <string name="close_session">Cerrar sesión</string>
     <string name="create_account">Crea tu Cuenta</string>
-
+    <string name="manager_dashboard_title">Panel de %1$s: ¡Bienvenido, %2$s!</string>
     <string name="delivery_adress">Dirección</string>
     <string name="delivery_destination_name">Nombre completo del receptor</string>
     <string name="delivery_destination_title">3. Datos del Destino</string>
@@ -68,7 +68,6 @@
 
     <string name="make_register">Registrarse</string>
     <string name="manager_dashboard_subtitle">Coordina las recogidas y las entregas.</string>
-    <string name="manager_dashboard_title">Panel de Control de Gestión</string>
     <string name="manager_description_delivery">¡Todas las entregas han sido completadas!</string>
     <string name="manager_description_pickups">¡No hay recogidas pendientes por hoy!</string>
     <string name="md_white">#FFFFFF</string>
@@ -150,6 +149,54 @@
     <string name="personal_access">Acceso de Personal</string>
     <string name="admin_managing">Gestión Admin</string>
     <string name="no_routes_assigned">No tienes rutas asignadas o pendientes de recolección.</string>
+    <string name="not_implemented_yet">Funcionalidad no implementada todavía.</string>
+    <string name="show_history">Mostrar/Ocultar Historial de Envíos Finalizados</string>
+    <string name="no_shipments">Aún no tienes envíos marcados como finalizados en tu historial. ¡Empieza a enviar!</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_accept">Aceptar</string>
+    <string name="action_on_route">En Camino</string>
+    <string name="action_deliver">Entregado</string>
+    <string name="action_confirm">Confirmar Entrega</string>
+
+    <string name="dialog_title_cancel">Confirmar Cancelación</string>
+    <string name="dialog_message_cancel">¿Estás seguro de que deseas cancelar la solicitud %1$d? Esta acción no se puede deshacer.</string>
+    <string name="dialog_positive_cancel">Sí, Cancelar</string>
+    <string name="dialog_negative_cancel">No, Mantener</string>
+    <string name="solicitud_id_format">ID Solicitud: #%1$d</string>
+    <string name="delivery_pickup_adress_label">Dirección de Recolección:</string>
+    <string name="error_no_branch_id">Error de Sesión: No se pudo obtener el ID de la sucursal. Por favor, inicie sesión de nuevo.</string>
+    <string name="empty_state_no_pending_requests">No hay solicitudes pendientes de asignación en este momento.</string>
+    <string name="no_requests_in_this_status">No hay solicitudes con este estado para mostrar.</string>
+    <string name="no_history_for_tracking">No se encontró historial de seguimiento para esta guía.</string>
+    <string name="no_pending_requests_branch">No hay solicitudes pendientes en esta sucursal.</string>
+    <string name="no_collectors_available">No hay recolectores disponibles en esta sucursal o zona.</string>
+    <string name="request_assigned_success">Solicitud asignada correctamente al conductor.</string>
+    <string name="error_network_fail">Fallo de red: No se pudo conectar al servidor.</string>
+    <string name="error_server_code">Error del servidor: %s</string>
+    <string name="error_network_driver_search">Error de red al buscar conductor disponible.</string>
+    <string name="error_assignment_failed">Fallo al asignar la solicitud. Intente de nuevo.</string>
+    <string name="error_network_assignment">Fallo de red al intentar asignar la solicitud.</string>
+    <string name="cd_user_role_icon">Icono que representa el rol del usuario.</string>
+    <string name="cd_edit_user">Modificar usuario</string>
+    <string name="cd_delete_user">Eliminar usuario</string>
+    <string name="recolector_assigned_format">Conductor Asignado: %s</string>
+    <string name="action_assign">Asignar.</string>
+    <string name="action_start">Iniciar Recolección.</string>
+    <string name="action_finish">Finalizar Recolección.</string>
+    <string name="branch_origin_format">Sucursal de Origen: %1$s</string>
+    <string name="branch_id_format">ID: %s</string>
+    <string name="action_start_pickup">Iniciar Recolección</string>
+    <string name="action_finish_pickup">Recoger Paquete</string>
+    <string name="action_finish_recoleccion">Recolección Exitosa</string>
+    <string name="hint_confirmation_code">Ingrese Código de Entrega</string>
+    <string name="placeholder_select_gestor">--- Seleccione Gestor ---</string>
+    <string name="error_select_gestor">Por favor, seleccione un Gestor válido.</string>
+    <string name="action_start_recollection">Iniciar Recolección</string>
+    <string name="action_collect">Recolectar Paquete</string>
+    <string name="error_confirmation_code_required">Ingrese un código de confirmación válido (mínimo 4 dígitos).</string>
+    <string name="guia_id_format">Guía #%s</string>
+    <string name="driver_recipient_format">Para: %s (Recibe)</string>
+
 
     <string-array name="logistic_roles">
         <item>CONDUCTOR</item>

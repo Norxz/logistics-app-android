@@ -4,102 +4,121 @@ import android.content.Context
 import android.content.SharedPreferences
 
 /**
- * Gestiona la sesión del usuario en la aplicación utilizando [SharedPreferences].
+ * Extensión para SharedPreferences.Editor que permite agrupar transacciones de put/apply.
+ * Evita llamar a .edit() y .apply() manualmente para cada cambio.
+ */
+inline fun SharedPreferences.edit(operation: (SharedPreferences.Editor) -> Unit) {
+    val editor = edit()
+    operation(editor)
+    editor.apply()
+}
+
+/**
+ * 💾 Gestor de Sesión del Usuario.
+ * Utiliza SharedPreferences para almacenar de forma persistente
+ * los datos de la sesión (ID, rol, sucursal, etc.) del usuario logueado.
  */
 class SessionManager(context: Context) {
 
     private val PREF_NAME = "LogiAppSession"
 
-    // Claves para almacenar los datos
+    // Claves de la sesión
     private val KEY_IS_LOGGED_IN = "isLoggedIn"
     private val KEY_USER_ID = "userId"
     private val KEY_ROLE = "role"
-    private val KEY_ZONA = "zona"
     private val KEY_NAME = "name"
-
     private val KEY_EMAIL = "USER_EMAIL"
 
+    // Claves específicas de personal logístico (SOLO SUCURSAL)
+    private val KEY_SUCURSAL = "sucursal_name"
+    private val KEY_BRANCH_ID = "branch_id"
+
+    // Solo se necesita la instancia de SharedPreferences
     private val pref: SharedPreferences =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-    private val editor: SharedPreferences.Editor = pref.edit()
 
     /**
      * Crea y guarda una sesión de usuario después de un inicio de sesión exitoso.
-     *
-     * @param userId El ID único del usuario.
-     * @param role El rol del usuario (ej. "CLIENTE", "CONDUCTOR", "ADMIN").
-     * @param zona La zona asignada.
-     * @param name El nombre visible del usuario. // <-- PARÁMETRO AÑADIDO
      */
-    fun createLoginSession(userId: Long, role: String, zona: String?, name: String, email: String) {
-        editor.putBoolean(KEY_IS_LOGGED_IN, true)
-        editor.putLong(KEY_USER_ID, userId)
-        editor.putString(KEY_ROLE, role)
-        editor.putString(KEY_ZONA, zona)
-        editor.putString(KEY_NAME, name)
-        editor.putString(KEY_EMAIL, email)
-        editor.apply()
+    fun createLoginSession(
+        userId: Long,
+        role: String,
+        sucursal: String?,
+        sucursalId: Long?,
+        name: String,
+        email: String
+    ) {
+        pref.edit { editor ->
+            editor.putBoolean(KEY_IS_LOGGED_IN, true)
+            editor.putLong(KEY_USER_ID, userId)
+            editor.putString(KEY_ROLE, role)
+            editor.putString(KEY_SUCURSAL, sucursal)
+
+            if (sucursalId != null) {
+                editor.putLong(KEY_BRANCH_ID, sucursalId)
+            }
+
+            editor.putString(KEY_NAME, name)
+            editor.putString(KEY_EMAIL, email)
+        }
     }
 
-    /**
-     * Cierra la sesión del usuario actual.
-     */
-    fun logoutUser() {
-        editor.clear()
-        editor.apply()
-    }
+    // --- Getters de Sesión ---
 
-    /**
-     * Verifica si hay un usuario con sesión activa.
-     */
     fun isLoggedIn(): Boolean {
         return pref.getBoolean(KEY_IS_LOGGED_IN, false)
     }
 
-    /**
-     * Obtiene el ID del usuario de la sesión actual.
-     */
     fun getUserId(): Long {
         return pref.getLong(KEY_USER_ID, -1L)
     }
 
-    /**
-     * Obtiene el nombre del usuario de la sesión actual.
-     * @return El nombre del usuario o una cadena vacía si no se encuentra.
-     */
     fun getName(): String {
         return pref.getString(KEY_NAME, "") ?: ""
     }
 
-    /**
-     * Obtiene el rol del usuario de la sesión actual.
-     */
+    fun getUserFullName(): String? {
+        return pref.getString(KEY_NAME, null)
+    }
+
     fun getRole(): String {
         return pref.getString(KEY_ROLE, "") ?: ""
     }
 
-    /**
-     * Obtiene la zona asignada al usuario actual.
-     */
-    fun getZona(): String? {
-        return pref.getString(KEY_ZONA, null)
-    }
-
-    fun saveUserEmail(email: String) {
-        editor.putString("USER_EMAIL", email)
-        editor.apply()
+    fun getSucursal(): String? {
+        return pref.getString(KEY_SUCURSAL, null)
     }
 
     fun getUserEmail(): String? {
-        return pref.getString("USER_EMAIL", null)
+        return pref.getString(KEY_EMAIL, null)
+    }
+
+    // --- Métodos de Sucursal ---
+
+    fun saveSucursalId(id: Long) {
+        pref.edit().putLong(KEY_BRANCH_ID, id).apply()
+    }
+
+    fun getBranchId(): Long? {
+        val id = pref.getLong(KEY_BRANCH_ID, -1L)
+        return id.takeIf { it != -1L }
     }
 
     fun getSucursalId(): Long? {
-        return pref.getLong("sucursal_id", -1).takeIf { it != -1L }
+        return getBranchId()
     }
 
-    fun saveSucursalId(id: Long) {
-        pref.edit().putLong("sucursal_id", id).apply()
+    // --- Cierre de Sesión ---
+
+    /**
+     * Cierra la sesión del usuario actual, eliminando todos los datos guardados.
+     */
+    fun logoutUser() {
+        pref.edit().clear().apply()
     }
 
+    // 📢 MÉTODO AÑADIDO: Alias para logoutUser()
+    fun logout() {
+        logoutUser()
+    }
 }

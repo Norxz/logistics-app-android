@@ -1,3 +1,25 @@
 <resources>
-    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="padding_screen_horizontal">32dp</dimen>
+
+    <dimen name="spacing_tiny">4dp</dimen>        <dimen name="spacing_small">12dp</dimen>       <dimen name="spacing_medium">24dp</dimen>      <dimen name="spacing_large">48dp</dimen>       <dimen name="icon_size_large">96dp</dimen>
+
+    <dimen name="text_size_headline">28sp</dimen>
+
+    <dimen name="text_size_body">16sp</dimen>
+
+    <dimen name="text_size_button">16sp</dimen>
+
+    <dimen name="button_padding_vertical">14dp</dimen>
+
+    <dimen name="button_corner_radius">12dp</dimen>
+    <dimen name="spinner_height">32dp</dimen>
+    <dimen name="padding_large">32dp</dimen>
+    <dimen name="margin_extra_large">32dp</dimen>
+    <dimen name="margin_x_small">4dp</dimen>
+    <dimen name="margin_medium">16dp</dimen>
+    <dimen name="margin_small">8dp</dimen>
+    <dimen name="padding_medium">16dp</dimen>
+    <dimen name="padding_small">8dp</dimen>
+    <dimen name="corner_radius_medium">8dp</dimen>
+    <dimen name="component_height_standard">56dp</dimen>
 </resources>

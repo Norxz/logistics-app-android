@@ -1,17 +1,40 @@
+// co.edu.unipiloto.myapplication.model.User.kt
 package co.edu.unipiloto.myapplication.model
 
+import com.google.gson.annotations.SerializedName
+import java.io.Serializable
+
 /**
- * DTO utilizado para enviar datos del usuario al cliente (Android/Postman)
- * después de un login/registro exitoso, omitiendo el passwordHash.
+ * Representa un usuario del sistema para el frontend (excluye el passwordHash).
  */
 data class User(
-    val id: Long,
-    val fullName: String,
-    val email: String,
-    val phoneNumber: String?,
-    val role: String,
-    val sucursal: Sucursal?,
-    val isActive: Boolean
-) {
+    @SerializedName("id")
+    val id: Long? = null, // Usar Long? para seguridad
 
-}
+    @SerializedName("documento")
+    val documento: String? = null, // Campo añadido
+
+    @SerializedName("fullName")
+    val fullName: String,
+
+    @SerializedName("email")
+    val email: String,
+
+    @SerializedName("phoneNumber")
+    val phoneNumber: String? = null,
+
+    @SerializedName("role")
+    val role: String, // Mapeado del Enum Role a String
+
+    @SerializedName("sucursal")
+    val sucursal: Sucursal? = null, // Relación con el modelo Sucursal
+
+    @SerializedName("fechaCreacion")
+    val fechaCreacion: String? = null, // Instant serializado a String
+
+    @SerializedName("ultimoLogin")
+    val ultimoLogin: String? = null, // Instant serializado a String
+
+    @SerializedName("isActive")
+    val isActive: Boolean = true
+) : Serializable
