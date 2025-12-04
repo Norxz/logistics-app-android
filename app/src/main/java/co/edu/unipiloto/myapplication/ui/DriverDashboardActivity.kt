@@ -69,7 +69,7 @@ class DriverDashboardActivity : AppCompatActivity(), OnRequestClickListener {
     private fun setupListeners() {
         btnLogout.setOnClickListener {
             sessionManager.logout()
-            val intent = Intent(this, LoginActivity::class.java)
+            val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
             finish()
         }
