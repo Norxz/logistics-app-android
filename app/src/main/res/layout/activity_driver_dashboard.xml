@@ -54,10 +54,86 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginTop="@dimen/margin_medium"
-        android:background="@color/separator"
         android:alpha="0.2"
+        android:background="@color/separator"
         app:layout_constraintTop_toBottomOf="@+id/tvDriverSubtitle" />
 
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cvGpsPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/padding_medium"
+        android:layout_marginTop="@dimen/padding_small"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp"
+        app:cardBackgroundColor="#F5F5F5"
+        app:layout_constraintTop_toBottomOf="@+id/separator"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/tvOdometer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Distancia recorrida: 0.0 m"
+                android:textColor="@color/primary_color"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:gravity="center_horizontal"
+                android:layout_marginBottom="8dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <EditText
+                    android:id="@+id/etGpsTime"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:hint="T(seg)"
+                    android:inputType="number"
+                    android:textSize="14sp"
+                    android:minHeight="48dp"/>
+
+                <EditText
+                    android:id="@+id/etGpsDist"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:hint="Dist(m)"
+                    android:inputType="number"
+                    android:textSize="14sp"
+                    android:minHeight="48dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnConfigGps"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Config"
+                    android:textSize="12sp"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnOpenMaps"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Ver Ruta en Google Maps"
+                android:layout_marginTop="4dp"
+                app:icon="@android:drawable/ic_dialog_map"
+                app:iconGravity="textStart"/>
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewRoutes"
         android:layout_width="0dp"
@@ -68,7 +144,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/separator"
+        app:layout_constraintTop_toBottomOf="@+id/cvGpsPanel"
         tools:listitem="@layout/item_solicitud_driver" />
 
     <TextView

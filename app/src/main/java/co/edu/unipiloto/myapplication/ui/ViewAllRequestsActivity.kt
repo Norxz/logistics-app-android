@@ -8,6 +8,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import co.edu.unipiloto.myapplication.R
 // ✅ CORRECCIÓN 1: Adaptador y Modelo deben manejar Solicitud
 import co.edu.unipiloto.myapplication.adapters.RequestAdapter // Manteniendo el nombre de tu archivo
@@ -94,35 +96,42 @@ class ViewAllRequestsActivity : AppCompatActivity() {
     /**
      * Carga todas las solicitudes del sistema usando el servicio REST.
      */
+    /**
+     * Carga todas las solicitudes del sistema usando Corrutinas.
+     */
     private fun loadRequests() {
-        // 🛑 CAMBIO CLAVE: Esperar List<SolicitudResponse>
-        getSolicitudApi().getAllSolicitudes().enqueue(object : Callback<List<SolicitudResponse>> {
+        // Usamos lifecycleScope.launch porque la función del API ahora es 'suspend'
+        lifecycleScope.launch {
+            try {
+                // 1. Llamada directa (se suspende aquí hasta recibir respuesta)
+                val response = getSolicitudApi().getAllSolicitudes()
 
-            override fun onResponse(call: Call<List<SolicitudResponse>>, response: Response<List<SolicitudResponse>>) {
-                // fetchedRequests ahora es List<SolicitudResponse>
-                val fetchedRequests = response.body()
+                // 2. Manejo de respuesta
+                if (response.isSuccessful) {
+                    val fetchedRequests = response.body()
 
-                if (response.isSuccessful && fetchedRequests != null) {
-                    if (fetchedRequests.isNotEmpty()) {
-
-                        // ✅ APLICAR LA SOLUCIÓN: Mapear DTO a Modelo
+                    if (!fetchedRequests.isNullOrEmpty()) {
+                        // Convertir DTO -> Modelo
                         val modelList = fetchedRequests.map { it.toModel() }
 
-                        adapter.updateData(modelList) // <-- Le pasamos los Modelos
+                        // Actualizar adaptador
+                        adapter.updateData(modelList)
                     } else {
                         Toast.makeText(this@ViewAllRequestsActivity, "No hay solicitudes pendientes.", Toast.LENGTH_SHORT).show()
+                        // Limpiar lista por si acaso
+                        adapter.updateData(emptyList())
                     }
                 } else {
                     Log.e("AdminRequests", "Error ${response.code()} al cargar solicitudes.")
                     Toast.makeText(this@ViewAllRequestsActivity, "Error al cargar datos del servidor.", Toast.LENGTH_SHORT).show()
                 }
-            }
 
-            override fun onFailure(call: Call<List<SolicitudResponse>>, t: Throwable) {
-                Log.e("AdminRequests", "Fallo de red: ${t.message}")
+            } catch (e: Exception) {
+                // 3. Manejo de fallos de red (equivalente a onFailure)
+                Log.e("AdminRequests", "Fallo de red: ${e.message}")
                 Toast.makeText(this@ViewAllRequestsActivity, "Fallo de red. Verifique el servidor.", Toast.LENGTH_LONG).show()
             }
-        })
+        }
     }
 
     private fun handleManageRequestClick(solicitud: Solicitud) {

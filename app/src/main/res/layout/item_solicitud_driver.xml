@@ -83,19 +83,43 @@
             app:layout_constraintEnd_toEndOf="parent"
             tools:text="Para: Ana María López (Recibe)" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnStartTask"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/llActionButtons"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="INICIAR TAREA"
+            android:orientation="horizontal"
+            android:gravity="end|center_vertical"
             android:layout_marginTop="16dp"
-            android:backgroundTint="@color/status_in_route"
-            app:cornerRadius="8dp"
-            app:icon="@android:drawable/ic_menu_send"
-            app:iconTint="@color/md_white"
             app:layout_constraintTop_toBottomOf="@+id/tvClientName"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStartTask"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="INICIAR TAREA"
+                android:backgroundTint="@color/status_in_route"
+                app:cornerRadius="8dp"
+                app:icon="@android:drawable/ic_menu_send"
+                app:iconTint="@color/md_white" />
+
+            <View
+                android:layout_width="12dp"
+                android:layout_height="match_parent"/>
+
+            <ImageButton
+                android:id="@+id/btnViewRoute"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@android:drawable/ic_dialog_map"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="@color/primary_color"
+                android:scaleType="centerInside"
+                android:padding="8dp"
+                android:contentDescription="Ver Ruta en Mapa" />
+
+        </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.cardview.widget.CardView>

@@ -1,12 +1,8 @@
-// co.edu.unipiloto.myapplication.dto.SolicitudResponse.kt
 package co.edu.unipiloto.myapplication.dto
 
 import com.google.gson.annotations.SerializedName
 import java.io.Serializable
 
-/**
- * 📊 DTO de respuesta simplificado...
- */
 data class SolicitudResponse(
     @SerializedName("id")
     val id: Long,
@@ -23,6 +19,9 @@ data class SolicitudResponse(
     @SerializedName("franjaHoraria")
     val franjaHoraria: String,
 
+    @SerializedName("direccionRecoleccion")
+    val direccionRecoleccion: String?,
+
     @SerializedName("direccionCompleta")
     val direccionCompleta: String,
 
@@ -37,7 +36,5 @@ data class SolicitudResponse(
 
     @SerializedName("createdAt")
     val createdAt: String? = null
-
-    // --------------------------------------------------------
 
 ) : Serializable

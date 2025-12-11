@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageButton // Import necesario
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
@@ -23,18 +24,20 @@ class DriverRequestAdapter(
         private val tvClientName: TextView = itemView.findViewById(R.id.tvClientName)
         private val btnStartTask: Button = itemView.findViewById(R.id.btnStartTask)
 
+        // 1. NUEVO: Referencia al botón del mapa
+        private val btnViewRoute: ImageButton = itemView.findViewById(R.id.btnViewRoute)
+
         fun bind(request: SolicitudResponse) {
 
             // --- 1. Mapeo de Datos ---
             tvGuiaID.text = itemView.context.getString(R.string.guia_id_format, request.guia.trackingNumber)
             tvAddress.text = request.direccionCompleta
 
-            // CORRECCIÓN: Se usa 'nombreReceptor' en lugar de 'receptorName'
-            val recipientName = "Destinatario: " + request.direccionCompleta
-
+            // CORRECCIÓN: Se usa 'nombreReceptor' o el format string adecuado
+            val recipientName = "Destinatario: " + request.direccionCompleta // O request.receptor.nombre si lo tienes
             tvClientName.text = itemView.context.getString(R.string.driver_recipient_format, recipientName)
 
-            // --- 2. Lógica de Estados y Botón ---
+            // --- 2. Lógica de Estados y Botón de Acción (Amarillo) ---
             val (actionText, nextStatus, colorRes) = getActionDetails(request.estado)
 
             tvActionType.text = actionText.uppercase()
@@ -42,16 +45,20 @@ class DriverRequestAdapter(
             if (nextStatus != null) {
                 btnStartTask.text = nextStatus.uppercase()
                 btnStartTask.visibility = View.VISIBLE
-
-                // CORRECCIÓN: Se usa el color dinámico, asumiendo que R.color.status_collected está definido.
                 btnStartTask.setBackgroundColor(ContextCompat.getColor(itemView.context, colorRes))
 
-                // Configurar el listener
+                // Listener para cambiar estado
                 btnStartTask.setOnClickListener {
                     listener.onRequestStatusChange(request.id, request.estado)
                 }
             } else {
                 btnStartTask.visibility = View.GONE
+            }
+
+            // --- 3. NUEVO: Lógica del Botón de Mapa ---
+            // Listener para ver ruta
+            btnViewRoute.setOnClickListener {
+                listener.onMapRouteClick(request)
             }
         }
     }
@@ -69,7 +76,7 @@ class DriverRequestAdapter(
             "EN_RUTA_RECOLECCION" -> Triple(
                 "EN RECOLECCIÓN",
                 "PAQUETE RECOLECTADO",
-                R.color.status_collected // Color asumido
+                R.color.status_collected
             )
             "EN_DISTRIBUCION" -> Triple(
                 "EN ALMACÉN/DISTRIBUCIÓN",

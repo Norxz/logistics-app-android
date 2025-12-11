@@ -148,7 +148,7 @@ interface SolicitudApi {
      * Obtiene todas las solicitudes del sistema (visible para ADMIN).
      */
     @GET("solicitudes")
-    fun getAllSolicitudes(): Call<List<SolicitudResponse>>
+    suspend fun getAllSolicitudes(): Response<List<SolicitudResponse>>
 
     @PUT("api/v1/solicitudes/{id}/assign")
     suspend fun assignDriverEndpoint(@Path("id") solicitudId: Long, @Body body: Map<String, Long>): Response<SolicitudResponse>
